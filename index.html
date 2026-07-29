@@ -14,30 +14,20 @@
           <h1>Base Planner</h1>
         </div>
         <div class="grid-readout" aria-live="polite">
-          <span>Grid</span>
-          <strong>35 × 35</strong>
+          <span>Available tiles</span>
+          <strong id="tile-count">196</strong>
         </div>
       </header>
 
-      <section class="workspace" aria-label="Base building workspace">
-        <aside class="build-panel">
-          <p class="panel-label">Build palette</p>
-          <button class="palette-item is-selected" type="button" data-item="foundation">
-            <span class="swatch foundation"></span> Foundation
-          </button>
-          <button class="palette-item" type="button" data-item="structure">
-            <span class="swatch structure"></span> Structure
-          </button>
-          <button class="palette-item" type="button" data-item="road">
-            <span class="swatch road"></span> Road
-          </button>
-          <p class="placeholder-note">Items and placement rules will appear here when your database is connected.</p>
-        </aside>
-
+      <section class="workspace" aria-label="Base planning workspace">
         <section class="board-area">
           <div class="board-toolbar">
-            <span id="status">Foundation selected · click a tile to place</span>
-            <button id="clear-grid" type="button">Clear grid</button>
+            <label class="size-control" for="base-size">
+              <span>Base size</span>
+              <input id="base-size" type="range" min="14" max="35" value="14" />
+              <strong id="size-label">14 × 14</strong>
+            </label>
+            <span id="status">Planning canvas · 196 tiles available</span>
           </div>
           <div class="board-viewport">
             <div id="game-grid" class="game-grid" role="grid" aria-label="35 by 35 build grid"></div>
