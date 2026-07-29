@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tycoon Sim 2</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">TYCOON SIM 2</p>
+          <h1>Base Planner</h1>
+        </div>
+        <div class="grid-readout" aria-live="polite">
+          <span>Grid</span>
+          <strong>35 × 35</strong>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Base building workspace">
+        <aside class="build-panel">
+          <p class="panel-label">Build palette</p>
+          <button class="palette-item is-selected" type="button" data-item="foundation">
+            <span class="swatch foundation"></span> Foundation
+          </button>
+          <button class="palette-item" type="button" data-item="structure">
+            <span class="swatch structure"></span> Structure
+          </button>
+          <button class="palette-item" type="button" data-item="road">
+            <span class="swatch road"></span> Road
+          </button>
+          <p class="placeholder-note">Items and placement rules will appear here when your database is connected.</p>
+        </aside>
+
+        <section class="board-area">
+          <div class="board-toolbar">
+            <span id="status">Foundation selected · click a tile to place</span>
+            <button id="clear-grid" type="button">Clear grid</button>
+          </div>
+          <div class="board-viewport">
+            <div id="game-grid" class="game-grid" role="grid" aria-label="35 by 35 build grid"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
