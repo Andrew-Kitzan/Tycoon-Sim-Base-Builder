@@ -15,23 +15,34 @@
         </div>
         <div class="grid-readout" aria-live="polite">
           <span>Available tiles</span>
-          <strong id="tile-count">196</strong>
+          <strong id="tile-count">400</strong>
         </div>
       </header>
 
       <section class="workspace" aria-label="Base planning workspace">
         <section class="board-area">
+          <section class="workflow" aria-label="Build workflow">
+            <p class="panel-label">Build workflow</p>
+            <ol id="workflow-steps" class="workflow-steps"></ol>
+            <div id="coordinate-summary" class="coordinate-summary" hidden></div>
+            <div id="validation-summary" class="validation-summary" hidden></div>
+          </section>
           <div class="board-toolbar">
             <label class="size-control" for="base-size">
               <span>Base size</span>
-              <input id="base-size" type="range" min="14" max="35" value="14" />
-              <strong id="size-label">14 × 14</strong>
+              <input id="base-size" type="range" min="14" max="35" value="20" />
+              <strong id="size-label">20 × 20</strong>
             </label>
-            <span id="status">Planning canvas · 196 tiles available</span>
+            <span id="status">Planning canvas · 400 tiles available</span>
           </div>
           <div class="board-viewport">
-            <div id="game-grid" class="game-grid" role="grid" aria-label="35 by 35 build grid"></div>
+            <div class="grid-frame">
+              <div id="column-labels" class="column-labels" aria-hidden="true"></div>
+              <div id="row-labels" class="row-labels" aria-hidden="true"></div>
+              <div id="game-grid" class="game-grid" role="grid" aria-label="20 by 20 build grid"></div>
+            </div>
           </div>
+          <div id="plan-legend" class="plan-legend" aria-label="Current plan legend"></div>
         </section>
       </section>
     </main>

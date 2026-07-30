@@ -1,0 +1,10 @@
+{
+  "name": "tycoon-sim-2-base-planner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Grid-based Tycoon Sim 2 base planner and validation rules.",
+  "scripts": {
+    "test": "node tests/validate-planner.js",
+    "check": "node --check app.js && node tests/validate-planner.js"
+  }
+}
