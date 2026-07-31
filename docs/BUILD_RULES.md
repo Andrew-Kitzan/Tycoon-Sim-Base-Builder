@@ -16,6 +16,16 @@ When a player asks for a base:
 5. Render the completed plan on the grid.
 6. Perform a final manual verification before presenting the build.
 
+Every rendered item record must include its database description and relevant
+stats so the grid's hover details are complete. The item editor may move, rotate,
+or remove a mapped item, but every accepted edit invalidates the prior route
+validation and must be rechecked before the layout is treated as complete.
+
+When the player asks to clear the board or begin a new setup, permanently remove
+all items, route segments, active-plan data, calculated validation totals, and
+other setup-specific state from the previous base. Do not retain the old layout
+as hidden, archived, fallback, or saved plan data because it is no longer relevant.
+
 Do not stop after producing only an item list. Mapping and rendering follow
 immediately unless required player information is missing.
 
@@ -136,8 +146,8 @@ All conveyors must be physically connected. Gaps cause ore to fall.
   conveyor.
 - Prefer faster conveyors on safe straight sections.
 - Slow ore before a turn when practical.
-- Ore may turn above speed 16 only when a correctly placed Conveyor Wall prevents
-  it from falling.
+- Ore may turn safely at speeds through 16.8. At speed 17 or higher, use a
+  correctly placed Conveyor Wall or slow the ore before the turn.
 - Use Quarter Conveyors for compact turns. For gap bridging and straight
   sections, use the fastest safe conveyor that fits the available space so ore
   reaches the furnace sooner.
@@ -162,6 +172,9 @@ All conveyors must be physically connected. Gaps cause ore to fall.
   separately and sum their estimated ore counts.
 - Clamp the active estimate to the 100-ore base cap and also report the uncapped
   projection.
+- When the base reaches 100 ores, droppers pause until an ore is removed. Which
+  paused dropper resumes next is unpredictable and must not be used as a routing
+  or value assumption.
 - Always use the dropper the player requests, regardless of its drop speed.
 - A Rebirth or Achievement dropper is limited to one copy, so use that single
   dropper at its actual speed.
@@ -181,9 +194,17 @@ For every traveled item or conveyor section:
 `time in seconds = length in tiles × 3 ÷ conveyor speed`
 
 Sum the traveled lengths along the ore's actual centerline. Do not count parallel
-width tiles as additional route length. Furnace processing occurs when the ore is
-accepted; only include furnace travel time if the database explicitly provides a
-speed or processing delay.
+width tiles as additional route length. By default, a furnace has a centered 2×2
+processing zone. Route the ore into that zone. Processing is immediate when the
+ore touches it, so do not add time beyond the travel time required to reach the
+zone unless the database explicitly documents an additional delay.
+
+Furnace processing-zone exceptions:
+
+- Krakatoa has a centered 2×1 processing zone rather than a 2×2 zone.
+- Proficient Furnace and Toxic Wasteland have a 2×2 processing zone in a corner.
+  When facing south, the zone is in the bottom-left corner of the furnace
+  footprint. Rotate that corner position with the furnace for every other facing.
 
 ## Expected cash per minute
 
@@ -197,10 +218,16 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   average travel time.
 - If projected active ores remain below 100, estimated furnace entries/min equal
   the total ores/second produced multiplied by 60.
-- If the route saturates the 100-ore cap, estimate the cap-limited rate as:
-  `100 ÷ weighted average travel time × 60`.
-- Reduce the entry rate for any expected ore losses, probabilistic scanner
-  failures, furnace rejection conditions, or other destruction risks.
+- If the route saturates the 100-ore cap and no ore is removed early, estimate
+  the cap-limited rate as: `100 ÷ weighted average travel time × 60`.
+- Count only ores actually processed by the furnace as furnace entries. An ore
+  destroyed or rejected earlier produces no cash.
+- Destroyed ores immediately free their ore-cap slots. For routes with meaningful
+  destruction risk, estimate cap usage from each outcome's time until destruction
+  or furnace processing rather than treating every spawned ore as traveling the
+  full route.
+- Include probabilistic scanner results, destructive machines, furnace rejection,
+  and every other survival risk in the processed-ore rate and expected cash.
 - The cash-per-ore input must include the furnace multiplier and every condition
   the build actually satisfies.
 - Report the furnace entries/min, expected cash/min, and whether the estimate is
@@ -218,22 +245,28 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 - Measure and report the remaining gap between the planned input and the final
   capgrader's upper threshold. A faster or smaller chain must not be chosen when
   it leaves a meaningfully larger cap gap.
+- An input within 5% below the final capgrader's upper threshold qualifies as
+  near-cap. Inside that 5% band, time and space may take priority only when the
+  saved space enables a stronger later multiplier or otherwise improves expected
+  cash/min. If space is not constrained, continue favoring the closer cap input.
 - Example: for a final capgrader with a 135K upper threshold, prefer an input
   close to 134K–134.999K over an input near 101K, even when the 101K chain is
   faster or shorter.
 - A high-cap item may appear later if its input is still within range.
-- Scanners—including Precision, Ancient, Azure, and any item with `scanner` in
-  its name—may only be the final capgrader because their upgrades are not
-  guaranteed.
+- Capgrader scanners such as Precision, Ancient, and Azure may only be the final
+  capgrader because their upgrades are not guaranteed. This final-capgrader rule
+  does not apply to normal post-capgrader items such as Star Scanner.
 - Do not select a tiny shortcut that merely reaches the final capgrader's minimum
   unless the player explicitly requests absolute minimum time.
 - Capgrader-chain optimization is lexicographic:
-  1. minimize the gap below the final capgrader's upper input threshold;
-  2. among similarly near-cap chains, minimize elapsed time;
-  3. then minimize total length and occupied space;
-  4. then maximize final value if a tie remains.
-- Time and space remain important, but they are secondary to reaching a
-  near-cap input. Only prioritize absolute minimum time over cap proximity when
+  1. reach the final capgrader's 5% near-cap band whenever practical;
+  2. inside that band, maximize expected cash/min for the completed base;
+  3. accept a larger cap gap only when saved time/space enables a stronger later
+     multiplier or another net cash/min improvement;
+  4. when the saved space produces no downstream benefit, prefer the closer cap
+     input;
+  5. use elapsed time and total occupied space as final tie-breakers.
+- Only prioritize absolute minimum time over reaching the 5% near-cap band when
   the player explicitly asks for that objective.
 
 ### Additive starts and Lunar Landing
@@ -258,12 +291,55 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   ore that same effect without destroying it when the database documents that
   protection.
 
+### Randomized and destructive normal upgraders
+
+- Evaluate randomized and destructive normal upgraders by expected cash/min,
+  not only by guaranteed survival or cash per surviving ore.
+- A machine that destroys some ores may still be optimal when its multiplier on
+  surviving ores raises total expected cash/min.
+- Lambdas have no maximum number of uses per ore. Three Lambdas are the normal
+  recommendation, not a use limit: the workbook identifies three as the
+  risk/reward sweet spot between stronger possible outcomes and the rapidly
+  increasing chance that the ore is destroyed or ruined.
+- For `n` Lambda upgrades, use the workbook's cumulative survival formula:
+  `1.5^(n - 1) ÷ n!`. The listed survival rates are 100% after one Lambda, 75%
+  after two, 37.5% after three, and approximately 14.06% after four.
+- After a Base Lambda upgrade survives, its outcome probabilities are:
+  1/19 for 3.2×, 1/19 for +1,000, 1/19 for an explosion, 1/19 for setting the
+  ore to 1, 1/19 for fling and 2.2×, 1/19 for 6× plus Sparkle, and 13/19 for
+  2.2×. Use the corresponding variant-specific values from `Stats for Nerds`
+  when the player owns a stronger Lambda variant.
+- Three Lambdas have a listed 37.5% total survival chance. The workbook's custom
+  three-Lambda comparison lists approximately 40.28% bad outcomes and 59.72%
+  good outcomes among the modeled outcomes; use the full probability tree when
+  estimating processed ore rate and expected cash/min.
+- Because Lambda can apply Sparkle, prefer placing it after Acid Plant when the
+  route can subsequently clear effects with Ore Washer.
+- If Lambdas do not fit, use the MPU list to compare their expected benefit
+  against competing items rather than removing them automatically.
+- Star Scanner is optional when space is available. If owned, one is a common
+  choice for its possible 3× upgrade; multiple Star Scanners may be spread across
+  the route to give more ores a chance to be hit.
+- Star Scanner has a successful-use limit of one per ore across all of its
+  variants and copies. Once an ore receives one successful Star Scanner beam hit,
+  later Star Scanner beams cannot upgrade it again. A missed earlier beam does
+  not consume the use, so a later scanner may still successfully hit that ore.
+- When space is constrained, remove optional scanners before stronger
+  expected-value items unless the scanner has better MPU or expected cash/min.
+
 ## Normal upgraders and furnaces
 
 - After capgraders, use legal normal upgraders while space and use limits allow.
 - Apply every multiplier in route order.
 - Validate limited uses across Base, Shiny, Mythic, and Shiny Mythic variants.
+- All variant forms of the same item share one Limited Uses pool per ore. Using
+  the Base, Shiny, Mythic, or Shiny Mythic form counts against that same item's
+  per-ore limit.
+- Additional copies may improve coverage for random or position-dependent
+  upgraders, but they cannot exceed the shared per-ore successful-use limit.
 - Place the furnace last.
+- Connect the route to the furnace's processing zone. Assume a centered 2×2 zone
+  unless the furnace is one of the documented processing-zone exceptions.
 - Check furnace-specific conditions and use the best multiplier the route
   actually satisfies.
 
@@ -284,11 +360,14 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 
 ## Optimization priority
 
-1. Maximize final ore value.
-2. If everything does not fit, prioritize space efficiency and compare MPU/MPA.
-3. Prioritize travel time when the ore cap is saturated or the player uses
+1. Maximize expected cash per minute, including ore survival, destruction,
+   random outcomes, furnace acceptance, and ore-cap behavior.
+2. Preserve the final-capgrader priority and its 5% near-cap rule.
+3. If everything does not fit, prioritize space efficiency and compare MPU/MPA
+   by their contribution to expected cash/min.
+4. Prioritize travel time when the ore cap is saturated or the player uses
    Throne.
-4. Prefer faster safe straight conveyors, but preserve valid turns, centering,
+5. Prefer faster safe straight conveyors, but preserve valid turns, centering,
    ranges, effects, and item-use limits.
 
 ## Required output

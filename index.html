@@ -47,6 +47,32 @@
       </section>
     </main>
 
+    <div id="item-tooltip" class="item-tooltip" role="tooltip" hidden></div>
+
+    <dialog id="item-editor" class="item-editor" aria-labelledby="item-editor-title">
+      <form method="dialog" class="item-editor-card">
+        <div class="item-editor-heading">
+          <div>
+            <p class="panel-label">Selected item</p>
+            <h2 id="item-editor-title">Edit item</h2>
+          </div>
+          <button class="icon-button" type="button" data-action="close-editor" aria-label="Close item editor">×</button>
+        </div>
+        <div id="item-editor-details" class="item-editor-details"></div>
+        <label class="coordinate-control" for="move-coordinate">
+          <span>New top-left coordinate</span>
+          <input id="move-coordinate" name="coordinate" type="text" inputmode="text" placeholder="A1 or 1,1" autocomplete="off" />
+        </label>
+        <p id="item-editor-error" class="item-editor-error" role="alert" hidden></p>
+        <div class="item-editor-actions">
+          <button type="button" data-action="move-item">Move</button>
+          <button type="button" data-action="rotate-left">↶ Rotate left</button>
+          <button type="button" data-action="rotate-right">Rotate right ↷</button>
+          <button class="danger-button" type="button" data-action="remove-item">Remove</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="app.js"></script>
   </body>
 </html>

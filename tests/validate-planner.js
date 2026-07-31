@@ -5,18 +5,28 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const appPath = path.join(root, 'app.js');
+const indexPath = path.join(root, 'index.html');
 const databasePath = path.join(root, 'data', 'Tycoon Sim Database.xlsx');
 const source = fs.readFileSync(appPath, 'utf8');
+const indexSource = fs.readFileSync(indexPath, 'utf8');
 const executableEnd = source.indexOf("sizeSlider.addEventListener");
 
 assert.ok(executableEnd > 0, 'Could not locate the planner startup section.');
 assert.match(source, /let workflowStage = 0;/, 'Workflow must start at step 1.');
-assert.match(source, /const activePlan = null;/, 'Board must start empty.');
+assert.match(source, /let activePlan = null;/, 'Board must start empty.');
 assert.ok(fs.existsSync(databasePath), 'The database workbook is missing.');
 assert.ok(
   fs.statSync(databasePath).size > 1_000_000,
   'The database workbook appears incomplete.',
 );
+assert.match(indexSource, /id="item-tooltip"/, 'Item tooltip is missing.');
+assert.match(indexSource, /id="item-editor"/, 'Item editor dialog is missing.');
+assert.match(indexSource, /data-action="move-item"/, 'Move control is missing.');
+assert.match(indexSource, /data-action="rotate-left"/, 'Left rotation control is missing.');
+assert.match(indexSource, /data-action="rotate-right"/, 'Right rotation control is missing.');
+assert.match(indexSource, /data-action="remove-item"/, 'Remove control is missing.');
+assert.match(source, /pointerenter/, 'Hover details are not wired to plan items.');
+assert.match(source, /openItemEditor/, 'Plan-item click editing is not wired.');
 
 const sandbox = {
   document: {
@@ -32,6 +42,9 @@ vm.runInContext(
     validation,
     activePlan,
     placeItem,
+    parseCoordinate,
+    rotateDirection,
+    updateItemGeometry,
     calculateExpectedEconomy,
     validateCoordinateMap,
     validateRouteSegments,
@@ -45,6 +58,9 @@ const {
   validation,
   activePlan,
   placeItem,
+  parseCoordinate,
+  rotateDirection,
+  updateItemGeometry,
   calculateExpectedEconomy,
   validateCoordinateMap,
   validateRouteSegments,
@@ -55,12 +71,45 @@ assert.equal(routeSegments.length, 0, 'Cleared route data remains in app.js.');
 assert.equal(validation, null, 'Cleared validation data remains in app.js.');
 assert.equal(activePlan, null, 'The committed board is not empty.');
 
+assert.deepEqual(
+  { ...parseCoordinate('AA35') },
+  { x: 27, y: 35 },
+  'A1 coordinate parsing failed.',
+);
+assert.deepEqual(
+  { ...parseCoordinate('3, 5') },
+  { x: 3, y: 5 },
+  'Numeric coordinate parsing failed.',
+);
+assert.equal(rotateDirection('north', 'left'), 'west');
+assert.equal(rotateDirection('north', 'right'), 'east');
+
 const rotationFixtures = [
   placeItem(1, 'Even North', 1, 1, 6, 3, 'north'),
   placeItem(2, 'Even East', 8, 1, 6, 3, 'east'),
   placeItem(3, 'Odd South', 1, 8, 3, 2, 'south'),
   placeItem(4, 'Odd West', 8, 8, 3, 2, 'west'),
 ];
+
+const detailedItem = placeItem(
+  5,
+  'Detailed Upgrader',
+  4,
+  5,
+  6,
+  3,
+  'north',
+  'upgrader',
+  { description: 'Fixture description', stats: { Multiplier: '3x' } },
+);
+assert.equal(detailedItem.description, 'Fixture description');
+assert.equal(detailedItem.stats.Multiplier, '3x');
+const rotatedDetailedItem = updateItemGeometry(detailedItem, {
+  direction: rotateDirection(detailedItem.direction, 'right'),
+});
+assert.equal(rotatedDetailedItem.direction, 'east');
+assert.equal(rotatedDetailedItem.width, 3);
+assert.equal(rotatedDetailedItem.height, 6);
 
 assert.deepEqual(
   {
@@ -172,7 +221,21 @@ const measuredEconomy = calculateExpectedEconomy({
 assert.equal(measuredEconomy.estimatedEntriesPerMinute, 90);
 assert.equal(measuredEconomy.expectedCashPerMinute, 22_500);
 
+const destructiveEconomy = calculateExpectedEconomy({
+  cashPerOre: 1_000,
+  oreCap: 100,
+  droppers: [{
+    routeTimeSeconds: 20,
+    averageRemovalTimeSeconds: 12,
+    oresPerSecond: 4,
+    processedFraction: 0.6,
+  }],
+});
+assert.equal(destructiveEconomy.projectedActiveOres, 48);
+assert.equal(destructiveEconomy.estimatedEntriesPerMinute, 144);
+assert.equal(destructiveEconomy.expectedCashPerMinute, 144_000);
+
 console.log(
-  'Planner validation passed: blank board, rotation, internal path width, '
-  + 'boundaries, overlaps, database, throughput, and cash/min.',
+  'Planner validation passed: blank board, editor controls, rotation, internal '
+  + 'path width, boundaries, overlaps, database, throughput, and cash/min.',
 );

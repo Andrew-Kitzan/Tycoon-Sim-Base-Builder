@@ -95,14 +95,26 @@ placeItem(
   databaseLength,
   'north',
   'capgrader',
+  {
+    description: 'What the item does',
+    stats: { Multiplier: '3x', Speed: 12 },
+  },
 );
 ```
 
 Valid directions are `north`, `east`, `south`, and `west`. Never manually swap
 the database width and length; `placeItem` performs the rotation. The final
-optional value declares the render category: `dropper`, `capgrader`, `upgrader`,
-`portable`, or `furnace`. Droppers and furnaces can also be inferred from their
-names.
+first optional value declares the render category: `dropper`, `capgrader`,
+`upgrader`, `portable`, or `furnace`. Droppers and furnaces can also be inferred
+from their names. The final optional details object can provide `description`,
+`stats`, `label`, and a stable `id` for the grid's item information and editor.
+
+Rendered items are interactive. Hovering or keyboard-focusing an item shows its
+name, description, stats, database size, rendered footprint, top-left coordinate,
+and facing direction. Clicking opens controls to move it by a new top-left
+coordinate, rotate it 90 degrees left or right, or remove it from the plan. Moves
+and rotations are rejected if they leave the active base or overlap another item
+or external conveyor. An accepted edit marks the route for revalidation.
 
 Internal path width is automatic:
 
@@ -133,11 +145,11 @@ is 4×2 before rotation.
 
 ## Render a plan
 
-The blank committed state is:
+The normal blank state is:
 
 ```js
 let workflowStage = 0;
-const activePlan = null;
+let activePlan = null;
 ```
 
 To render a verified plan during a branch test, point `activePlan` at the plan
@@ -163,11 +175,13 @@ active ores = min(projected ores, 100)
 When cash-in value is known:
 
 ```text
-expected cash/min = expected cash per ore × furnace entries/min
+expected cash/min = expected cash per processed ore × processed furnace entries/min
 ```
 
 If the ore cap is saturated and no measured furnace rate is available, the
-planner estimates entries/min as `100 ÷ weighted route time × 60`.
+planner reduces spawning according to average time until each ore is either
+destroyed or processed. Destroyed and rejected ores produce no cash, but their
+removal frees ore-cap space earlier.
 
 See `docs/BUILD_RULES.md` for the complete capgrader, effect, inventory, portable,
 conveyor-wall, progression, and optimization rules.
