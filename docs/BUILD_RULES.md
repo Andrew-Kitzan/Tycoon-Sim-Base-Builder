@@ -56,7 +56,15 @@ immediately unless required player information is missing.
 
 ## Player profile and item availability
 
-- If F2P/P2W is unspecified, assume F2P.
+- Before calculating an item list, collect the player's plot size, Rebirth/Life,
+  requested dropper and dropper variant, crate progression, available item
+  variants, F2P/P2W status, Merchant access, Secret ownership, Achievement-item
+  ownership, and any exact inventory limits.
+- If the player omits one of those answers—or skips part of a clarification
+  request—ask for the missing information before planning. Do not infer one
+  answer from another profile field.
+- If F2P/P2W is unspecified, ask whether the player is F2P or P2W. Do not silently
+  assume either status.
 - F2P builds may not use any Premium Shop/P2W item.
 - If the player is P2W, ask which packs and individual items they own.
 - Secret-tier items are never assumed owned. If Secret ownership is not stated,
@@ -66,6 +74,21 @@ immediately unless required player information is missing.
 - Exact inventory quantities are hard limits.
 - If no exact quantity is provided, assume an unlimited inventory of every legal
   item, subject to limited-use rules and the dropper ownership exceptions below.
+- Prefer the highest owned and progression-legal variant of every selected item.
+  This is a preference, not an absolute requirement: a lower variant may be used
+  when the higher form would invalidate a capgrader range or when the lower form
+  produces a meaningfully better near-cap chain. First try retuning item counts
+  and order with the highest forms. If a lower form is still better, clearly mark
+  that variant and explain the capgrader reason in the item's rendered details.
+- When Shiny, Mythic, or Shiny Mythic forms improve value without increasing the
+  footprint or slowing the conveyor, test whether their stronger multiplier can
+  remove a weaker item or connector from the route. Prefer the higher-form chain
+  when it simultaneously raises the valid final value and reduces total space or
+  elapsed time; then remap the saved space rather than only changing item labels.
+- A tier or variant attached to the requested dropper applies only to that
+  dropper. For example, “Base Iron Dropper” requires Base Iron Droppers but does
+  not restrict upgraders, furnaces, or other items to Base variants. Apply a
+  build-wide tier restriction only when the player explicitly states one.
 - Rebirth and Achievement droppers are limited to one copy each.
 - Before using a Secret dropper, ask exactly how many copies the player owns.
 - Base and Shiny versions share the same limited-use pool. Using either variant
@@ -107,8 +130,9 @@ Workbook sizes use `WIDTH × LENGTH`.
   - Grid Y size = item width.
 - Rotating an item 90 degrees rotates its entire footprint, input, output, and
   internal conveyor while preserving its original width and length.
-- The internal conveyor travels through the full item length and is centered
-  across the item width.
+- An upgrader's internal conveyor travels through the full item length and is
+  centered across the item width. Furnaces are excluded: they use only their
+  documented processing zone and never receive a full through-conveyor.
 - Even-width items use a centered two-tile-wide internal conveyor.
 - Odd-width items use a centered one-tile-wide internal conveyor.
 - The remainder of the full database footprint is wall or decoration and cannot
@@ -142,6 +166,11 @@ All conveyors must be physically connected. Gaps cause ore to fall.
 - Ultracharged Conveyor: 4×2, speed 24.
 - Centering Conveyor: 2×2, speed 12. Its walls block ore from crossing the
   closed sides.
+- Before connecting a turn or perpendicular lane to a Centering Conveyor, map
+  its open and closed sides. The final incoming conveyor tile must touch an open
+  side; never route ore into one of its wall tiles. Use a one-tile Quarter
+  Conveyor approach and a Half Conveyor transition when a full 2×2 turn would
+  feed a closed side.
 - Conveyor Wall: 1×2 and occupies its own placement space; it does not overlap a
   conveyor.
 - Prefer faster conveyors on safe straight sections.
@@ -151,14 +180,39 @@ All conveyors must be physically connected. Gaps cause ore to fall.
 - Use Quarter Conveyors for compact turns. For gap bridging and straight
   sections, use the fastest safe conveyor that fits the available space so ore
   reaches the furnace sooner.
+- After a Quarter Conveyor has redirected the ore, do not place a second
+  parallel Quarter Conveyor directly beneath or beside that completed corner.
+  Keep only the actual corner and any forward conveyor tiles required to reach
+  the next item. Parallel tiles before the turn may still be necessary to catch
+  the ore's incoming lane.
 - A 2×2 block made only from Quarter Conveyors should normally be replaced by the
   appropriate 2×2 conveyor unless the individual Quarter directions are required.
+- Two side-by-side Quarter Conveyors that face the same direction and occupy the
+  same 2×1 footprint as a Half Conveyor must be replaced by one Half Conveyor.
+  Keep separate Quarters only when their directions differ or their placement
+  cannot be represented by the rotated Half Conveyor footprint.
+- Apply this compression largest-first: four aligned Quarters become one full
+  2×2 conveyor, not two Half Conveyors. Likewise, two aligned Half Conveyors
+  that form a straight 2×2 footprint become one Normal Conveyor or faster legal
+  full-size conveyor.
+- A straight 2×2 block whose four Quarter Conveyors all face the same direction
+  must be replaced by a Normal Conveyor or a faster legal 2×2 conveyor. The
+  only exception is a true turn/merge whose individual tiles require different
+  directions.
+- At the turn itself, every tile in the turning column must face the new travel
+  direction. For example, when the eastbound lane turns south at `AH17:AH18`,
+  both `AH17` and `AH18` face south rather than east.
 - Centering Conveyors, Orbital Messenger, Clockwork Upgrader, and teleporters
   center ore.
 - A centering item can appear earlier on the same uninterrupted line; it does not
   need to be immediately before a centered upgrader.
 - Side-fed droppers place ore toward that side. Droppers aligned with the route
   spawn ore in the center.
+- Before finalizing a collector, verify the exact landing half for every
+  dropper. When all ores must land on one side, use individual Quarter
+  Conveyors for that side instead of a full 2×2 conveyor that exposes the wrong
+  half, and move/rotate side-fed droppers until every drop point reaches the
+  intended conveyor tiles.
 - T-junction merges are allowed.
 
 ## Dropper selection and the ore cap
@@ -228,16 +282,39 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   full route.
 - Include probabilistic scanner results, destructive machines, furnace rejection,
   and every other survival risk in the processed-ore rate and expected cash.
+- For a randomized upgrader such as Lambda, calculate the displayed expected ore
+  value conditional on the ore surviving. Do not include Explosion, Fling, or any
+  other destroyed outcome as a zero-value ore in that conditional value. A
+  non-destructive bad outcome such as Lambda's `set value to 1` still survives and
+  remains in the value distribution and processed-ore throughput.
+- Model replacement spawning when an ore is destroyed: the ore frees its cap slot
+  at the destruction time, allowing a paused dropper to resume. For cap-limited
+  builds, use the probability-weighted time to destruction or furnace processing
+  as the slot occupancy time. Only surviving ores that enter the furnace count as
+  furnace entries or cash.
 - The cash-per-ore input must include the furnace multiplier and every condition
   the build actually satisfies.
 - Report the furnace entries/min, expected cash/min, and whether the estimate is
   production-limited or ore-cap-limited.
+- Display expected cash/min with a magnitude suffix and exactly two decimals,
+  truncating rather than rounding (for example, `$297.486T/min` displays as
+  `$297.48T/min`).
 
 ## Capgrader rules
 
 - Use only items listed on `Capgrader` as capgraders.
 - Normal upgraders cannot be used as capgrader starts.
 - Apply capgraders immediately after the dropper section.
+- Treat the capgrader section as one uninterrupted route block. Once the first
+  capgrader is used, finish every selected ranged capgrader before placing any
+  normal no-range multiplicative upgrader.
+- `Incremental Upgrader`, `Electric Overdrive`, and every other normal
+  multiplier with no input range must come after the final selected capgrader;
+  they may never be used to bridge Helio, Fusion, Martian, or other capgrader
+  ranges.
+- The only pre-capgrader exceptions are the documented dropper-start choices:
+  one legal Lunar Landing per dropper or a stronger legal additive start. Those
+  exceptions do not permit normal multipliers inside the ranged chain.
 - Pick a final capgrader and keep every input inside its allowed range.
 - The first optimization priority is the ore value immediately **before** the
   final capgrader. Bring that input as close as practical to the final
@@ -284,12 +361,17 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 
 ### Destructive effects
 
-- Avoid capgraders that add a destructive effect unless Ore Washer can remove it
-  before the ore is destroyed.
+- Avoid capgraders that add a destructive effect unless a legal remover can
+  remove it before the ore is destroyed. Ore Washer handles washable effects;
+  Oasis also removes Fire specifically.
 - Overcharged cannot be washed away.
 - A dropper that naturally produces a destructive effect is allowed to give its
   ore that same effect without destroying it when the database documents that
   protection.
+- When keeping a timed destructive effect, calculate travel from the point the
+  effect is applied to the furnace processing zone. Flame Thrower Fire must be
+  processed in under 2 seconds and Toxic in under 5 seconds; otherwise move the
+  effect source later or remove the effect with a legal washer.
 
 ### Randomized and destructive normal upgraders
 
@@ -309,6 +391,9 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   ore to 1, 1/19 for fling and 2.2×, 1/19 for 6× plus Sparkle, and 13/19 for
   2.2×. Use the corresponding variant-specific values from `Stats for Nerds`
   when the player owns a stronger Lambda variant.
+- Explosion and Fling are destroyed-ore outcomes and must be excluded from
+  furnace throughput. `Set to 1` is a bad outcome but does not destroy the ore;
+  keep that ore in the processed rate and continue calculating from value 1.
 - Three Lambdas have a listed 37.5% total survival chance. The workbook's custom
   three-Lambda comparison lists approximately 40.28% bad outcomes and 59.72%
   good outcomes among the modeled outcomes; use the full probability tree when
@@ -338,21 +423,35 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 - Additional copies may improve coverage for random or position-dependent
   upgraders, but they cannot exceed the shared per-ore successful-use limit.
 - Place the furnace last.
-- Connect the route to the furnace's processing zone. Assume a centered 2×2 zone
-  unless the furnace is one of the documented processing-zone exceptions.
+- Furnaces must face back toward the incoming conveyor line; do not point them
+  in the same direction that ore was traveling before entry.
+- Connect the route to the furnace's processing zone. The default processing
+  zone is a front-centered 2×2 area and does not continue through the furnace
+  like an upgrader conveyor.
+- Krakatoa is the centered-front exception with a 2×1 processing zone.
+- Proficient Furnace and Toxic Wasteland use a corner zone; when facing south,
+  their 2×2 processing zone is in the bottom-left corner. Rotate the complete
+  furnace and zone together: west = top-left, north = top-right, and east =
+  bottom-right.
 - Check furnace-specific conditions and use the best multiplier the route
   actually satisfies.
 
 ## Portable upgraders
 
+- Portables are normal post-capgrader upgrades. Never route ore through a
+  portable beam until it has exited the final capgrader.
 - Portables do not contain conveyors. Place them beside an external conveyor.
+- A standard 2×1 portable occupies 2×1 when facing east/west and 1×2 when
+  facing north/south.
 - All normal portable upgrade beams are two tiles long. This includes standard
   Portables, Derp Blaster, Dragon, and Ore Glazer.
 - Portable Spinner is the only documented exception: its upgrade zone extends
   one tile around it instead of using a two-tile-long beam.
 - Portable upgrade beams may pass through walls/decorations and may overlap other
   portable beams.
-- Portable physical footprints still obey any documented placement restrictions.
+- Portable physical footprints cannot overlap another item or an external
+  conveyor. Only their upgrade beams may pass through item walls/decorations or
+  overlap other upgrade beams.
 - A single portable may upgrade the same ore again only after the ore completely
   leaves its upgrade zone and later re-enters it.
 - Normal built-in conveyor upgraders cannot reverse direction internally, so
@@ -386,3 +485,42 @@ For a completed build, provide:
   required values are known;
 - remaining plot space; and
 - a rendered grid that matches the coordinate map.
+
+The rendered grid's hover/editor details must also expose, when applicable:
+
+- ore value before and after each capgrader, size changer, and portable;
+- ore size before and after every Expander or Shrinker;
+- per-dropper arrival time and time across the highlighted upgrader;
+- each Lambda's use number, cumulative intrinsic survival, survival after
+  Explosion/Fling, destruction at that Lambda, cumulative ore destruction,
+  expected incoming value, and its variant-scaled 2.2×, 3.2×, and 6× outcomes;
+- every applied effect's behavior and whether it is cosmetic or destructive;
+- for destructive effects, the route distance/time to the next remover or
+  furnace processing zone, the destruction timer, and remaining safety margin;
+  and
+- furnace facing, processing-zone size, placement, and exact grid coordinates.
+
+## Validation and database consistency gate
+
+- Droppers have no built-in conveyor. Render only their physical footprint and
+  exact drop point; never draw an internal belt through a dropper.
+- All workbook sheets that repeat an item's stat are expected to agree. Run the
+  database synchronization check before planning. If two sheets disagree on a
+  size, multiplier, range, use limit, conveyor speed, drop speed, or ore size,
+  report the exact sheets/rows and do not silently choose one.
+- A layout is not validated merely because footprints fit. Simulate a continuous
+  ore route from every dropper's exact landing cell, through every external and
+  internal transport segment in order, to the furnace's exact processing zone.
+- Reject a route containing a gap, incorrect lane, wrong-facing segment,
+  unreachable portable beam, disconnected turn, or missed furnace zone.
+- Apply conveyor replacement largest-first: a same-direction 2×2 block of four
+  Quarter Conveyors becomes a full-size fast conveyor when legal; two compatible
+  Quarter Conveyors become one Half Conveyor; two compatible Half Conveyors that
+  form a 2×2 block become one full-size fast conveyor.
+
+When destruction occurs before separate dropper paths merge, preserve an
+independent cumulative destruction total for every source dropper. If multiple
+droppers have the same total, combine their display labels (for example,
+`A & B total ore destruction`). After merging, retain those distinct totals until
+they become equal; do not silently replace them with an unweighted route-wide
+percentage.

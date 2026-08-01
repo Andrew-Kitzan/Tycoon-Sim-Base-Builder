@@ -4,7 +4,17 @@
   "private": true,
   "description": "Grid-based Tycoon Sim 2 base planner and validation rules.",
   "scripts": {
-    "test": "node tests/validate-planner.js",
-    "check": "node --check app.js && node tests/validate-planner.js"
+    "test": "node tests/validate-planner.js && node tests/engine.test.mjs",
+    "check": "node --check planner-core.js && node --check app.js && node --check scripts/sync-database.mjs && node --check scripts/report-database-conflicts.mjs && node --check scripts/planner-cli.mjs && node tests/validate-planner.js && node tests/engine.test.mjs",
+    "database:sync": "node scripts/sync-database.mjs && node scripts/report-database-conflicts.mjs",
+    "database:index": "node scripts/build-database-index.mjs",
+    "database:report": "node scripts/report-database-conflicts.mjs",
+    "item": "node scripts/planner-cli.mjs item",
+    "legal-pool": "node scripts/planner-cli.mjs legal-pool",
+    "solve-cap": "node scripts/planner-cli.mjs solve-cap",
+    "build": "node scripts/planner-cli.mjs build",
+    "validate-plan": "node scripts/planner-cli.mjs validate-plan",
+    "plan:summary": "node scripts/planner-cli.mjs summary --compact",
+    "plan:clear": "node scripts/planner-cli.mjs clear --compact"
   }
 }

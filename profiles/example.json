@@ -1,0 +1,16 @@
+{
+  "plotSize": 20,
+  "life": 4,
+  "dropper": { "name": "Iron Dropper", "variant": "Base", "quantity": 2 },
+  "highestCrate": "Fantasy",
+  "variants": "any",
+  "payment": "f2p",
+  "merchantItems": [],
+  "secretItems": [],
+  "achievementItems": [],
+  "premiumItems": [],
+  "inventory": {},
+  "requiredItems": [],
+  "forbiddenItems": [],
+  "objective": "cash-per-minute"
+}

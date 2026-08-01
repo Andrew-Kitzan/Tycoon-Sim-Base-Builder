@@ -15,7 +15,7 @@
         </div>
         <div class="grid-readout" aria-live="polite">
           <span>Available tiles</span>
-          <strong id="tile-count">400</strong>
+          <strong id="tile-count">1225</strong>
         </div>
       </header>
 
@@ -28,18 +28,27 @@
             <div id="validation-summary" class="validation-summary" hidden></div>
           </section>
           <div class="board-toolbar">
-            <label class="size-control" for="base-size">
-              <span>Base size</span>
-              <input id="base-size" type="range" min="14" max="35" value="20" />
-              <strong id="size-label">20 × 20</strong>
-            </label>
-            <span id="status">Planning canvas · 400 tiles available</span>
+            <div class="board-controls">
+              <label class="size-control" for="base-size">
+                <span>Base size</span>
+                <input id="base-size" type="range" min="14" max="35" value="35" />
+                <strong id="size-label">35 × 35</strong>
+              </label>
+              <div class="zoom-control" role="group" aria-label="Grid zoom controls">
+                <span>Grid zoom</span>
+                <button id="zoom-out" type="button" aria-label="Zoom grid out">−</button>
+                <input id="grid-zoom" type="range" min="100" max="225" step="25" value="150" aria-label="Grid zoom percentage" />
+                <button id="zoom-in" type="button" aria-label="Zoom grid in">+</button>
+                <strong id="zoom-label">150%</strong>
+              </div>
+            </div>
+            <span id="status">Planning canvas · 1225 tiles available</span>
           </div>
           <div class="board-viewport">
             <div class="grid-frame">
               <div id="column-labels" class="column-labels" aria-hidden="true"></div>
               <div id="row-labels" class="row-labels" aria-hidden="true"></div>
-              <div id="game-grid" class="game-grid" role="grid" aria-label="20 by 20 build grid"></div>
+              <div id="game-grid" class="game-grid" role="grid" aria-label="35 by 35 build grid"></div>
             </div>
           </div>
           <div id="plan-legend" class="plan-legend" aria-label="Current plan legend"></div>
@@ -73,6 +82,9 @@
       </form>
     </dialog>
 
+    <script src="data/items.generated.js"></script>
+    <script src="planner-core.js"></script>
+    <script src="data/active-plan.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

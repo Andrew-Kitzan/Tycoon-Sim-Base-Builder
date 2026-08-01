@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tycoon Sim player profile",
+  "type": "object",
+  "required": ["plotSize", "dropper", "highestCrate", "variants", "payment"],
+  "anyOf": [
+    { "required": ["life"] },
+    { "required": ["rebirth"] }
+  ],
+  "properties": {
+    "plotSize": { "type": "integer", "minimum": 14, "maximum": 35 },
+    "life": { "type": "integer", "minimum": 1 },
+    "rebirth": { "type": "integer", "minimum": 0 },
+    "dropper": {
+      "type": "object",
+      "required": ["name", "variant"],
+      "properties": {
+        "name": { "type": "string" },
+        "variant": { "type": "string" },
+        "quantity": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "highestCrate": { "type": "string" },
+    "variants": { "enum": ["base-only", "any", "exact-inventory"] },
+    "payment": { "enum": ["f2p", "p2w"] },
+    "merchantItems": { "type": "array", "items": { "type": "string" } },
+    "secretItems": { "type": "array", "items": { "type": "string" } },
+    "achievementItems": { "type": "array", "items": { "type": "string" } },
+    "premiumItems": { "type": "array", "items": { "type": "string" } },
+    "inventory": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "requiredItems": { "type": "array", "items": { "type": "string" } },
+    "forbiddenItems": { "type": "array", "items": { "type": "string" } },
+    "objective": { "enum": ["cash-per-minute", "cash-per-second", "low-ore-limit", "space", "time"] }
+  }
+}

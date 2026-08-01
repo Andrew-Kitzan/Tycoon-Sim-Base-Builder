@@ -1,16 +1,30 @@
 # Tycoon Sim 2 Base Planner
 
 A browser-based grid planner for constructing and validating Tycoon Sim 2 bases.
-The committed application opens to a blank 20×20 canvas and can scale from 14×14
-through 35×35.
+The application can scale from 14×14 through 35×35 and opens on a clean canvas.
+Completed setups are compact plan recipes loaded only after the reusable
+geometry and continuous-route validators accept them.
 
 ## Repository contents
 
 - `index.html` — planner interface.
 - `styles.css` — grid, item, conveyor, workflow, and coordinate styling.
-- `app.js` — planner data, mapping, rotation, validation, and rendering logic.
+- `app.js` — planner interaction and rendering logic.
+- `planner-core.js` — reusable rotation, conveyor compression, database checks,
+  and continuous-route simulation.
+- `engine/` — legal-item filtering, cap/post-cap search, A* placement,
+  destructive-effect timing, seeded simulation, and independent validation.
+- `rules/engine-rules.json` — machine-readable rules and diagnostic codes.
+- `schemas/` — player-profile and generated-plan contracts.
+- `profiles/` — compact player inputs that replace repeated large edits to
+  `app.js`.
+- `data/items.generated.js` — normalized workbook records used by recipes.
+- `data/database-conflicts.json` — exact cross-sheet disagreements.
+- `scripts/sync-database.mjs` — workbook normalization command.
 - `data/Tycoon Sim Database.xlsx` — source-of-truth game database.
 - `docs/BUILD_RULES.md` — complete shared base-building rules.
+- `docs/PLANNER_WORKFLOW.md` — low-token setup recipe workflow.
+- `docs/DATABASE_CONFLICTS.md` — readable workbook consistency report.
 - `tests/validate-planner.js` — automated geometry and calculation checks.
 
 ## Quick start
@@ -21,8 +35,9 @@ No build step or web server is required:
 2. Open `index.html` in a browser.
 3. Move the Base size slider to test plots from 14×14 through 35×35.
 
-The committed board is intentionally blank. Cleared or superseded setup data is
-removed rather than retained in `app.js`.
+The board starts empty. When a setup is cleared or replaced, its superseded item,
+route, active-plan, and validation data must be removed from `app.js` rather than
+retained.
 
 ## Run automated checks
 
@@ -38,17 +53,39 @@ The test has no third-party dependencies. It verifies:
 - odd/even internal conveyor widths;
 - plot boundaries;
 - item/item and conveyor/item overlaps;
-- reserved and remaining tile totals;
-- dropper travel-time and ore-cap calculations;
-- furnace throughput and expected cash-per-minute calculations;
+- blank-board state and reusable interaction controls;
+- reusable route, dropper, ore-cap, and economy calculations;
+- furnace processing-zone geometry;
 - the included database file; and
-- that the committed canvas starts empty.
+- that no retired setup remains loaded as the active plan.
 
 For a syntax-only check:
 
 ```powershell
 npm.cmd run check
 ```
+
+## Low-token engine commands
+
+The planner accepts a compact JSON profile and performs the repetitive work in
+code. The normal loop is:
+
+```powershell
+npm.cmd run legal-pool -- profiles/example.json --compact
+npm.cmd run solve-cap -- profiles/example.json --compact
+npm.cmd run build -- profiles/example.json --compact
+npm.cmd run validate-plan -- plans/active-plan.json --compact
+npm.cmd run plan:summary
+```
+
+`build` writes `plans/active-plan.json` plus the browser loader at
+`data/active-plan.js`. The renderer reads that recipe automatically; it no
+longer requires a hand-written setup inside `app.js`.
+
+Use `npm.cmd run item -- "Item Name" --compact` for a focused database lookup.
+The engine reads `data/items.index.json`, which merges repeated workbook rows
+while preserving source sheets and ownership restrictions. Database sync hashes
+the workbook and skips the expensive import when nothing changed.
 
 ## Branch testing workflow
 

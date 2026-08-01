@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tycoon Sim plan recipe",
+  "type": "object",
+  "required": ["version", "profile", "items", "conveyors", "route"],
+  "properties": {
+    "version": { "const": 1 },
+    "profile": { "type": "object" },
+    "items": { "type": "array" },
+    "conveyors": { "type": "array" },
+    "route": { "type": "array" },
+    "metrics": { "type": "object" },
+    "validation": { "type": "object" }
+  }
+}

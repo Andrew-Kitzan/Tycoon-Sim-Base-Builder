@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "crateProgression": [
+    "Basic", "Advanced", "Factory", "Quarry", "Futuristic", "Toxic",
+    "Desert", "Fantasy", "Space", "Candy", "Periastron", "Ancient",
+    "Alien", "Tropical", "Ocean", "Trinket", "Toy"
+  ],
+  "variantRank": ["Base", "Shiny", "Mythic", "Shiny Mythic"],
+  "oreCap": 100,
+  "safeTurnSpeed": 16.8,
+  "teleporterMinimumRebirth": 5,
+  "teleportersEnabled": false,
+  "finalCapTolerance": 0.05,
+  "defaultPortableBeamLength": 2,
+  "portableSpinnerBeamRadius": 1,
+  "defaultFurnaceZone": { "across": 2, "depth": 2, "placement": "front-center" },
+  "furnaceOverrides": {
+    "Krakatoa": { "across": 2, "depth": 1, "placement": "front-center" },
+    "Proficient Furnace": { "across": 2, "depth": 2, "placement": "front-corner" },
+    "Toxic Wasteland": { "across": 2, "depth": 2, "placement": "front-corner" }
+  },
+  "scannerFinalCapgraderOnly": true,
+  "recommendedLambdaCount": 3,
+  "builtInComplexModels": ["Lambda Upgrader", "Runic Array"],
+  "destructiveEffectTimers": { "Fire": 2, "Toxic": 5, "Nuclear": 5, "Overcharged": 5 },
+  "validationCodes": {
+    "PROFILE_MISSING": "Required player-profile field is missing.",
+    "ITEM_ILLEGAL": "Item is not legal for this player profile.",
+    "DATABASE_CONFLICT": "Repeated workbook stats disagree.",
+    "COMPLEX_ITEM_UNMODELED": "Stats for Nerds behavior requires an explicit model.",
+    "ROUTE_GAP": "The ore route contains a physical gap.",
+    "WRONG_LANE": "Ore is not in the lane required by the next item.",
+    "COLLISION": "Two physical footprints overlap.",
+    "OUT_OF_BOUNDS": "A footprint extends outside the plot.",
+    "FURNACE_MISSED": "The route does not enter the furnace processing zone.",
+    "PORTABLE_UNREACHABLE": "A portable footprint cannot legally reach the ore route.",
+    "CAP_RANGE": "A capgrader receives ore outside its input range.",
+    "USE_LIMIT": "An ore exceeds an item's shared limited-use pool.",
+    "TELEPORTER_DISABLED": "Teleporters are intentionally unsupported until their rules are supplied."
+  }
+}

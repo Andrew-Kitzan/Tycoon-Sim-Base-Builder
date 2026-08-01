@@ -3,6 +3,10 @@ const columnLabels = document.querySelector('#column-labels');
 const rowLabels = document.querySelector('#row-labels');
 const sizeSlider = document.querySelector('#base-size');
 const sizeLabel = document.querySelector('#size-label');
+const zoomSlider = document.querySelector('#grid-zoom');
+const zoomLabel = document.querySelector('#zoom-label');
+const zoomOut = document.querySelector('#zoom-out');
+const zoomIn = document.querySelector('#zoom-in');
 const tileCount = document.querySelector('#tile-count');
 const status = document.querySelector('#status');
 const legend = document.querySelector('#plan-legend');
@@ -24,6 +28,15 @@ const workflow = [
   '5. Final verification',
 ];
 let workflowStage = 0;
+const baseTileSize = 24;
+
+function applyGridZoom(value) {
+  const zoom = Math.min(Number(zoomSlider.max), Math.max(Number(zoomSlider.min), Number(value)));
+  zoomSlider.value = zoom;
+  zoomLabel.textContent = `${zoom}%`;
+  document.documentElement.style.setProperty('--tile', `${baseTileSize * zoom / 100}px`);
+  document.documentElement.style.setProperty('--grid-zoom', String(zoom / 100));
+}
 
 // Coordinates are 1-based to match the labels shown to the player.
 // Database sizes are WIDTH x LENGTH. Even-width items have a centered
@@ -32,6 +45,10 @@ let workflowStage = 0;
 // north/south placements use LENGTH on the grid's Y axis.
 function placeItem(order, name, x, y, itemWidth, itemLength, direction, type = null, details = {}) {
   const horizontal = direction === 'east' || direction === 'west';
+  const resolvedType = itemType(name, type);
+  const dropper = resolvedType === 'dropper';
+  const portable = resolvedType === 'portable';
+  const furnace = resolvedType === 'furnace';
   return {
     id: details.id ?? `item-${order}`,
     order,
@@ -43,54 +60,42 @@ function placeItem(order, name, x, y, itemWidth, itemLength, direction, type = n
     y,
     itemWidth,
     itemLength,
-    conveyorWidth: itemWidth % 2 === 0 ? 2 : 1,
-    width: horizontal ? itemLength : itemWidth,
-    height: horizontal ? itemWidth : itemLength,
+    conveyorWidth: dropper || portable || furnace ? 0 : (itemWidth % 2 === 0 ? 2 : 1),
+    width: portable
+      ? (horizontal ? itemWidth : itemLength)
+      : (horizontal ? itemLength : itemWidth),
+    height: portable
+      ? (horizontal ? itemLength : itemWidth)
+      : (horizontal ? itemWidth : itemLength),
+    beamLength: portable ? (details.beamLength ?? 2) : 0,
+    processingZoneAcross: furnace ? 2 : 0,
+    processingZoneDepth: furnace ? (name.includes('Krakatoa') ? 1 : 2) : 0,
+    processingZonePlacement: furnace && /Proficient Furnace|Toxic Wasteland/.test(name)
+      ? 'front-corner'
+      : (furnace ? 'front-center' : null),
+    sourceDroppers: details.sourceDroppers ?? null,
     direction,
-    type: itemType(name, type),
+    type: resolvedType,
   };
 }
 
 const coordinateMap = [];
 const routeSegments = [];
-
-function calculateExpectedEconomy({
-  cashPerOre,
-  droppers,
-  oreCap = 100,
-  knownFurnaceEntriesPerMinute = null,
-}) {
-  const totalDropRate = droppers.reduce(
-    (sum, dropper) => sum + dropper.oresPerSecond,
-    0,
-  );
-  const projectedActiveOres = droppers.reduce(
-    (sum, dropper) => sum + dropper.oresPerSecond
-      * (dropper.averageRemovalTimeSeconds ?? dropper.routeTimeSeconds),
-    0,
-  );
-  const weightedRouteTime = projectedActiveOres / totalDropRate;
-  const oreCapThroughputScale = Math.min(1, oreCap / projectedActiveOres);
-  const estimatedProcessedOresPerSecond = droppers.reduce(
-    (sum, dropper) => sum + dropper.oresPerSecond
-      * (dropper.processedFraction ?? 1),
-    0,
-  ) * oreCapThroughputScale;
-  const estimatedEntriesPerMinute = knownFurnaceEntriesPerMinute
-    ?? estimatedProcessedOresPerSecond * 60;
-
-  return {
-    projectedActiveOres,
-    weightedRouteTime,
-    oreCapThroughputScale,
-    estimatedEntriesPerMinute,
-    expectedCashPerMinute: cashPerOre * estimatedEntriesPerMinute,
-    limitedByOreCap: projectedActiveOres > oreCap,
-  };
-}
-
+let plannedOrder = 1;
+let capOreValue = 0;
 let validation = null;
 
+function abbreviatedRate(value) {
+  const units = [[1e30, 'No'], [1e27, 'Oc'], [1e24, 'Sp'], [1e21, 'Sx'],
+    [1e18, 'Qn'], [1e15, 'Qd'], [1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+  const [divisor, suffix] = units.find(([minimum]) => value >= minimum) ?? [1, ''];
+  const truncated = Math.floor((value / divisor) * 100) / 100;
+  return `$${truncated.toFixed(2)}${suffix}/min`;
+}
+
+function abbreviatedPerSecond(value) {
+  return abbreviatedRate(value).replace('/min', '/sec');
+}
 function itemType(name, declaredType = null) {
   if (declaredType) return declaredType;
   if (name.includes('Dropper')) return 'dropper';
@@ -109,6 +114,10 @@ function shortLabel(name) {
     .toUpperCase();
 }
 
+function baseItemName(name) {
+  return name.replace(/^(?:Shiny Mythic|Mythic|Shiny|Base)\s+/i, '');
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -125,16 +134,94 @@ function formatStats(stats) {
   return entries.map(([label, value]) => `${label}: ${value}`).join(' · ');
 }
 
+function statRowsHtml(entries) {
+  return entries.map(([label, value]) => {
+    const valueHtml = label === 'Arrival time from droppers'
+      ? `<span class="timing-arrivals">${String(value)
+        .split(' · ')
+        .map((arrival) => `<span>${escapeHtml(arrival)}</span>`)
+        .join('')}</span>`
+      : escapeHtml(value);
+    return `
+    <div class="item-stat-row">
+      <span class="item-stat-label">${escapeHtml(label)}</span>
+      <span class="item-stat-value">${valueHtml}</span>
+    </div>`;
+  }).join('');
+}
+
+function statsSectionsHtml(stats) {
+  if (typeof stats === 'string') {
+    return `<section class="item-stat-section"><h3>Item stats</h3><p>${escapeHtml(stats)}</p></section>`;
+  }
+
+  const entries = Object.entries(stats ?? {});
+  if (entries.length === 0) {
+    return '<section class="item-stat-section"><h3>Item stats</h3><p>No stats loaded.</p></section>';
+  }
+
+  const isOreTracking = ([label]) => /^Ore (value|size) (before|after)$/i.test(label);
+  const isTiming = ([label]) => /^(Arrival time|Time across)/i.test(label);
+  const isEffectTracking = ([label]) => /^(Effect|Next remover|Route to safety|Destruction timer|Safety margin)/i.test(label);
+  const isLambdaValueTracking = ([label]) => /^(Expected ore value before Lambda|Good outcome)/i.test(label);
+  const isDestructionTracking = ([label]) => /^(Intrinsic survival|Survival including|Destruction at|(?:.+ )?Total ore destruction)/i.test(label);
+  const oreTracking = entries.filter(isOreTracking);
+  const timing = entries.filter(isTiming);
+  const effectTracking = entries.filter(isEffectTracking);
+  const lambdaValueTracking = entries.filter(isLambdaValueTracking);
+  const destructionTracking = entries.filter(isDestructionTracking);
+  const itemStats = entries.filter((entry) => !isOreTracking(entry)
+    && !isTiming(entry)
+    && !isEffectTracking(entry)
+    && !isLambdaValueTracking(entry)
+    && !isDestructionTracking(entry));
+  return `
+    ${oreTracking.length > 0 ? `
+      <section class="item-stat-section ore-tracking">
+        <h3>Ore tracking</h3>
+        <div class="item-stat-grid">${statRowsHtml(oreTracking)}</div>
+      </section>` : ''}
+    ${timing.length > 0 ? `
+      <section class="item-stat-section timing-tracking">
+        <h3>Route timing</h3>
+        <div class="item-stat-grid">${statRowsHtml(timing)}</div>
+      </section>` : ''}
+    ${destructionTracking.length > 0 ? `
+      <section class="item-stat-section destruction-tracking">
+        <h3>Ore destruction</h3>
+        <div class="item-stat-grid">${statRowsHtml(destructionTracking)}</div>
+      </section>` : ''}
+    ${lambdaValueTracking.length > 0 ? `
+      <section class="item-stat-section lambda-value-tracking">
+        <h3>Lambda value outcomes</h3>
+        <div class="item-stat-grid">${statRowsHtml(lambdaValueTracking)}</div>
+      </section>` : ''}
+    ${effectTracking.length > 0 ? `
+      <section class="item-stat-section effect-tracking">
+        <h3>Effect & safety</h3>
+        <div class="item-stat-grid">${statRowsHtml(effectTracking)}</div>
+      </section>` : ''}
+    ${itemStats.length > 0 ? `
+      <section class="item-stat-section">
+        <h3>Item stats</h3>
+        <div class="item-stat-grid">${statRowsHtml(itemStats)}</div>
+      </section>` : ''}`;
+}
+
 function itemDetailsHtml(item) {
+  const processingZone = furnaceProcessingZoneGeometry(item);
   return `
     <strong>${escapeHtml(item.name)}</strong>
     <p>${escapeHtml(item.description ?? 'No description loaded for this item.')}</p>
-    <dl>
-      <dt>Stats</dt><dd>${escapeHtml(formatStats(item.stats))}</dd>
+    ${statsSectionsHtml(item.stats)}
+    <dl class="item-meta">
       <dt>Database size</dt><dd>${item.itemWidth}×${item.itemLength}</dd>
       <dt>Grid footprint</dt><dd>${item.width}×${item.height}</dd>
       <dt>Top-left</dt><dd>${columnName(item.x)}${item.y}</dd>
       <dt>Facing</dt><dd>${escapeHtml(item.direction)}</dd>
+      ${processingZone ? `
+        <dt>Processing zone</dt><dd>${processingZone.width}×${processingZone.height} at ${coordinateRange(processingZone)}</dd>
+        <dt>Zone placement</dt><dd>${escapeHtml(item.processingZonePlacement.replaceAll('-', ' '))}</dd>` : ''}
     </dl>`;
 }
 
@@ -164,24 +251,174 @@ function rotateDirection(direction, turn) {
 
 function updateItemGeometry(item, { x = item.x, y = item.y, direction = item.direction } = {}) {
   const horizontal = direction === 'east' || direction === 'west';
+  const portable = item.type === 'portable';
   return {
     ...item,
     x,
     y,
     direction,
-    width: horizontal ? item.itemLength : item.itemWidth,
-    height: horizontal ? item.itemWidth : item.itemLength,
+    width: portable
+      ? (horizontal ? item.itemWidth : item.itemLength)
+      : (horizontal ? item.itemLength : item.itemWidth),
+    height: portable
+      ? (horizontal ? item.itemLength : item.itemWidth)
+      : (horizontal ? item.itemWidth : item.itemLength),
   };
+}
+
+function portableBeamGeometry(item) {
+  if (item.type !== 'portable' || !item.beamLength) return null;
+  if (item.direction === 'north') {
+    return { x: item.x, y: item.y - item.beamLength, width: item.width, height: item.beamLength };
+  }
+  if (item.direction === 'south') {
+    return { x: item.x, y: item.y + item.height, width: item.width, height: item.beamLength };
+  }
+  if (item.direction === 'west') {
+    return { x: item.x - item.beamLength, y: item.y, width: item.beamLength, height: item.height };
+  }
+  return { x: item.x + item.width, y: item.y, width: item.beamLength, height: item.height };
+}
+
+function furnaceProcessingZoneGeometry(item) {
+  if (item.type !== 'furnace' || !item.processingZoneAcross || !item.processingZoneDepth) return null;
+  const across = item.processingZoneAcross;
+  const depth = item.processingZoneDepth;
+
+  if (item.processingZonePlacement === 'front-corner') {
+    if (item.direction === 'south') {
+      return { x: item.x, y: item.y + item.height - depth, width: across, height: depth };
+    }
+    if (item.direction === 'west') {
+      return { x: item.x, y: item.y, width: depth, height: across };
+    }
+    if (item.direction === 'north') {
+      return { x: item.x + item.width - across, y: item.y, width: across, height: depth };
+    }
+    return {
+      x: item.x + item.width - depth,
+      y: item.y + item.height - across,
+      width: depth,
+      height: across,
+    };
+  }
+  if (item.direction === 'west') {
+    return {
+      x: item.x,
+      y: item.y + (item.height - across) / 2,
+      width: depth,
+      height: across,
+    };
+  }
+  if (item.direction === 'east') {
+    return {
+      x: item.x + item.width - depth,
+      y: item.y + (item.height - across) / 2,
+      width: depth,
+      height: across,
+    };
+  }
+  if (item.direction === 'north') {
+    return {
+      x: item.x + (item.width - across) / 2,
+      y: item.y,
+      width: across,
+      height: depth,
+    };
+  }
+  return {
+    x: item.x + (item.width - across) / 2,
+    y: item.y + item.height - depth,
+    width: across,
+    height: depth,
+  };
+}
+
+function coordinateRange({ x, y, width, height }) {
+  const start = `${columnName(x)}${y}`;
+  const end = `${columnName(x + width - 1)}${y + height - 1}`;
+  return start === end ? start : `${start}:${end}`;
 }
 
 let activePlan = null;
 let selectedItemId = null;
 let editNotice = '';
 
+function clearPlanner() {
+  coordinateMap.length = 0;
+  routeSegments.length = 0;
+  plannedOrder = 1;
+  capOreValue = 0;
+  validation = null;
+  activePlan = null;
+  workflowStage = 0;
+  selectedItemId = null;
+  editNotice = '';
+}
+
+function loadGeneratedPlan(plan) {
+  clearPlanner();
+  if (!plan?.valid) return false;
+  sizeSlider.value = plan.profile.plotSize;
+  coordinateMap.push(...plan.items.map((item, index) => ({
+    ...item,
+    order: item.order ?? index + 1,
+    label: item.label ?? `${item.order ?? index + 1}. ${shortLabel(item.name)}`,
+    stats: item.stats ?? {},
+  })));
+  routeSegments.push(...plan.conveyors);
+  const metrics = plan.metrics ?? {};
+  const optimization = plan.optimization ?? {};
+  validation = {
+    routeTimeSeconds: optimization.routeTimeSeconds ?? 0,
+    averageRemovalTimeSeconds: optimization.routeTimeSeconds ?? 0,
+    estimatedOres: metrics.cappedActiveOres ?? 0,
+    uncappedEstimatedOres: metrics.projectedActiveOres ?? 0,
+    oreCap: 100,
+    dropperCount: optimization.dropperQuantity ?? plan.profile.dropper.quantity ?? 1,
+    dropRatePerSecond: metrics.dropRate ? metrics.dropRate / Math.max(1, optimization.dropperQuantity ?? plan.profile.dropper.quantity ?? 1) : 0,
+    dropperRouteTimes: { A: optimization.routeTimeSeconds ?? 0 },
+    finalOreValue: optimization.valueBeforeFurnace ?? 0,
+    estimatedFurnaceOresPerMinute: metrics.furnaceEntriesPerMinute ?? 0,
+    finalCapgraderName: coordinateMap.filter((item) => item.type === 'capgrader').at(-1)?.name ?? 'N/A',
+    finalCapgraderInput: optimization.finalCapInput ?? 0,
+    finalCapgraderOutput: optimization.valueBeforeFurnace ?? 0,
+    expectedCashPerMinute: metrics.expectedCashPerMinute ?? 0,
+    expectedCashPerSecond: metrics.expectedCashPerSecond ?? 0,
+    throughputLimitedByOreCap: metrics.limitedByOreCap ?? false,
+    toxicExposureSeconds: 0,
+    fireExposureSeconds: 0,
+    reservedTiles: coordinateMap.reduce((sum, item) => sum + item.width * item.height, 0)
+      + routeSegments.reduce((sum, item) => sum + item.width * item.height, 0),
+    remainingTiles: Math.max(0, plan.profile.plotSize ** 2
+      - coordinateMap.reduce((sum, item) => sum + item.width * item.height, 0)
+      - routeSegments.reduce((sum, item) => sum + item.width * item.height, 0)),
+    checks: (plan.diagnostics ?? []).length
+      ? plan.diagnostics.map((entry) => `${entry.code}: ${entry.message}`)
+      : ['Machine-generated route passed the planner engine validation gate.'],
+  };
+  activePlan = {
+    title: plan.title,
+    minimumSize: plan.profile.plotSize,
+    items: coordinateMap,
+    lanes: routeSegments,
+  };
+  workflowStage = 5;
+  return true;
+}
 const legendItems = [
   ['dropper', 'Droppers'], ['capgrader', 'Capgraders'], ['upgrader', 'Upgraders'],
   ['portable', 'Portables'], ['furnace', 'Furnace'], ['routing', 'Blue = external conveyor'],
 ];
+
+const conveyorAbbreviations = {
+  'Normal Conveyor': 'Con',
+  'Supercharged Conveyor': 'Sup',
+  'Ultracharged Conveyor': 'Ult',
+  'Centering Conveyor': 'Cen',
+  'Half Conveyor': 'Hal',
+  'Quarter Conveyor': 'Qua',
+};
 
 function renderGrid(size) {
   const tiles = size * size;
@@ -248,14 +485,17 @@ function renderWorkflow() {
     coordinateSummary.hidden = false;
     coordinateSummary.innerHTML = `
       <table>
-        <thead><tr><th>Order</th><th>Item</th><th>Top-left</th><th>Database W×L</th><th>Path width</th><th>Grid footprint</th><th>Facing</th></tr></thead>
+        <thead><tr><th>Order</th><th>Item</th><th>Variant</th><th>Top-left</th><th>Database W×L</th><th>Path width</th><th>Grid footprint</th><th>Facing</th></tr></thead>
         <tbody>${listedItems.map((item) => `
           <tr>
             <td>${item.order}</td>
-            <td>${item.name}</td>
+            <td>${escapeHtml(baseItemName(item.name))}</td>
+            <td>${escapeHtml(item.stats?.Variant ?? item.variant ?? 'Base')}</td>
             <td>(${item.x}, ${item.y})</td>
             <td>${item.itemWidth}×${item.itemLength}</td>
-            <td>${item.conveyorWidth}</td>
+            <td>${item.type === 'furnace'
+              ? `${item.processingZoneAcross}×${item.processingZoneDepth} processing zone`
+              : item.conveyorWidth}</td>
             <td>${item.width}×${item.height}</td>
             <td>${item.direction}</td>
           </tr>`).join('')}
@@ -269,19 +509,24 @@ function renderWorkflow() {
   if (workflowStage >= 3 && validation) {
     validationSummary.hidden = false;
     validationSummary.innerHTML = `
-      <strong>Route validated:</strong> ${validation.routeTimeSeconds}s ×
+      <strong>Route validated:</strong> ${validation.routeTimeSeconds}s end-to-end ·
+      ${validation.averageRemovalTimeSeconds}s average removal ×
       ${validation.dropperCount * validation.dropRatePerSecond} ores/sec ≈
-      ${validation.uncappedEstimatedOres} projected ·
+      ${validation.uncappedEstimatedOres} projected active ·
       ${validation.estimatedOres} active (${validation.oreCap}-ore cap).
-      <br><strong>Per dropper:</strong> A ${validation.dropperRouteTimes.A}s
-      · B ${validation.dropperRouteTimes.B}s
-      · C ${validation.dropperRouteTimes.C}s
-      · D ${validation.dropperRouteTimes.D}s
+      <br><strong>Per dropper:</strong> ${Object.entries(validation.dropperRouteTimes)
+        .map(([label, seconds]) => `${label} ${seconds}s`)
+        .join(' · ')}
       <br><strong>Final ore:</strong> $${validation.finalOreValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
       · <strong>Furnace rate:</strong> ${validation.estimatedFurnaceOresPerMinute.toLocaleString()} ores/min
-      <br><strong>Expected income:</strong> $${validation.expectedCashPerMinute.toLocaleString(undefined, { maximumFractionDigits: 2 })}/min
+      <br><strong>Final capgrader (${validation.finalCapgraderName}):</strong> $${validation.finalCapgraderInput.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+      → $${validation.finalCapgraderOutput.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+      <br><strong>Expected income:</strong> ${abbreviatedRate(validation.expectedCashPerMinute)}
+      · ${abbreviatedPerSecond(validation.expectedCashPerSecond)}
       ${validation.throughputLimitedByOreCap ? ' · ore-cap limited' : ''}
       · <strong>Space:</strong> ${validation.reservedTiles} reserved / ${validation.remainingTiles} remaining
+      <br><strong>Effect safety:</strong> Toxic ${validation.toxicExposureSeconds}s / 5s
+      · Fire ${validation.fireExposureSeconds}s / 2s
       <br>${validation.checks.map((check) => `✓ ${check}`).join('<br>')}
       ${workflowStage >= 5 ? '<br>✓ Final calculation and render verification complete.' : ''}`;
   }
@@ -402,9 +647,15 @@ function validateCoordinateMap(items, size) {
 
   items.forEach((item) => {
     const horizontal = item.direction === 'east' || item.direction === 'west';
-    const expectedWidth = horizontal ? item.itemLength : item.itemWidth;
-    const expectedHeight = horizontal ? item.itemWidth : item.itemLength;
-    const expectedConveyorWidth = item.itemWidth % 2 === 0 ? 2 : 1;
+    const portable = item.type === 'portable';
+    const furnace = item.type === 'furnace';
+    const expectedWidth = portable
+      ? (horizontal ? item.itemWidth : item.itemLength)
+      : (horizontal ? item.itemLength : item.itemWidth);
+    const expectedHeight = portable
+      ? (horizontal ? item.itemLength : item.itemWidth)
+      : (horizontal ? item.itemWidth : item.itemLength);
+    const expectedConveyorWidth = portable || furnace || item.type === 'dropper' ? 0 : (item.itemWidth % 2 === 0 ? 2 : 1);
     if (item.width !== expectedWidth || item.height !== expectedHeight) {
       throw new Error(
         `${item.name} has an invalid rotated footprint: `
@@ -418,6 +669,17 @@ function validateCoordinateMap(items, size) {
       );
     }
 
+    if (furnace) {
+      const zone = furnaceProcessingZoneGeometry(item);
+      if (!zone
+        || zone.x < item.x
+        || zone.y < item.y
+        || zone.x + zone.width > item.x + item.width
+        || zone.y + zone.height > item.y + item.height) {
+        throw new Error(`${item.name} has an invalid processing zone.`);
+      }
+    }
+
     if (item.x < 1 || item.y < 1 || item.x + item.width - 1 > size || item.y + item.height - 1 > size) {
       throw new Error(`${item.name} is outside the ${size}×${size} base.`);
     }
@@ -426,9 +688,10 @@ function validateCoordinateMap(items, size) {
       for (let x = item.x; x < item.x + item.width; x += 1) {
         const key = `${x},${y}`;
         if (occupied.has(key)) {
-          throw new Error(`${item.name} overlaps ${occupied.get(key)} at ${key}.`);
+          const other = occupied.get(key);
+          throw new Error(`${item.name} overlaps ${other.name} at ${key}.`);
         }
-        occupied.set(key, item.name);
+        occupied.set(key, item);
       }
     }
   });
@@ -439,6 +702,14 @@ function validateCoordinateMap(items, size) {
 function validateRouteSegments(segments, items, size) {
   const itemTiles = new Set();
   const routeTiles = new Set();
+  const conveyorSizes = {
+    'Quarter Conveyor': { width: 1, length: 1 },
+    'Half Conveyor': { width: 2, length: 1 },
+    'Normal Conveyor': { width: 2, length: 2 },
+    'Supercharged Conveyor': { width: 2, length: 2 },
+    'Centering Conveyor': { width: 2, length: 2 },
+    'Ultracharged Conveyor': { width: 4, length: 2 },
+  };
 
   items.forEach((item) => {
     for (let y = item.y; y < item.y + item.height; y += 1) {
@@ -449,6 +720,18 @@ function validateRouteSegments(segments, items, size) {
   });
 
   segments.forEach((segment) => {
+    const sizeRule = conveyorSizes[segment.conveyor];
+    if (sizeRule && ['north', 'east', 'south', 'west'].includes(segment.direction)) {
+      const horizontal = segment.direction === 'east' || segment.direction === 'west';
+      const expectedWidth = horizontal ? sizeRule.length : sizeRule.width;
+      const expectedHeight = horizontal ? sizeRule.width : sizeRule.length;
+      if (segment.width !== expectedWidth || segment.height !== expectedHeight) {
+        throw new Error(
+          `${segment.name} has an impossible ${segment.conveyor} footprint: `
+          + `${segment.width}×${segment.height}; expected ${expectedWidth}×${expectedHeight}.`,
+        );
+      }
+    }
     if (
       segment.x < 1
       || segment.y < 1
@@ -469,6 +752,63 @@ function validateRouteSegments(segments, items, size) {
         }
         routeTiles.add(key);
       }
+    }
+  });
+
+  const quarterAt = new Map(
+    segments
+      .filter((segment) => segment.conveyor === 'Quarter Conveyor')
+      .map((segment) => [`${segment.x},${segment.y}`, segment]),
+  );
+  quarterAt.forEach((segment) => {
+    const matchingNeighbor = segment.direction === 'east' || segment.direction === 'west'
+      ? quarterAt.get(`${segment.x},${segment.y + 1}`)
+      : quarterAt.get(`${segment.x + 1},${segment.y}`);
+    const belongsToStraight2x2 = segment.direction === 'east' || segment.direction === 'west'
+      ? [-1, 1].some((offset) => (
+        quarterAt.get(`${segment.x + offset},${segment.y}`)?.direction === segment.direction
+        && quarterAt.get(`${segment.x + offset},${segment.y + 1}`)?.direction === segment.direction
+      ))
+      : [-1, 1].some((offset) => (
+        quarterAt.get(`${segment.x},${segment.y + offset}`)?.direction === segment.direction
+        && quarterAt.get(`${segment.x + 1},${segment.y + offset}`)?.direction === segment.direction
+      ));
+    if (matchingNeighbor?.direction === segment.direction && !belongsToStraight2x2) {
+      throw new Error(
+        `Quarter Conveyor pair at ${segment.x},${segment.y} has the footprint `
+        + 'of one Half Conveyor and must be replaced by it.',
+      );
+    }
+  });
+  quarterAt.forEach((segment) => {
+    const block = [
+      segment,
+      quarterAt.get(`${segment.x + 1},${segment.y}`),
+      quarterAt.get(`${segment.x},${segment.y + 1}`),
+      quarterAt.get(`${segment.x + 1},${segment.y + 1}`),
+    ];
+    if (block.every((tile) => tile?.direction === segment.direction)) {
+      throw new Error(
+        `Straight 2x2 Quarter Conveyor block at ${segment.x},${segment.y} `
+        + 'must be replaced by a Normal Conveyor or a faster full-size conveyor.',
+      );
+    }
+  });
+
+  const halfAt = new Map(
+    segments
+      .filter((segment) => segment.conveyor === 'Half Conveyor')
+      .map((segment) => [`${segment.x},${segment.y}`, segment]),
+  );
+  halfAt.forEach((segment) => {
+    const matchingNeighbor = segment.direction === 'east' || segment.direction === 'west'
+      ? halfAt.get(`${segment.x + 1},${segment.y}`)
+      : halfAt.get(`${segment.x},${segment.y + 1}`);
+    if (matchingNeighbor?.direction === segment.direction) {
+      throw new Error(
+        `Half Conveyor pair at ${segment.x},${segment.y} forms a straight 2x2 block `
+        + 'and must be replaced by a Normal Conveyor or faster full-size conveyor.',
+      );
     }
   });
 
@@ -498,24 +838,40 @@ function renderPlan(size) {
     element.dataset.itemId = item.id;
     element.setAttribute('aria-label', `${item.name}, facing ${item.direction}. Click to edit.`);
     const direction = { north: '↑', east: '→', south: '↓', west: '←' }[item.direction] ?? '';
-    const belt = document.createElement('span');
-    belt.className = 'item-belt';
-    if (item.direction === 'east' || item.direction === 'west') {
-      belt.style.left = '0';
-      belt.style.top = `calc(${(item.height - item.conveyorWidth) / 2} * var(--tile))`;
-      belt.style.width = '100%';
-      belt.style.height = `calc(${item.conveyorWidth} * var(--tile))`;
-    } else {
-      belt.style.top = '0';
-      belt.style.left = `calc(${(item.width - item.conveyorWidth) / 2} * var(--tile))`;
-      belt.style.height = '100%';
-      belt.style.width = `calc(${item.conveyorWidth} * var(--tile))`;
+    if (item.type === 'furnace') {
+      const processingZone = furnaceProcessingZoneGeometry(item);
+      if (processingZone) {
+        const zone = document.createElement('span');
+        zone.className = 'furnace-processing-zone';
+        zone.title = `${item.name} processing zone · ${coordinateRange(processingZone)}`;
+        zone.style.left = `calc(${processingZone.x - item.x} * var(--tile))`;
+        zone.style.top = `calc(${processingZone.y - item.y} * var(--tile))`;
+        zone.style.width = `calc(${processingZone.width} * var(--tile))`;
+        zone.style.height = `calc(${processingZone.height} * var(--tile))`;
+        element.append(zone);
+      }
+    } else if (item.type !== 'portable' && item.type !== 'dropper') {
+      const belt = document.createElement('span');
+      belt.className = 'item-belt';
+      if (item.direction === 'east' || item.direction === 'west') {
+        belt.style.left = '0';
+        belt.style.top = `calc(${(item.height - item.conveyorWidth) / 2} * var(--tile))`;
+        belt.style.width = '100%';
+        belt.style.height = `calc(${item.conveyorWidth} * var(--tile))`;
+      } else {
+        belt.style.top = '0';
+        belt.style.left = `calc(${(item.width - item.conveyorWidth) / 2} * var(--tile))`;
+        belt.style.height = '100%';
+        belt.style.width = `calc(${item.conveyorWidth} * var(--tile))`;
+      }
+      element.append(belt);
     }
-    element.append(belt);
 
     const label = document.createElement('span');
     label.className = 'plan-label';
-    label.textContent = item.label ?? shortLabel(item.name);
+    const compactFootprint = item.width * item.height <= 2;
+    if (compactFootprint) label.classList.add('is-compact');
+    label.textContent = compactFootprint ? String(item.order) : (item.label ?? shortLabel(item.name));
     element.append(label);
     if (direction) {
       const arrow = document.createElement('span');
@@ -534,13 +890,34 @@ function renderPlan(size) {
     element.addEventListener('focus', () => showItemTooltip(item, null, element));
     element.addEventListener('blur', hideItemTooltip);
     element.addEventListener('click', () => openItemEditor(item));
+
+    const beam = portableBeamGeometry(item);
+    if (beam) {
+      const beamElement = document.createElement('div');
+      beamElement.className = 'portable-beam';
+      beamElement.title = `${item.name} two-tile upgrade beam`;
+      beamElement.style.left = `calc(${beam.x - 1} * var(--tile))`;
+      beamElement.style.top = `calc(${beam.y - 1} * var(--tile))`;
+      beamElement.style.width = `calc(${beam.width} * var(--tile))`;
+      beamElement.style.height = `calc(${beam.height} * var(--tile))`;
+      grid.append(beamElement);
+    }
     grid.append(element);
   });
 
   activePlan.lanes.forEach((lane) => {
     const element = document.createElement('div');
-    element.className = `plan-lane${lane.wall ? ' has-wall' : ''}`;
-    element.textContent = lane.label;
+    const conveyorClass = lane.conveyor.toLowerCase().replaceAll(' ', '-');
+    const arrow = { north: '↑', east: '→', south: '↓', west: '←' }[lane.direction] ?? '';
+    const abbreviation = conveyorAbbreviations[lane.conveyor] ?? lane.label;
+    const directionClass = `direction-${lane.direction}`;
+    element.className = `plan-lane ${conveyorClass} ${directionClass}${lane.wall ? ' has-wall' : ''}`;
+    element.textContent = `${abbreviation}${arrow ? ` ${arrow}` : ''}`;
+    element.title = `${lane.conveyor} · facing ${lane.direction} · speed ${lane.speed}`;
+    element.setAttribute(
+      'aria-label',
+      `${lane.conveyor}, facing ${lane.direction}, speed ${lane.speed}`,
+    );
     element.style.left = `calc(${lane.x - 1} * var(--tile))`;
     element.style.top = `calc(${lane.y - 1} * var(--tile))`;
     element.style.width = `calc(${lane.width} * var(--tile))`;
@@ -549,25 +926,25 @@ function renderPlan(size) {
   });
 
   legend.innerHTML = legendItems.map(([type, label]) => `<span class="legend-key"><span class="legend-swatch ${type}"></span>${label}</span>`).join('');
-  const reservedTiles = activePlan.items.reduce(
-    (total, item) => total + item.width * item.height,
-    0,
-  ) + (activePlan.lanes ?? []).reduce(
-    (total, lane) => total + lane.width * lane.height,
-    0,
-  );
+  const reservedTiles = validateCoordinateMap(activePlan.items, size)
+    + validateRouteSegments(activePlan.lanes ?? [], activePlan.items, size);
   const remainingTiles = Math.max(0, size * size - reservedTiles);
   tileCount.textContent = remainingTiles.toLocaleString();
   if (editNotice) {
     status.textContent = editNotice;
-  } else if (size === 20 && validation) {
+  } else if (size === activePlan.minimumSize && validation) {
     status.textContent = `${activePlan.title} · ${validation.remainingTiles} tiles remaining`;
   } else {
     status.textContent = `${activePlan.title} · ${remainingTiles} tiles remaining`;
   }
 }
 
+clearPlanner();
+if (globalThis.TycoonActivePlan?.valid) loadGeneratedPlan(globalThis.TycoonActivePlan);
 sizeSlider.addEventListener('input', () => renderGrid(Number(sizeSlider.value)));
+zoomSlider.addEventListener('input', () => applyGridZoom(zoomSlider.value));
+zoomOut.addEventListener('click', () => applyGridZoom(Number(zoomSlider.value) - Number(zoomSlider.step)));
+zoomIn.addEventListener('click', () => applyGridZoom(Number(zoomSlider.value) + Number(zoomSlider.step)));
 itemEditor.addEventListener('click', (event) => {
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (!action) return;
@@ -588,11 +965,13 @@ moveCoordinate.addEventListener('keydown', (event) => {
   }
 });
 if (coordinateMap.length > 0 || routeSegments.length > 0) {
-  const itemTileCount = validateCoordinateMap(coordinateMap, 20);
-  const routeTileCount = validateRouteSegments(routeSegments, coordinateMap, 20);
+  const startupSize = Number(sizeSlider.value);
+  const itemTileCount = validateCoordinateMap(coordinateMap, startupSize);
+  const routeTileCount = validateRouteSegments(routeSegments, coordinateMap, startupSize);
   if (validation && itemTileCount + routeTileCount !== validation.reservedTiles) {
     throw new Error(`Reserved tile count is ${itemTileCount + routeTileCount}, expected ${validation.reservedTiles}.`);
   }
 }
 renderWorkflow();
+applyGridZoom(zoomSlider.value);
 renderGrid(Number(sizeSlider.value));
