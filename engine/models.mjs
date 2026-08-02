@@ -20,7 +20,31 @@ export function maxPhysicalCopies(item, profile, rules, phase = 'post') {
   return 1;
 }
 
-export function applyDeterministicItem(item, state, useNumber = 1, profile = {}) {
+function updateEffects(item, effects, rules) {
+  const active = new Set(effects ?? []);
+  if (!rules?.effectDefinitions) return [...active];
+  for (const [effect, definition] of Object.entries(rules.effectDefinitions)) {
+    if (definition.removedBy?.includes(item.name)) active.delete(effect);
+  }
+  for (const [effect, definition] of Object.entries(rules.effectDefinitions)) {
+    if (definition.appliedBy?.includes(item.name)) active.add(effect);
+  }
+  return [...active];
+}
+
+export function appliedEffectsForItem(item, rules) {
+  return Object.entries(rules?.effectDefinitions ?? {})
+    .filter(([, definition]) => definition.appliedBy?.includes(item.name))
+    .map(([effect]) => effect);
+}
+
+export function canActivateItem(item, state) {
+  // Acid Plant only triggers on a completely effect-free ore. Its own Toxic
+  // effect therefore prevents another Acid Plant from triggering.
+  return item.name !== 'Acid Plant' || !(state.effects?.length);
+}
+
+export function applyDeterministicItem(item, state, useNumber = 1, profile = {}, rules = null) {
   const type = normalize(item.mainStatType);
   const before = state.value;
   let value = before;
@@ -29,7 +53,10 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {})
   let oreSize = state.oreSize ?? 1;
   const model = (profile.complexItemModels ?? {})[item.name];
 
-  if (model) {
+  const activates = canActivateItem(item, state);
+  if (!activates) {
+    value = before;
+  } else if (model) {
     value = model.operation === 'add' ? before + model.amount : before * (model.multiplier ?? 1);
     survival *= 1 - (model.destructionChance ?? 0);
     replication *= model.replication ?? 1;
@@ -69,6 +96,8 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {})
     survival,
     replication,
     oreSize,
+    effects: activates ? updateEffects(item, state.effects, rules) : [...(state.effects ?? [])],
+    activated: activates,
     timeSeconds: (state.timeSeconds ?? 0) + crossingSeconds(item),
     area: (state.area ?? 0) + itemArea(item),
   };

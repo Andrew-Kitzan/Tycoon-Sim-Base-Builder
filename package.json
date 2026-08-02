@@ -12,8 +12,15 @@
     "item": "node scripts/planner-cli.mjs item",
     "legal-pool": "node scripts/planner-cli.mjs legal-pool",
     "solve-cap": "node scripts/planner-cli.mjs solve-cap",
+    "analyze-post": "node scripts/planner-cli.mjs analyze-post",
     "build": "node scripts/planner-cli.mjs build",
+    "optimize": "node scripts/planner-cli.mjs optimize-current --compact && node scripts/planner-cli.mjs finalize-winner --compact",
     "validate-plan": "node scripts/planner-cli.mjs validate-plan",
+    "validate-map": "node scripts/planner-cli.mjs validate-map",
+    "restore-preview": "node scripts/planner-cli.mjs restore-preview",
+    "validate-winner": "node scripts/planner-cli.mjs validate-winner",
+    "finalize-winner": "node scripts/planner-cli.mjs finalize-winner",
+    "workflow-stage": "node scripts/planner-cli.mjs workflow-stage",
     "plan:summary": "node scripts/planner-cli.mjs summary --compact",
     "plan:clear": "node scripts/planner-cli.mjs clear --compact"
   }

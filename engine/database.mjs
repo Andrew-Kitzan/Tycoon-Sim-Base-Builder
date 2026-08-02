@@ -2,6 +2,29 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { itemKey, normalize, readJson } from './utils.mjs';
 
+// Confirmed workbook spelling aliases. Remove these after the source workbook is
+// corrected; keeping them here prevents duplicate limited-use pools meanwhile.
+const ITEM_ALIASES = new Map([
+  ['moonstone dopper', 'Moonstone Dropper'],
+  ['enforced upgrader', 'Enforcer Upgrader'],
+]);
+
+function canonicalName(name) {
+  return ITEM_ALIASES.get(normalize(name)) ?? name;
+}
+
+function canonicalizeDatabase(database) {
+  const groups = new Map();
+  for (const original of database.records) {
+    const name = canonicalName(original.name);
+    const record = { ...original, name, key: itemKey(name, original.variant) };
+    const records = groups.get(record.key) ?? [];
+    records.push(record);
+    groups.set(record.key, records);
+  }
+  return { ...database, records: [...groups.values()].map(preferredRecord) };
+}
+
 export async function loadRules(root) {
   return readJson(path.join(root, 'rules', 'engine-rules.json'));
 }
@@ -9,10 +32,10 @@ export async function loadRules(root) {
 export async function loadDatabase(root) {
   const compactPath = path.join(root, 'data', 'items.index.json');
   try {
-    return await readJson(compactPath);
+    return canonicalizeDatabase(await readJson(compactPath));
   } catch {
     const source = await fs.readFile(path.join(root, 'data', 'items.generated.js'), 'utf8');
-    return JSON.parse(source.slice(source.indexOf('=') + 1, source.lastIndexOf(';')));
+    return canonicalizeDatabase(JSON.parse(source.slice(source.indexOf('=') + 1, source.lastIndexOf(';'))));
   }
 }
 
@@ -50,7 +73,7 @@ export function preferredRecord(records) {
 }
 
 export function findItem(database, name, variant = 'Base') {
-  const key = itemKey(name, variant);
+  const key = itemKey(canonicalName(name), variant);
   const conflict = (database.conflicts ?? []).find((entry) => entry.item === key || entry.key === key);
   if (conflict) throw Object.assign(new Error(`${name} (${variant}) has conflicting database values.`), { code: 'DATABASE_CONFLICT', conflict });
   const records = database.records.filter((record) => record.key === key);

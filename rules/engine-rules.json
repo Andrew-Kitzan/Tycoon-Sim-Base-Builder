@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 3,
   "crateProgression": [
     "Basic", "Advanced", "Factory", "Quarry", "Futuristic", "Toxic",
     "Desert", "Fantasy", "Space", "Candy", "Periastron", "Ancient",
@@ -11,6 +11,18 @@
   "teleporterMinimumRebirth": 5,
   "teleportersEnabled": false,
   "finalCapTolerance": 0.05,
+  "optimizationPolicy": {
+    "primaryObjective": "expectedCashPerMinute",
+    "tieBreakers": ["remainingTiles", "routeTimeSeconds"],
+    "directions": {
+      "expectedCashPerMinute": "maximize",
+      "remainingTiles": "maximize",
+      "routeTimeSeconds": "minimize"
+    },
+    "requireValidatedCandidates": true,
+    "requireCandidateComparison": true,
+    "finalizationRequires": ["optimizationComplete", "finalVerificationComplete"]
+  },
   "defaultPortableBeamLength": 2,
   "portableSpinnerBeamRadius": 1,
   "defaultFurnaceZone": { "across": 2, "depth": 2, "placement": "front-center" },
@@ -22,7 +34,52 @@
   "scannerFinalCapgraderOnly": true,
   "recommendedLambdaCount": 3,
   "builtInComplexModels": ["Lambda Upgrader", "Runic Array"],
-  "destructiveEffectTimers": { "Fire": 2, "Toxic": 5, "Nuclear": 5, "Overcharged": 5 },
+  "destructiveEffectTimers": { "Fire": 2, "Toxic": 5, "Nuclear": 3, "Overcharged": 3 },
+  "effectDefinitions": {
+    "Fire": {
+      "type": "destructive",
+      "timerSeconds": 2,
+      "sourceTimerSeconds": { "Dragon's Breath": 3 },
+      "appliedBy": ["Ore Flamethrower", "Dragon's Breath", "Fire Crystal Dropper", "Pineapple Dropper"],
+      "removedBy": ["Oasis Cleanser", "Leviathans' Wrath", "Ore Wash"],
+      "interaction": "Fire and Frost on the same ore destroy it."
+    },
+    "Nuclear": {
+      "type": "destructive",
+      "timerSeconds": 3,
+      "appliedBy": ["Nuclear Upgrader", "Meltdown Dropper"],
+      "immuneDroppers": ["Uranium Dropper", "Meltdown Dropper"],
+      "removedBy": ["Ore Wash"]
+    },
+    "Toxic": {
+      "type": "destructive",
+      "timerSeconds": 5,
+      "appliedBy": ["Acid Plant"],
+      "immuneDroppers": ["Uranium Dropper"],
+      "removedBy": ["Ore Wash"]
+    },
+    "Overcharged": {
+      "type": "destructive",
+      "timerSeconds": 3,
+      "appliedBy": ["Chartreuse Collider"],
+      "removedBy": [],
+      "interaction": "Prevents further effects; Ore Wash makes the ore explode."
+    },
+    "Derp": { "type": "cosmetic", "appliedBy": ["Derp Blaster", "Godly Stone Dropper"] },
+    "Sparkles": { "type": "cosmetic", "appliedBy": ["Cupcake-inator", "Godly Stone Dropper", "Lambda Upgrader"] },
+    "Rainbow": { "type": "cosmetic", "appliedBy": ["Prismatic Upgrader"] },
+    "Electrified": { "type": "cosmetic", "appliedBy": ["Scarabyte Dropper", "Electric Overdrive", "Robot Apocalypse"] },
+    "Frost": {
+      "type": "cosmetic",
+      "appliedBy": ["Shark Dropper", "Leviathans' Wrath"],
+      "interaction": "Fire and Frost on the same ore destroy it."
+    },
+    "Neon": {
+      "type": "cosmetic-material",
+      "appliedBy": ["Fire Crystal Dropper", "Netrozite Dropper", "Slushie Dropper", "Kunzite Dropper", "Meltdown Dropper", "Sugarbomb Dropper", "Martian Tech", "Electric Overdrive"],
+      "removedBy": ["Ore Glazer"]
+    }
+  },
   "validationCodes": {
     "PROFILE_MISSING": "Required player-profile field is missing.",
     "ITEM_ILLEGAL": "Item is not legal for this player profile.",
@@ -34,6 +91,7 @@
     "OUT_OF_BOUNDS": "A footprint extends outside the plot.",
     "FURNACE_MISSED": "The route does not enter the furnace processing zone.",
     "PORTABLE_UNREACHABLE": "A portable footprint cannot legally reach the ore route.",
+    "PORTABLE_BEFORE_CAP": "A portable may not touch ore until all capgraders are complete.",
     "CAP_RANGE": "A capgrader receives ore outside its input range.",
     "USE_LIMIT": "An ore exceeds an item's shared limited-use pool.",
     "TELEPORTER_DISABLED": "Teleporters are intentionally unsupported until their rules are supplied."

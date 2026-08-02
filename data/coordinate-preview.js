@@ -1,0 +1,1 @@
+globalThis.TycoonCoordinateMapPreview = null;

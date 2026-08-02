@@ -2,10 +2,12 @@ import { crossingSeconds } from './models.mjs';
 
 function namedEffects(item, rules) {
   const text = `${item.effects ?? ''}`;
-  return Object.keys(rules.destructiveEffectTimers).filter((effect) => (
-    new RegExp(`\\b${effect}\\b`, 'i').test(text)
-    && !new RegExp(`remov(?:e|es|ing)[^\n.]*\\b${effect}\\b`, 'i').test(text)
-  ));
+  return Object.keys(rules.destructiveEffectTimers).filter((effect) => {
+    const knownSources = rules.effectDefinitions?.[effect]?.appliedBy;
+    if (knownSources?.length) return knownSources.some((name) => name.toLowerCase() === item.name.toLowerCase());
+    return new RegExp(`(?:appl(?:y|ies)|gives?|has|sets?[^\n.]*on)\\b[^\n.]*\\b${effect}\\b`, 'i').test(text)
+      && !new RegExp(`remov(?:e|es|ing)[^\n.]*\\b${effect}\\b`, 'i').test(text);
+  });
 }
 
 function immuneTo(dropper, effect) {
@@ -22,6 +24,13 @@ function isEffectRemover(item, effect) {
   return effect.toLowerCase() === 'fire' && /oasis/i.test(item.name);
 }
 
+function timerForEffect(effect, item, rules) {
+  const definition = rules.effectDefinitions?.[effect];
+  return definition?.sourceTimerSeconds?.[item.name]
+    ?? definition?.timerSeconds
+    ?? rules.destructiveEffectTimers[effect];
+}
+
 export function destructiveEffectsInChain(chain, rules) {
   return [...new Set(chain.flatMap((entry) => namedEffects(entry.item ?? entry, rules)))];
 }
@@ -32,7 +41,7 @@ export function evaluateEffectSafety({ dropper, dropperCount = 1, chain, layout,
     const item = chain[index].item ?? chain[index];
     for (const effect of namedEffects(item, rules)) {
       if (immuneTo(dropper, effect)) {
-        results.push({ effect, chainIndex: index, appliedBy: item.name, safe: true, immune: true, exposureSeconds: 0, timerSeconds: rules.destructiveEffectTimers[effect] });
+        results.push({ effect, chainIndex: index, appliedBy: item.name, safe: true, immune: true, exposureSeconds: 0, timerSeconds: timerForEffect(effect, item, rules) });
         continue;
       }
       const washable = effect.toLowerCase() !== 'overcharged';
@@ -49,7 +58,7 @@ export function evaluateEffectSafety({ dropper, dropperCount = 1, chain, layout,
       for (let candidateIndex = index + 1; candidateIndex <= destination && candidateIndex < chain.length; candidateIndex += 1) {
         exposureSeconds += crossingSeconds(chain[candidateIndex].item ?? chain[candidateIndex]);
       }
-      const timerSeconds = rules.destructiveEffectTimers[effect];
+      const timerSeconds = timerForEffect(effect, item, rules);
       results.push({
         effect,
         chainIndex: index,

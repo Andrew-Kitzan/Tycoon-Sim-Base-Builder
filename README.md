@@ -78,6 +78,18 @@ npm.cmd run validate-plan -- plans/active-plan.json --compact
 npm.cmd run plan:summary
 ```
 
+For a completed setup, use the resumable batch optimizer instead of manually
+running individual candidates:
+
+```powershell
+npm.cmd run optimize
+```
+
+It checkpoints every tested configuration, skips completed configurations when
+resumed, prints only a compact winning summary, runs strict directed-route
+validation, finalizes the grid, and writes `PROJECT_STATE.md`. A new Codex task
+can read that state file plus the rule files without replaying the old chat.
+
 `build` writes `plans/active-plan.json` plus the browser loader at
 `data/active-plan.js`. The renderer reads that recipe automatically; it no
 longer requires a hand-written setup inside `app.js`.

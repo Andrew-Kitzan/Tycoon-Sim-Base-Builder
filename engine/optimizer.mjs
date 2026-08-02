@@ -1,5 +1,22 @@
-import { applyDeterministicItem, crossingSeconds, expectedCashWeight, itemArea, maxPhysicalCopies } from './models.mjs';
+import { applyDeterministicItem, canActivateItem, crossingSeconds, expectedCashWeight, itemArea, maxPhysicalCopies } from './models.mjs';
 import { integerUseLimit, normalize, parseRange } from './utils.mjs';
+
+export function compareOptimizationMetrics(left, right, rules) {
+  const policy = rules.optimizationPolicy ?? {};
+  const criteria = [policy.primaryObjective ?? 'expectedCashPerMinute', ...(policy.tieBreakers ?? [])];
+  for (const criterion of criteria) {
+    const leftValue = Number(left?.[criterion] ?? 0);
+    const rightValue = Number(right?.[criterion] ?? 0);
+    if (leftValue === rightValue) continue;
+    const direction = policy.directions?.[criterion] ?? 'maximize';
+    return direction === 'minimize' ? rightValue - leftValue : leftValue - rightValue;
+  }
+  return 0;
+}
+
+export function rankOptimizationCandidates(candidates, rules) {
+  return [...candidates].sort((left, right) => compareOptimizationMetrics(right.metrics, left.metrics, rules));
+}
 
 function bestVariantPerName(items, rules) {
   const rank = new Map(rules.variantRank.map((variant, index) => [normalize(variant), index]));
@@ -37,7 +54,7 @@ function chainEntry(item, beforeState, afterState) {
 }
 
 function paretoKey(state) {
-  return `${Math.round(Math.log10(Math.max(1, state.value)) * 100)}|${Object.entries(state.uses).sort().map(([name, count]) => `${name}:${count}`).join(',')}`;
+  return `${Math.round(Math.log10(Math.max(1, state.value)) * 100)}|${[...(state.effects ?? [])].sort().join(',')}|${Object.entries(state.uses).sort().map(([name, count]) => `${name}:${count}`).join(',')}`;
 }
 
 function prune(states, width, score) {
@@ -50,15 +67,15 @@ function prune(states, width, score) {
   return [...best.values()].sort((a, b) => score(b) - score(a)).slice(0, width);
 }
 
-export function optimizeCapgraders({ initialValue, initialOreSize = 1, legalItems, profile, rules, maxSteps = 18, beamWidth = 2500 }) {
+export function optimizeCapgraders({ initialValue, initialOreSize = 1, initialEffects = [], legalItems, profile, rules, maxSteps = 18, beamWidth = 2500 }) {
   const capgraders = legalItems.filter((item) => item.sourceSheets?.some((source) => source.sheet === 'Capgrader')
     && Number.isFinite(item.mainStat) && parseRange(item.range));
   const lunar = bestVariantPerName(legalItems.filter((item) => item.name === 'Lunar Landing'), rules)[0];
   const additives = bestVariantPerName(legalItems.filter((item) => normalize(item.mainStatType).includes('additive') && Number.isFinite(item.mainStat)), rules);
-  const initial = { value: initialValue, oreSize: initialOreSize, survival: 1, replication: 1, timeSeconds: 0, area: 0, uses: {}, chain: [], finalInput: null, finalCap: null };
+  const initial = { value: initialValue, oreSize: initialOreSize, survival: 1, replication: 1, effects: [...initialEffects], timeSeconds: 0, area: 0, uses: {}, chain: [], finalInput: null, finalCap: null };
   let openingStates = [initial];
   if (lunar) {
-    const state = applyDeterministicItem(lunar, initial, 1, profile);
+    const state = applyDeterministicItem(lunar, initial, 1, profile, rules);
     openingStates.push({ ...state, uses: addUse(initial, lunar), chain: [chainEntry(lunar, initial, state)] });
   }
   const lunarGain = lunar?.mainStat ?? 1;
@@ -77,7 +94,7 @@ export function optimizeCapgraders({ initialValue, initialOreSize = 1, legalItem
         })
         .reduce((best, item) => Math.max(best, item.mainStat), 1);
       if (additiveGain <= Math.max(lunarGain, bestCapGain)) continue;
-      const applied = applyDeterministicItem(additive, state, (state.uses[normalize(additive.name)] ?? 0) + 1, profile);
+      const applied = applyDeterministicItem(additive, state, (state.uses[normalize(additive.name)] ?? 0) + 1, profile, rules);
       next.push({ ...applied, uses: addUse(state, additive), chain: [...state.chain, chainEntry(additive, state, applied)] });
     }
     if (!next.length) break;
@@ -93,9 +110,9 @@ export function optimizeCapgraders({ initialValue, initialOreSize = 1, legalItem
     for (const state of frontier) {
       for (const item of capgraders) {
         const range = parseRange(item.range);
-        if (state.value < range.minimum || state.value > range.maximum || !useAllowed(item, state, profile, rules, 'cap')) continue;
+        if (state.value < range.minimum || state.value > range.maximum || !useAllowed(item, state, profile, rules, 'cap') || !canActivateItem(item, state)) continue;
         const useNumber = (state.uses[normalize(item.name)] ?? 0) + 1;
-        const applied = applyDeterministicItem(item, state, useNumber, profile);
+        const applied = applyDeterministicItem(item, state, useNumber, profile, rules);
         const candidate = {
           ...applied,
           uses: addUse(state, item),
@@ -116,15 +133,20 @@ export function optimizeCapgraders({ initialValue, initialOreSize = 1, legalItem
     return nearBand * 1e9 + ratio * 1e7 + Math.log(Math.max(1, state.value)) * 1e4 - state.timeSeconds * 10 - state.area;
   };
   const best = terminals.sort((a, b) => terminalScore(b) - terminalScore(a))[0] ?? initial;
+  const rankedTerminals = terminals.sort((a, b) => terminalScore(b) - terminalScore(a));
   const alternatives = [];
   const seenChains = new Set();
-  for (const state of terminals.sort((a, b) => terminalScore(b) - terminalScore(a))) {
+  const perLength = new Map();
+  for (const state of rankedTerminals) {
     const signature = state.chain.map((entry) => `${entry.item.key}@${entry.before}`).join('|');
     if (seenChains.has(signature)) continue;
+    const lengthCount = perLength.get(state.chain.length) ?? 0;
+    if (lengthCount >= 5) continue;
     seenChains.add(signature);
+    perLength.set(state.chain.length, lengthCount + 1);
     alternatives.push(state);
-    if (alternatives.length >= 40) break;
   }
+  alternatives.sort((a, b) => terminalScore(b) - terminalScore(a));
   return { best, alternatives, searchedStates: terminals.length };
 }
 
@@ -143,9 +165,10 @@ export function optimizePostCap({ initialState, legalItems, profile, rules, maxS
     for (const state of frontier) {
       for (const item of items) {
         if (!useAllowed(item, state, profile, rules)) continue;
+        if (!canActivateItem(item, state)) continue;
         if (state.area + itemArea(item) > areaBudget) continue;
         const useNumber = (state.uses[normalize(item.name)] ?? 0) + 1;
-        const applied = applyDeterministicItem(item, state, useNumber, profile);
+        const applied = applyDeterministicItem(item, state, useNumber, profile, rules);
         const candidate = {
           ...applied,
           uses: addUse(state, item),
@@ -159,9 +182,22 @@ export function optimizePostCap({ initialState, legalItems, profile, rules, maxS
     if (!next.length) break;
     frontier = prune(next, beamWidth, score);
   }
+  const ranked = candidates.sort((a, b) => score(b) - score(a));
+  const byAddedLength = new Map();
+  const initialLength = initial.chain.length;
+  for (const candidate of ranked) {
+    const addedLength = candidate.chain.length - initialLength;
+    const group = byAddedLength.get(addedLength) ?? [];
+    if (group.length < 5) group.push(candidate);
+    byAddedLength.set(addedLength, group);
+  }
+  const alternatives = [...byAddedLength.values()]
+    .flat()
+    .sort((a, b) => score(b) - score(a));
+  if (!alternatives.includes(initial)) alternatives.push(initial);
   return {
     best,
-    alternatives: candidates.sort((a, b) => score(b) - score(a)).slice(0, 50),
+    alternatives,
     searchedStates: candidates.length,
     score: expectedCashWeight(best),
   };

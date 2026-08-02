@@ -1,6 +1,6 @@
 import { diagnostic } from './utils.mjs';
 
-const HARD_CODES = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'ITEM_ILLEGAL', 'USE_LIMIT', 'WRONG_LANE']);
+const HARD_CODES = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'ITEM_ILLEGAL', 'USE_LIMIT', 'WRONG_LANE']);
 const conveyorRules = {
   'Quarter Conveyor': { width: 1, length: 1 },
   'Half Conveyor': { width: 2, length: 1 },

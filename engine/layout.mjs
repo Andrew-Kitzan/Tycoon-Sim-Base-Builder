@@ -264,7 +264,7 @@ function compressQuarterConveyors(conveyors) {
       byCell.get(`${conveyor.x},${conveyor.y + 1}`),
       byCell.get(`${conveyor.x + 1},${conveyor.y + 1}`),
     ];
-    if (block.every((cell) => cell && !consumed.has(key(cell)) && cell.direction === conveyor.direction)) {
+    if (!conveyor.lane && block.every((cell) => cell && !cell.lane && !consumed.has(key(cell)) && cell.direction === conveyor.direction && cell.stageIndex === conveyor.stageIndex)) {
       consumeBlock(block, { ...conveyor, conveyor: 'Supercharged Conveyor', speed: 18 }, conveyor.x, conveyor.y, 2, 2);
     }
   }
@@ -272,7 +272,7 @@ function compressQuarterConveyors(conveyors) {
     if (consumed.has(key(conveyor))) continue;
     const horizontal = conveyor.direction === 'east' || conveyor.direction === 'west';
     const neighbor = byCell.get(horizontal ? `${conveyor.x},${conveyor.y + 1}` : `${conveyor.x + 1},${conveyor.y}`);
-    if (neighbor && !consumed.has(key(neighbor)) && neighbor.direction === conveyor.direction) {
+    if (!conveyor.lane && neighbor && !neighbor.lane && !consumed.has(key(neighbor)) && neighbor.direction === conveyor.direction && neighbor.stageIndex === conveyor.stageIndex) {
       consumeBlock([conveyor, neighbor], { ...conveyor, conveyor: 'Half Conveyor', speed: 12 }, conveyor.x, conveyor.y, horizontal ? 1 : 2, horizontal ? 2 : 1);
     }
   }
@@ -281,21 +281,27 @@ function compressQuarterConveyors(conveyors) {
 }
 
 function groupRows(items, plotSize) {
-  const rows = [];
-  let row = [];
-  let length = 0;
-  for (const item of items) {
-    const needed = item.size.length + (row.length ? 1 : 0);
-    if (row.length && length + needed > plotSize - 2) {
-      rows.push(row);
-      row = [];
-      length = 0;
+  const capacity = plotSize - 2;
+  const best = Array(items.length + 1).fill(null);
+  best[items.length] = { height: 0, rows: [] };
+  for (let start = items.length - 1; start >= 0; start -= 1) {
+    let length = 0;
+    let rowHeight = 0;
+    for (let end = start; end < items.length; end += 1) {
+      length += items[end].size.length;
+      if (end === 0 && items.length > 1) length += 4;
+      if (length > capacity) break;
+      rowHeight = Math.max(rowHeight, items[end].size.width);
+      const tail = best[end + 1];
+      if (!tail) continue;
+      const totalHeight = rowHeight + (tail.rows.length ? 2 : 0) + tail.height;
+      const candidate = { height: totalHeight, rows: [items.slice(start, end + 1), ...tail.rows] };
+      if (!best[start]
+        || candidate.height < best[start].height
+        || (candidate.height === best[start].height && candidate.rows.length < best[start].rows.length)) best[start] = candidate;
     }
-    row.push(item);
-    length += item.size.length + (row.length > 1 ? 1 : 0);
   }
-  if (row.length) rows.push(row);
-  return rows;
+  return best[0]?.rows ?? [items];
 }
 
 export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize, rules }) {
@@ -303,6 +309,9 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
   const primaryDropper = dropperItems[0];
   const portableItems = chain.filter(isPortable);
   const logicalItems = [primaryDropper, ...chain.filter((item) => !isPortable(item)), furnace];
+  const finalCapLogicalIndex = logicalItems.reduce((last, item, index) => (
+    item.sourceSheets?.some((source) => source.sheet === 'Capgrader') ? index : last
+  ), 0);
   const rows = groupRows(logicalItems, plotSize);
   const placed = [];
   let rowTop = 1;
@@ -320,10 +329,12 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
       const x = travelDirection === 'east' ? cursor : cursor - size.width + 1;
       const y = centerLine - (item.size.width - across(item)) / 2;
       placed.push({ id: `item-${placed.length + 1}`, item, x, y, ...size, direction, type: item.type });
-      cursor += travelDirection === 'east' ? size.width + 1 : -(size.width + 1);
+      const mergeCorridor = item === primaryDropper ? 4 : 0;
+      cursor += travelDirection === 'east' ? size.width + mergeCorridor : -(size.width + mergeCorridor);
     }
-    // A centered two-wide lane needs a full 2x2 corner between packed rows.
-    rowTop += rowHeight + 2;
+    // Rows may touch vertically because the reserved edge columns hold the
+    // 2x2 turn; the turn must not consume two otherwise empty full rows.
+    rowTop += rowHeight;
   }
 
   const diagnostics = [];
@@ -361,10 +372,10 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
     const laneWidth = starts.length === 2 && target.length >= 2 ? 2 : 1;
     const effectiveSpeed = laneWidth === 2 ? 16.8 : 12;
     connections.push({ from: current, to: next, seconds: externalCells.length * 3 / (laneWidth * effectiveSpeed) });
-    if (index === 0) firstMergeTargets = externalCells.length ? externalCells : target;
+    if (index === 0) firstMergeTargets = externalCells.length ? externalCells.slice(0, Math.min(4, externalCells.length)) : target;
     externalCells.forEach((cell, pathIndex) => {
       const direction = cell.flowDirection ?? pathDirection(cell, externalCells[pathIndex + 1], next.direction);
-      const conveyor = { id: `conveyor-${conveyors.length + 1}`, name: `Quarter Conveyor ${conveyors.length + 1}`, conveyor: 'Quarter Conveyor', x: cell.x, y: cell.y, width: 1, height: 1, direction, speed: 12 };
+      const conveyor = { id: `conveyor-${conveyors.length + 1}`, name: `Quarter Conveyor ${conveyors.length + 1}`, conveyor: 'Quarter Conveyor', x: cell.x, y: cell.y, width: 1, height: 1, direction, speed: 12, stageIndex: index, lane: next.item.name === 'Oil Well' ? 'top' : undefined };
       conveyors.push(conveyor);
       route.push({ kind: 'conveyor', id: conveyor.id });
     });
@@ -407,17 +418,17 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
     const externalMergeCells = merged.path.filter((cell) => !occupancy.has(key(cell)) && !existingConveyors.has(key(cell)));
     externalMergeCells.forEach((cell, index) => {
       const direction = cell.flowDirection ?? pathDirection(cell, externalMergeCells[index + 1], primaryDropper.direction);
-      conveyors.push({ id: `conveyor-${conveyors.length + 1}`, name: `Quarter Conveyor ${conveyors.length + 1}`, conveyor: 'Quarter Conveyor', x: cell.x, y: cell.y, width: 1, height: 1, direction, speed: 12 });
+      conveyors.push({ id: `conveyor-${conveyors.length + 1}`, name: `Quarter Conveyor ${conveyors.length + 1}`, conveyor: 'Quarter Conveyor', x: cell.x, y: cell.y, width: 1, height: 1, direction, speed: 12, stageIndex: 0 });
     });
   }
   const furnacePlaced = placed.find((entry) => entry.item === furnace);
   const conveyorCells = new Set(conveyors.map(key));
   const portableDirections = ['south', 'north', 'east', 'west'];
-  let portableCursor = 0;
   for (const item of portableItems) {
     let portable = null;
-    for (let offset = portableCursor; offset < conveyors.length && !portable; offset += 1) {
-      const target = conveyors[offset];
+    const postCapConveyors = conveyors.filter((conveyor) => conveyor.stageIndex >= finalCapLogicalIndex);
+    for (let offset = 0; offset < postCapConveyors.length && !portable; offset += 1) {
+      const target = postCapConveyors[offset];
       for (const direction of portableDirections) {
         const size = gridSize(item, direction);
         const x = direction === 'south' || direction === 'north'
@@ -432,7 +443,6 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
         if (cells.some((cell) => occupancy.has(key(cell)) || conveyorCells.has(key(cell)))) continue;
         portable = candidate;
         cells.forEach((cell) => occupancy.set(key(cell), item.name));
-        portableCursor = offset + 1;
         break;
       }
     }
@@ -440,6 +450,35 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
     else diagnostics.push(diagnostic('PORTABLE_UNREACHABLE', `${item.name} has no legal footprint beside the route.`, { item: item.key }));
   }
   const compressed = compressQuarterConveyors(conveyors);
+  const firstUpgradeEntry = placed[1] ? internalPorts(placed[1]).entry : [];
+  const straightMergeCentering = compressed
+    .filter((conveyor) => conveyor.conveyor === 'Supercharged Conveyor')
+    .sort((left, right) => {
+      const distance = (entry) => Math.min(...rectCells(entry).flatMap((cell) => firstUpgradeEntry.map((goal) => Math.abs(cell.x - goal.x) + Math.abs(cell.y - goal.y))));
+      return distance(left) - distance(right);
+    })[0];
+  if (straightMergeCentering) {
+    straightMergeCentering.conveyor = 'Centering Conveyor';
+    straightMergeCentering.name = straightMergeCentering.name.replace('Supercharged', 'Centering');
+    straightMergeCentering.speed = 12;
+    straightMergeCentering.centers = true;
+  }
+  // Lane-sensitive upgraders need a fresh centering operation after the last
+  // odd-width Oil Well, not merely one somewhere near the droppers.
+  for (let targetIndex = 1; targetIndex < logicalItems.length; targetIndex += 1) {
+    if (!['Fine Point Upgrader', 'Prismatic Upgrader'].includes(logicalItems[targetIndex].name)) continue;
+    const priorOilIndex = logicalItems.slice(0, targetIndex).map((item) => item.name).lastIndexOf('Oil Well');
+    if (priorOilIndex < 0) continue;
+    const candidate = compressed.find((conveyor) => conveyor.stageIndex === targetIndex - 1 && conveyor.conveyor === 'Supercharged Conveyor');
+    if (candidate) {
+      candidate.conveyor = 'Centering Conveyor';
+      candidate.name = candidate.name.replace('Supercharged', 'Centering');
+      candidate.speed = 12;
+      candidate.centers = true;
+    } else if (!compressed.some((conveyor) => conveyor.stageIndex === targetIndex - 1 && conveyor.centers)) {
+      diagnostics.push(diagnostic('WRONG_LANE', `No 2x2 Centering Conveyor fits after Oil Well and before ${logicalItems[targetIndex].name}.`));
+    }
+  }
   const sequenceQueues = new Map();
   [...dropperItems, ...chain, furnace].forEach((item, sequenceIndex) => {
     const queue = sequenceQueues.get(item) ?? [];

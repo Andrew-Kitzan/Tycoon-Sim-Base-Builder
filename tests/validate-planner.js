@@ -11,16 +11,51 @@ const indexSource = read('index.html');
 const rulesSource = read('docs/BUILD_RULES.md');
 const databasePath = path.join(root, 'data', 'Tycoon Sim Database.xlsx');
 const generatedDatabaseSource = read('data/items.generated.js');
+const workflowStateSource = read('data/workflow-state.js');
+const cliSource = read('scripts/planner-cli.mjs');
+const packageSource = read('package.json');
 
 assert.ok(fs.existsSync(databasePath));
 assert.ok(fs.statSync(databasePath).size > 1_000_000);
 assert.doesNotMatch(appSource, /function loadKunziteAlienPlan/);
 assert.match(appSource, /function clearPlanner/);
+assert.match(cliSource, /replaceSummary: true/, 'clear must discard the previous test summary');
 assert.match(appSource, /clearPlanner\(\);/);
 assert.match(appSource, /item\.type !== 'portable' && item\.type !== 'dropper'/);
 assert.match(rulesSource, /Droppers have no built-in conveyor/);
 assert.match(rulesSource, /continuous\s+ore route/);
 assert.match(indexSource, /planner-core\.js/);
+assert.match(indexSource, /data\/workflow-state\.js/);
+assert.match(indexSource, /data\/coordinate-preview\.js/);
+assert.match(indexSource, /data\/optimization-baseline\.js/);
+assert.match(indexSource, /data\/optimization-progress\.js/);
+assert.match(indexSource, /id="stage-preview-summary"/);
+assert.match(appSource, /function loadWorkflowProgress/);
+assert.match(appSource, /function renderPlanningPreview/);
+assert.match(cliSource, /plans', 'coordinate-map\.json'\), \{ force: true \}/);
+assert.match(cliSource, /plans', 'route-validation\.json'\), \{ force: true \}/);
+assert.match(cliSource, /plans', 'optimization-baseline\.json'\), \{ force: true \}/);
+assert.match(appSource, /4\. Optimization and grid preview/);
+assert.match(cliSource, /removedActiveProfile/);
+assert.match(cliSource, /writeCoordinatePreview\(null\)/);
+assert.match(cliSource, /writeOptimizationBaseline\(null\)/);
+assert.match(cliSource, /writeOptimizationProgress\(null\)/);
+assert.match(cliSource, /optimization-in-progress/);
+assert.match(cliSource, /restoreCoordinateMapPreview/);
+assert.match(cliSource, /Step 5 cannot complete until finalVerificationComplete/);
+assert.match(cliSource, /command === 'optimize-current'/);
+assert.match(cliSource, /configKey/);
+assert.match(cliSource, /command === 'finalize-winner'/);
+assert.match(cliSource, /PROJECT_STATE\.md/);
+assert.match(packageSource, /"optimize"/);
+const workflowState = JSON.parse(
+  workflowStateSource.slice(
+    workflowStateSource.indexOf('=') + 1,
+    workflowStateSource.lastIndexOf(';'),
+  ),
+);
+assert(Number.isInteger(workflowState.completedStage));
+assert(workflowState.completedStage >= 0 && workflowState.completedStage <= 5);
 const generatedDatabase = JSON.parse(
   generatedDatabaseSource.slice(
     generatedDatabaseSource.indexOf('=') + 1,
@@ -36,20 +71,26 @@ assert.ok(kingDropperRecords.every((record) => record.maxCopies === 1));
 
 const appEnd = appSource.indexOf('sizeSlider.addEventListener');
 assert.ok(appEnd > 0);
-const appSandbox = { document: { querySelector: () => ({}) } };
+const restoredWorkflowState = { completedStage: 2, status: 'mapped-complete' };
+const appSandbox = { document: { querySelector: () => ({}) }, TycoonWorkflowState: restoredWorkflowState };
 vm.createContext(appSandbox);
 vm.runInContext(`${appSource.slice(0, appEnd)}
 this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem,
-  parseCoordinate, rotateDirection, furnaceProcessingZoneGeometry };`, appSandbox);
+  parseCoordinate, rotateDirection, furnaceProcessingZoneGeometry, completedStageForPlan, workflowStage, workflowProgress };`, appSandbox);
 const app = appSandbox.api;
 assert.equal(app.coordinateMap.length, 0);
 assert.equal(app.routeSegments.length, 0);
 assert.equal(app.validation, null);
 assert.equal(app.activePlan, null);
+assert.equal(app.workflowStage, 2);
+assert.equal(app.workflowProgress.status, 'mapped-complete');
 const uiDropper = app.placeItem(1, 'Iron Dropper', 1, 1, 2, 3, 'east', 'dropper');
 assert.equal(uiDropper.conveyorWidth, 0);
 assert.deepEqual({ ...app.parseCoordinate('AA35') }, { x: 27, y: 35 });
 assert.equal(app.rotateDirection('north', 'right'), 'east');
+assert.equal(app.completedStageForPlan({ valid: true }), 3);
+assert.equal(app.completedStageForPlan({ valid: true, optimization: { complete: true } }), 4);
+assert.equal(app.completedStageForPlan({ valid: true, optimization: { complete: true }, finalVerification: { complete: true } }), 5);
 
 const coreSandbox = {};
 vm.createContext(coreSandbox);

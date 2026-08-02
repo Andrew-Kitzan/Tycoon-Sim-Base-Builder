@@ -369,9 +369,22 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   ore that same effect without destroying it when the database documents that
   protection.
 - When keeping a timed destructive effect, calculate travel from the point the
-  effect is applied to the furnace processing zone. Flame Thrower Fire must be
-  processed in under 2 seconds and Toxic in under 5 seconds; otherwise move the
-  effect source later or remove the effect with a legal washer.
+  effect is applied to the furnace processing zone. Ore Flamethrower Fire must
+  be processed in under 2 seconds; Dragon's Breath Fire, Nuclear, and
+  Overcharged in under 3 seconds; and Toxic in under 5 seconds. Otherwise move
+  the effect source later or remove the effect with a legal washer. A route
+  equal to or longer than the timer is unsafe.
+- Acid Plant applies Toxic. Nuclear Upgrader applies Nuclear. Chartreuse
+  Collider applies Overcharged. Overcharged cannot be safely washed: Ore Wash
+  makes that ore explode.
+- Acid Plant only triggers when the ore has no effects at all. Rainbow from
+  Prismatic, a possible Sparkles result from Lambda, and every other existing
+  effect block it. A successful Acid Plant applies Toxic, so a second Acid
+  Plant cannot trigger unless a remover first returns the ore to an effect-free
+  state.
+- Fire and Frost cannot coexist on one ore; applying both destroys it.
+- Derp, Sparkles, Rainbow, Electrified, and Frost are cosmetic effects. Neon is
+  a cosmetic material. Their presence can still change item or furnace behavior.
 
 ### Randomized and destructive normal upgraders
 
@@ -398,8 +411,9 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   three-Lambda comparison lists approximately 40.28% bad outcomes and 59.72%
   good outcomes among the modeled outcomes; use the full probability tree when
   estimating processed ore rate and expected cash/min.
-- Because Lambda can apply Sparkle, prefer placing it after Acid Plant when the
-  route can subsequently clear effects with Ore Washer.
+- Because Lambda can apply Sparkles, it must be placed after any Acid Plant
+  that is expected to trigger unless a remover first returns the ore to an
+  effect-free state.
 - If Lambdas do not fit, use the MPU list to compare their expected benefit
   against competing items rather than removing them automatically.
 - Star Scanner is optional when space is available. If owned, one is a common
@@ -524,3 +538,18 @@ droppers have the same total, combine their display labels (for example,
 `A & B total ore destruction`). After merging, retain those distinct totals until
 they become equal; do not silently replace them with an unweighted route-wide
 percentage.
+
+## Optimization and finalization gate
+
+- A route that passes validation is only the Step 4 baseline; it is not a
+  finalized base.
+- Compare validated candidates lexicographically: maximize expected cash per
+  minute first, then maximize remaining plot tiles, then minimize end-to-end
+  route time. Space or time may never outweigh a lower cash-per-minute result.
+- Preserve every legality, capgrader, effect-safety, collision, lane, portable,
+  turn-speed, and furnace-zone rule while optimizing.
+- Step 5 may be completed only when the selected candidate explicitly records
+  both `optimizationComplete` and `finalVerificationComplete`.
+- Clearing the board deletes the setup-specific optimization baseline along
+  with the coordinate map, validation artifact, plan, and profile. Reusable
+  engine code and regression tests remain.

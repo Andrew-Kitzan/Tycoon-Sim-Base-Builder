@@ -9,6 +9,7 @@ const zoomOut = document.querySelector('#zoom-out');
 const zoomIn = document.querySelector('#zoom-in');
 const tileCount = document.querySelector('#tile-count');
 const status = document.querySelector('#status');
+const stagePreviewSummary = document.querySelector('#stage-preview-summary');
 const legend = document.querySelector('#plan-legend');
 const workflowSteps = document.querySelector('#workflow-steps');
 const coordinateSummary = document.querySelector('#coordinate-summary');
@@ -24,11 +25,26 @@ const workflow = [
   '1. Legal item list',
   '2. Coordinate map',
   '3. Route validation',
-  '4. Grid render',
+  '4. Optimization and grid preview',
   '5. Final verification',
 ];
 let workflowStage = 0;
+let workflowProgress = null;
+const planningPreview = globalThis.TycoonCoordinateMapPreview ?? null;
+const optimizationBaseline = globalThis.TycoonOptimizationBaseline ?? null;
+const optimizationProgress = globalThis.TycoonOptimizationProgress ?? null;
 const baseTileSize = 24;
+
+function loadWorkflowProgress(progress) {
+  if (!progress || typeof progress !== 'object') return false;
+  const savedStage = Number(progress.completedStage ?? progress.stage);
+  if (!Number.isFinite(savedStage)) return false;
+  workflowStage = Math.max(0, Math.min(workflow.length, Math.trunc(savedStage)));
+  workflowProgress = progress;
+  const previewSize = planningPreview?.map?.plotSize ?? planningPreview?.profile?.plotSize;
+  if (previewSize >= Number(sizeSlider.min) && previewSize <= Number(sizeSlider.max)) sizeSlider.value = previewSize;
+  return true;
+}
 
 function applyGridZoom(value) {
   const zoom = Math.min(Number(zoomSlider.max), Math.max(Number(zoomSlider.min), Number(value)));
@@ -352,8 +368,20 @@ function clearPlanner() {
   validation = null;
   activePlan = null;
   workflowStage = 0;
+  workflowProgress = null;
   selectedItemId = null;
   editNotice = '';
+}
+
+function completedStageForPlan(plan) {
+  if (!plan?.valid) return 2;
+  const optimizationComplete = plan.optimization?.complete === true
+    || plan.workflow?.optimizationComplete === true;
+  const finalVerificationComplete = plan.finalVerification?.complete === true
+    || plan.workflow?.finalVerificationComplete === true;
+  if (optimizationComplete && finalVerificationComplete) return 5;
+  if (optimizationComplete) return 4;
+  return 3;
 }
 
 function loadGeneratedPlan(plan) {
@@ -403,7 +431,7 @@ function loadGeneratedPlan(plan) {
     items: coordinateMap,
     lanes: routeSegments,
   };
-  workflowStage = 5;
+  workflowStage = completedStageForPlan(plan);
   return true;
 }
 const legendItems = [
@@ -476,12 +504,15 @@ function renderWorkflow() {
   const listedItems = activePlan?.items ?? coordinateMap;
   workflowSteps.replaceChildren(...workflow.map((label, index) => {
     const step = document.createElement('li');
-    step.className = `workflow-step${index < workflowStage ? ' is-done' : ''}${index === workflowStage ? ' is-current' : ''}`;
-    step.textContent = index < workflowStage ? `✓ ${label}` : label;
+    const isDone = index < workflowStage;
+    const isCurrent = index === workflowStage && workflowStage < workflow.length;
+    step.className = `workflow-step${isDone ? ' is-done' : ''}${isCurrent ? ' is-current' : ''}`;
+    step.dataset.status = isDone ? 'complete' : isCurrent ? 'current' : 'pending';
+    step.innerHTML = `<span>${isDone ? '✓ ' : ''}${label}</span><small>${isDone ? 'Complete' : isCurrent ? 'In progress' : 'Pending'}</small>`;
     return step;
   }));
 
-  if (workflowStage >= 2) {
+  if (workflowStage >= 2 && listedItems.length) {
     coordinateSummary.hidden = false;
     coordinateSummary.innerHTML = `
       <table>
@@ -503,7 +534,20 @@ function renderWorkflow() {
       </table>`;
   }
 
-  if (workflowStage < 2) coordinateSummary.hidden = true;
+  if (workflowStage >= 2 && !listedItems.length && workflowProgress) {
+    const summary = workflowProgress.summary ?? {};
+    coordinateSummary.hidden = false;
+    coordinateSummary.innerHTML = `
+      <strong>Coordinate map saved.</strong>
+      ${summary.itemCount != null ? ` ${summary.itemCount} items` : ''}
+      ${summary.conveyorRunCount != null ? ` · ${summary.conveyorRunCount} conveyor runs` : ''}
+      ${summary.plotSize != null ? ` · ${summary.plotSize}×${summary.plotSize} plot` : ''}
+      ${summary.routeCount != null ? ` · ${summary.routeCount} dropper routes checked` : ''}
+      ${summary.diagnosticCount ? ` · ${summary.diagnosticCount} correction${summary.diagnosticCount === 1 ? '' : 's'} required` : ''}
+      ${workflowProgress.validationPending ? ' · Route validation pending' : ''}`;
+  }
+
+  if (workflowStage < 2 || (workflowStage >= 2 && !listedItems.length && !workflowProgress)) coordinateSummary.hidden = true;
   if (workflowStage < 3 || !validation) validationSummary.hidden = true;
 
   if (workflowStage >= 3 && validation) {
@@ -815,14 +859,144 @@ function validateRouteSegments(segments, items, size) {
   return routeTiles.size;
 }
 
-function renderPlan(size) {
-  grid.querySelectorAll('.plan-item').forEach((item) => item.remove());
+function previewRange(value) {
+  const [startText, endText = startText] = String(value).split(':');
+  const start = parseCoordinate(startText);
+  const end = parseCoordinate(endText);
+  return {
+    x: Math.min(start.x, end.x),
+    y: Math.min(start.y, end.y),
+    width: Math.abs(end.x - start.x) + 1,
+    height: Math.abs(end.y - start.y) + 1,
+  };
+}
 
-  if (!activePlan) {
-    legend.textContent = 'No verified layout loaded yet.';
-    status.textContent = `Planning canvas · ${size * size} tiles available`;
+function positionPreviewElement(element, rectangle) {
+  element.style.left = `calc(${rectangle.x - 1} * var(--tile))`;
+  element.style.top = `calc(${rectangle.y - 1} * var(--tile))`;
+  element.style.width = `calc(${rectangle.width} * var(--tile))`;
+  element.style.height = `calc(${rectangle.height} * var(--tile))`;
+}
+
+function previewItemClass(item) {
+  if (item.section === 'furnace') return 'furnace';
+  if (/dropper/i.test(item.name)) return 'dropper';
+  if (/portable|spinner|glazer|derp blaster|dragon/i.test(item.name)) return 'portable';
+  if (item.section === 'capgrader') return 'capgrader';
+  return 'upgrader';
+}
+
+function previewPortableBeam(rectangle, facing, size) {
+  let beam;
+  if (facing === 'east') beam = { x: rectangle.x + rectangle.width, y: rectangle.y, width: 2, height: rectangle.height };
+  if (facing === 'west') beam = { x: rectangle.x - 2, y: rectangle.y, width: 2, height: rectangle.height };
+  if (facing === 'south') beam = { x: rectangle.x, y: rectangle.y + rectangle.height, width: rectangle.width, height: 2 };
+  if (facing === 'north') beam = { x: rectangle.x, y: rectangle.y - 2, width: rectangle.width, height: 2 };
+  if (!beam) return null;
+  const x = Math.max(1, beam.x);
+  const y = Math.max(1, beam.y);
+  const right = Math.min(size, beam.x + beam.width - 1);
+  const bottom = Math.min(size, beam.y + beam.height - 1);
+  return right >= x && bottom >= y ? { x, y, width: right - x + 1, height: bottom - y + 1 } : null;
+}
+
+function renderPlanningPreview(size) {
+  const map = planningPreview?.map;
+  const legalPool = planningPreview?.legalPool;
+  const validationPreview = planningPreview?.validation;
+  const banner = stagePreviewSummary;
+  banner.replaceChildren();
+  banner.hidden = false;
+  banner.className = 'stage-preview-summary';
+  const title = document.createElement('strong');
+  const detail = document.createElement('span');
+  banner.append(title, detail);
+
+  if (!map) {
+    title.textContent = workflowStage >= 1 ? 'Legal item pool ready' : 'Collecting player requirements';
+    if (legalPool) {
+      detail.textContent = `${legalPool.legalCount} legal · ${legalPool.rejectedCount} restricted`;
+      const categories = document.createElement('div');
+      categories.className = 'planning-preview-categories';
+      Object.entries(legalPool.categories ?? {}).forEach(([name, count]) => {
+        const chip = document.createElement('span');
+        chip.textContent = `${name}: ${count}`;
+        categories.append(chip);
+      });
+      banner.append(categories);
+    } else detail.textContent = 'The usable item pool will appear here after Step 1.';
+    legend.textContent = 'Step preview · no coordinates placed yet.';
+    status.textContent = workflowStage >= 1 ? 'Legal item filtering complete · coordinate mapping is next' : 'Waiting for setup requirements';
     return;
   }
+
+  const validated = workflowStage >= 3 && validationPreview?.valid;
+  banner.classList.add(validated ? 'is-validated' : 'is-mapping');
+  title.textContent = validated ? 'Route validation passed' : 'Coordinate mapping preview';
+  detail.textContent = validated
+    ? `${validationPreview.routes?.length ?? 0} dropper routes · ${(validationPreview.metrics?.routeTimeSeconds ?? 0).toFixed(3)}s longest route · ${Math.min(100, validationPreview.metrics?.projectedActiveOres ?? 0).toFixed(2)} estimated active ore${optimizationBaseline?.validated ? ` · Step 4 baseline ${abbreviatedRate(optimizationBaseline.metrics?.expectedCashPerMinute ?? 0)}, ${optimizationBaseline.metrics?.remainingTiles ?? 0} tiles free` : ''}${optimizationProgress ? ` · ${optimizationProgress.testedCandidates?.length ?? 0} candidate${optimizationProgress.testedCandidates?.length === 1 ? '' : 's'} tested` : ''}`
+    : `${map.items?.length ?? 0} item footprints · ${map.conveyorRuns?.length ?? 0} conveyor runs · not rendered yet`;
+  for (const run of map.conveyorRuns ?? []) {
+    const rectangle = previewRange(run.cells);
+    const element = document.createElement('div');
+    element.className = `planning-preview-route${validated ? ' is-validated' : ''}`;
+    element.title = `${run.type} · ${run.cells} · facing ${run.facing}`;
+    element.textContent = ({ north: '↑', east: '→', south: '↓', west: '←' })[run.facing] ?? '';
+    positionPreviewElement(element, rectangle);
+    grid.append(element);
+  }
+
+  for (const item of map.items ?? []) {
+    const rectangle = previewRange(`${item.topLeft}:${item.bottomRight}`);
+    const element = document.createElement('div');
+    element.className = `planning-preview-item ${previewItemClass(item)}${validated ? ' is-validated' : ''}`;
+    element.title = `${item.order}. ${item.variant} ${item.name} · ${item.topLeft}:${item.bottomRight} · facing ${item.facing}`;
+    const label = document.createElement('span');
+    label.textContent = `${item.order}. ${shortLabel(item.name)}`;
+    const arrow = document.createElement('b');
+    arrow.textContent = ({ north: '↑', east: '→', south: '↓', west: '←' })[item.facing] ?? '';
+    element.append(label, arrow);
+    positionPreviewElement(element, rectangle);
+    grid.append(element);
+    if (previewItemClass(item) === 'portable') {
+      const beamRectangle = previewPortableBeam(rectangle, item.facing, size);
+      if (beamRectangle) {
+        const beam = document.createElement('div');
+        beam.className = `planning-preview-beam${validated ? ' is-validated' : ''}`;
+        beam.title = `${item.name} upgrade beam · facing ${item.facing}`;
+        positionPreviewElement(beam, beamRectangle);
+        grid.append(beam);
+      }
+    }
+  }
+
+  if (validationPreview?.furnaceZone) {
+    const zone = document.createElement('div');
+    zone.className = 'planning-preview-furnace-zone';
+    zone.title = 'Validated furnace processing zone';
+    positionPreviewElement(zone, validationPreview.furnaceZone);
+    grid.append(zone);
+  }
+
+  legend.innerHTML = `<span class="legend-key"><span class="legend-swatch planning"></span>Planning footprint</span><span class="legend-key"><span class="legend-swatch ${validated ? 'validated' : 'routing'}"></span>${validated ? 'Validated route' : 'Unvalidated route'}</span>`;
+  status.textContent = validated
+    ? `Step 3 complete · ${validationPreview.routes?.length ?? 0} routes validated · Step 4 will optimize cash/min, then free space, then route time`
+    : `Step 2 mapping · ${map.items?.length ?? 0} items positioned provisionally`;
+}
+
+function renderPlan(size) {
+  grid.querySelectorAll('.plan-item, .plan-lane, .portable-beam, .planning-preview-item, .planning-preview-route, .planning-preview-beam, .planning-preview-furnace-zone').forEach((item) => item.remove());
+
+  if (!activePlan) {
+    renderPlanningPreview(size);
+    return;
+  }
+
+  if (workflowStage < 5) {
+    stagePreviewSummary.hidden = false;
+    stagePreviewSummary.className = 'stage-preview-summary is-mapping';
+    stagePreviewSummary.innerHTML = `<strong>${workflowStage >= 4 ? 'Optimization complete; final verification pending' : 'Optimization and grid preview in progress'}</strong><span>A validated layout is not final until optimization and final verification are both complete.</span>`;
+  } else stagePreviewSummary.hidden = true;
 
   if (size < activePlan.minimumSize) {
     legend.textContent = `${activePlan.title} needs at least ${activePlan.minimumSize} × ${activePlan.minimumSize}.`;
@@ -941,6 +1115,7 @@ function renderPlan(size) {
 
 clearPlanner();
 if (globalThis.TycoonActivePlan?.valid) loadGeneratedPlan(globalThis.TycoonActivePlan);
+else loadWorkflowProgress(globalThis.TycoonWorkflowState);
 sizeSlider.addEventListener('input', () => renderGrid(Number(sizeSlider.value)));
 zoomSlider.addEventListener('input', () => applyGridZoom(zoomSlider.value));
 zoomOut.addEventListener('click', () => applyGridZoom(Number(zoomSlider.value) - Number(zoomSlider.step)));

@@ -1,13 +1,45 @@
 import path from 'node:path';
 import { loadDatabase, loadRules, findItem } from './database.mjs';
 import { buildLegalPool } from './profile.mjs';
-import { optimizeCapgraders, optimizePostCap, chooseFurnace } from './optimizer.mjs';
+import { compareOptimizationMetrics, optimizeCapgraders, optimizePostCap, chooseFurnace } from './optimizer.mjs';
 import { autoLayout } from './layout.mjs';
 import { analyticOreFlow, seededOreSimulation } from './simulation.mjs';
 import { compactNumber, diagnostic, normalize } from './utils.mjs';
 import { evaluateEffectSafety } from './effects.mjs';
+import { appliedEffectsForItem, applyDeterministicItem } from './models.mjs';
+import { parseRange } from './utils.mjs';
 
 function uniqueChainEntries(chain) { return chain.map((entry) => entry.item); }
+
+export function lockedCapResult(initialValue, initialOreSize, lockedChain, legalItems, profile, rules = null, initialEffects = []) {
+  let state = { value: initialValue, oreSize: initialOreSize, survival: 1, replication: 1, effects: [...initialEffects], timeSeconds: 0, area: 0, uses: {}, chain: [], finalInput: null, finalCap: null };
+  for (const reference of lockedChain) {
+    const item = legalItems.find((entry) => entry.name === reference.name && entry.variant === reference.variant);
+    if (!item) throw new Error(`Locked capgrader ${reference.variant} ${reference.name} is not legal.`);
+    const before = state;
+    const useNumber = (state.uses[normalize(item.name)] ?? 0) + 1;
+    const applied = applyDeterministicItem(item, state, useNumber, profile, rules);
+    const range = parseRange(item.range);
+    state = {
+      ...applied,
+      uses: { ...state.uses, [normalize(item.name)]: useNumber },
+      chain: [...state.chain, {
+        item,
+        before: before.value,
+        after: applied.value,
+        oreSizeBefore: before.oreSize,
+        oreSizeAfter: applied.oreSize,
+        survivalBefore: before.survival,
+        survival: applied.survival,
+        timeBefore: before.timeSeconds,
+        timeAfter: applied.timeSeconds,
+      }],
+      finalInput: range ? before.value : state.finalInput,
+      finalCap: range ? range.maximum : state.finalCap,
+    };
+  }
+  return { best: state, alternatives: [], searchedStates: 1 };
+}
 
 function renderType(item) {
   if (/Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i.test(item.name)) return 'portable';
@@ -20,12 +52,19 @@ function dropQuantity(record) {
 }
 
 function hasHardLayoutError(layout) {
-  return layout.diagnostics.some((entry) => ['OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE'].includes(entry.code));
+  return layout.diagnostics.some((entry) => ['OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'WRONG_LANE'].includes(entry.code));
 }
 
-function candidateScore(state, layout, furnace, quantity = 1) {
+function candidateOptimizationMetrics(state, layout, furnace, quantity = 1, plotSize = 0) {
   const conveyorTime = layout.conveyors.reduce((sum, conveyor) => sum + conveyorTravelSeconds(conveyor), 0);
-  return quantity * state.value * state.survival * (state.replication ?? 1) * furnace.mainStat / Math.max(1, state.timeSeconds + conveyorTime);
+  const routeTimeSeconds = state.timeSeconds + conveyorTime;
+  const reservedTiles = layout.items.reduce((sum, item) => sum + item.width * item.height, 0)
+    + layout.conveyors.reduce((sum, conveyor) => sum + conveyor.width * conveyor.height, 0);
+  return {
+    expectedCashPerMinute: quantity * state.value * state.survival * (state.replication ?? 1) * furnace.mainStat * 60 / Math.max(1, routeTimeSeconds),
+    remainingTiles: Math.max(0, plotSize ** 2 - reservedTiles),
+    routeTimeSeconds,
+  };
 }
 
 function conveyorTravelSeconds(conveyor) {
@@ -128,13 +167,20 @@ export async function compilePlan(profile, options = {}) {
     return { version: 1, profile, diagnostics: [diagnostic('USE_LIMIT', `${legalDropper.name} is limited to ${legalDropper.maxCopies} physical copy/copies.`)], valid: false };
   }
   const initialValue = legalDropper.mainStat;
-  const cap = optimizeCapgraders({ initialValue, initialOreSize: legalDropper.oreSize ?? 1, legalItems: pool.legal, profile, rules, maxSteps: options.capSteps, beamWidth: options.beamWidth });
+  const initialEffects = appliedEffectsForItem(legalDropper, rules);
+  const cap = options.lockedCapChain?.length
+    ? lockedCapResult(initialValue, legalDropper.oreSize ?? 1, options.lockedCapChain, pool.legal, profile, rules, initialEffects)
+    : optimizeCapgraders({ initialValue, initialOreSize: legalDropper.oreSize ?? 1, initialEffects, legalItems: pool.legal, profile, rules, maxSteps: options.capSteps, beamWidth: options.beamWidth });
   const furnace = chooseFurnace(pool.legal, cap.best, profile, rules);
   if (!furnace) return { version: 1, profile, diagnostics: [diagnostic('ITEM_ILLEGAL', 'No deterministic legal furnace is available.')], valid: false };
   let selected = null;
+  let closestAttemptDiagnostics = [];
   // Couple item selection to physical fit: test several high-quality cap chains,
   // then retain the highest-value post-cap candidate that actually maps.
-  for (const capState of [cap.best, ...cap.alternatives].slice(0, 24)) {
+  // Small plots may need a slightly lower-value cap chain whose footprint is
+  // much smaller. Keep enough near-cap alternatives for the physical-fit pass
+  // instead of stopping before the first compact candidate.
+  for (const capState of [cap.best, ...cap.alternatives].slice(0, 96)) {
     const minimumDroppers = Array.from({ length: profile.dropper.quantity ?? 1 }, () => legalDropper);
     const capLayout = autoLayout({ dropper: legalDropper, droppers: minimumDroppers, chain: uniqueChainEntries(capState.chain), furnace, plotSize: profile.plotSize, rules });
     if (hasHardLayoutError(capLayout)) continue;
@@ -143,14 +189,22 @@ export async function compilePlan(profile, options = {}) {
     for (const postState of [...postResult.alternatives, capState]) {
       if (!includesRequiredItems(postState, legalDropper, furnace, profile)) continue;
       const desiredQuantity = desiredDropperQuantity(profile, legalDropper, postState, rules);
-      for (let quantity = desiredQuantity; quantity >= 1; quantity -= 1) {
+      const minimumQuantity = profile.dropper.quantity != null ? desiredQuantity : 1;
+      for (let quantity = desiredQuantity; quantity >= minimumQuantity; quantity -= 1) {
         const droppersForLayout = Array.from({ length: quantity }, () => legalDropper);
         const layout = autoLayout({ dropper: legalDropper, droppers: droppersForLayout, chain: uniqueChainEntries(postState.chain), furnace, plotSize: profile.plotSize, rules });
-        if (hasHardLayoutError(layout)) continue;
+        if (hasHardLayoutError(layout)) {
+          if (includesRequiredItems(postState, legalDropper, furnace, profile) && (!closestAttemptDiagnostics.length || layout.diagnostics.length < closestAttemptDiagnostics.length)) {
+            closestAttemptDiagnostics = layout.diagnostics;
+          }
+          continue;
+        }
         const effectSafety = evaluateEffectSafety({ dropper: legalDropper, dropperCount: quantity, chain: postState.chain, layout, rules });
         if (!effectSafety.safe) continue;
-        const score = candidateScore(postState, layout, furnace, quantity);
-        if (!selected || score > selected.score) selected = { capState, postState, postResult, layout, score, quantity, effectSafety };
+        const optimizationMetrics = candidateOptimizationMetrics(postState, layout, furnace, quantity, profile.plotSize);
+        if (!selected || compareOptimizationMetrics(optimizationMetrics, selected.optimizationMetrics, rules) > 0) {
+          selected = { capState, postState, postResult, layout, optimizationMetrics, quantity, effectSafety };
+        }
         break;
       }
       if (selected?.postState === postState) break;
@@ -158,7 +212,7 @@ export async function compilePlan(profile, options = {}) {
   }
   if (!selected) {
     const layout = autoLayout({ dropper: legalDropper, chain: uniqueChainEntries(cap.best.chain), furnace, plotSize: profile.plotSize, rules });
-    return { version: 1, profile, title: `${legalDropper.name} layout`, valid: false, items: [], conveyors: [], route: [], diagnostics: layout.diagnostics.length ? layout.diagnostics : [diagnostic('OUT_OF_BOUNDS', 'No optimized chain fits the plot.')], legalPool: { accepted: pool.legal.length, rejected: pool.rejected.length } };
+    return { version: 1, profile, title: `${legalDropper.name} layout`, valid: false, items: [], conveyors: [], route: [], diagnostics: closestAttemptDiagnostics.length ? closestAttemptDiagnostics : layout.diagnostics.length ? layout.diagnostics : [diagnostic('OUT_OF_BOUNDS', 'No optimized chain fits the plot.')], legalPool: { accepted: pool.legal.length, rejected: pool.rejected.length } };
   }
   const { capState, postState, postResult: post, layout, quantity, effectSafety } = selected;
   const routeTimeSeconds = postState.timeSeconds + layout.conveyors.reduce((sum, conveyor) => sum + conveyorTravelSeconds(conveyor), 0);
@@ -177,7 +231,7 @@ export async function compilePlan(profile, options = {}) {
   const diagnostics = [...layout.diagnostics];
   const finalCapRatio = capState.finalCap ? capState.finalInput / capState.finalCap : null;
   if (finalCapRatio != null && finalCapRatio < 1 - rules.finalCapTolerance) diagnostics.push(diagnostic('CAP_RANGE', `Best final capgrader input is ${(finalCapRatio * 100).toFixed(2)}% of its cap; below the preferred band.`, { ratio: finalCapRatio }));
-  const hardErrors = diagnostics.filter((entry) => ['OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'ITEM_ILLEGAL'].includes(entry.code));
+  const hardErrors = diagnostics.filter((entry) => ['OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'WRONG_LANE', 'ITEM_ILLEGAL'].includes(entry.code));
   const orderedItems = [...layout.items].sort((a, b) => a.sequenceIndex - b.sequenceIndex);
   return {
     version: 1,

@@ -21,7 +21,7 @@ function sourceCrate(record, rules) {
 
 function sourceRebirth(record) {
   const values = (record.sources ?? [record.source]).flatMap((source) => {
-    const match = String(source ?? '').match(/rebirth\s*(\d+)/i);
+    const match = String(source ?? '').match(/(?:rebirth|rebrith)\s*(\d+)/i);
     return match ? [Number(match[1])] : [];
   });
   return values.length ? Math.min(...values) : null;
@@ -31,12 +31,13 @@ function ownsByName(list, record) {
   return (list ?? []).some((name) => normalize(name) === normalize(record.name));
 }
 
-export function legalReason(record, profile, rules) {
+export function legalReason(record, profile, rules, familyRecords = [record]) {
   const highestCrateIndex = rules.crateProgression.findIndex((crate) => normalize(crate) === normalize(profile.highestCrate));
   const crate = sourceCrate(record, rules);
   if (crate && rules.crateProgression.indexOf(crate) > highestCrateIndex) return `requires ${crate} crate`;
   const rebirth = profile.rebirth ?? Math.max(0, profile.life - 1);
-  const requiredRebirth = sourceRebirth(record);
+  const familyRebirths = familyRecords.map(sourceRebirth).filter((value) => value != null);
+  const requiredRebirth = familyRebirths.length ? Math.min(...familyRebirths) : null;
   if (requiredRebirth != null && requiredRebirth > rebirth) return `requires Rebirth ${requiredRebirth}`;
   const source = normalize((record.sources ?? [record.source]).join(' '));
   const rarity = normalize(record.rarity);
@@ -45,6 +46,8 @@ export function legalReason(record, profile, rules) {
   if (record.acquisitions?.includes('merchant') && !ownsByName(profile.merchantItems, record)) return 'Merchant item not owned';
   if (record.acquisitions?.includes('premium') && profile.payment !== 'p2w') return 'P2W item in F2P profile';
   if (profile.payment === 'p2w' && record.acquisitions?.includes('premium') && !ownsByName(profile.premiumItems, record)) return 'Premium item not owned';
+  if (/\bfrom code\b|\bgift from\b|\bgift of\b/i.test((record.sources ?? [record.source]).join(' '))
+    && !ownsByName(profile.specialItems, record)) return 'Special/code item not owned';
   if ((profile.forbiddenItems ?? []).some((name) => normalize(name) === normalize(record.name))) return 'explicitly forbidden';
   if (profile.variants === 'base-only' && normalize(record.variant) !== 'base') return 'non-Base variant forbidden';
   const inventoryKey = itemKey(record.name, record.variant);
@@ -68,9 +71,16 @@ export function buildLegalPool(database, profile, rules) {
   }
   const legal = [];
   const rejected = [];
+  const families = new Map();
   for (const records of grouped.values()) {
     const record = preferredRecord(records);
-    const reason = legalReason(record, profile, rules);
+    const family = families.get(normalize(record.name)) ?? [];
+    family.push(record);
+    families.set(normalize(record.name), family);
+  }
+  for (const records of grouped.values()) {
+    const record = preferredRecord(records);
+    const reason = legalReason(record, profile, rules, families.get(normalize(record.name)));
     (reason ? rejected : legal).push(reason ? { record, reason } : record);
   }
   return { legal, rejected, diagnostics };
