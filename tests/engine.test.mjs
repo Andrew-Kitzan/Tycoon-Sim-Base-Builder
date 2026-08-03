@@ -11,6 +11,7 @@ import { readJson } from '../engine/utils.mjs';
 import { appliedEffectsForItem, applyDeterministicItem, canActivateItem } from '../engine/models.mjs';
 import { plannerCacheKey } from '../engine/cache.mjs';
 import { lintDatabase } from '../engine/database-lint.mjs';
+import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const [database, rules, profile] = await Promise.all([
@@ -18,6 +19,9 @@ const [database, rules, profile] = await Promise.all([
   loadRules(root),
   readJson(path.join(root, 'profiles', 'example.json')),
 ]);
+
+const sparseWorksheet = `<?xml version="1.0"?><worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Starting size</t></is></c><c r="B1" s="2"/></row><row r="2"><c r="A2"><v>0.5</v></c><c r="B2" t="inlineStr"><is><t>Shrink &amp; Expand</t></is></c></row><row r="44059"><c r="Z44059" s="9"/></row></sheetData></worksheet>`;
+assert.deepEqual(parseWorksheetXml(sparseWorksheet), [['Starting size'], [0.5, 'Shrink & Expand']], 'XLSX reader must ignore empty formatted cells instead of expanding the used range');
 
 assert(compareOptimizationMetrics(
   { expectedCashPerMinute: 101, remainingTiles: 1, routeTimeSeconds: 100 },

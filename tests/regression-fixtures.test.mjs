@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { loadDatabase, loadRules, findItem } from '../engine/database.mjs';
 import { applyDeterministicItem } from '../engine/models.mjs';
+import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const directory = path.join(root, 'tests', 'fixtures', 'regressions');
@@ -24,6 +25,17 @@ for (const fixture of fixtures) {
   } else if (fixture.id === 'portable-after-cap') {
     assert.equal(rules.portableRequirements.phase, 'post-cap');
     assert(rules.validationCodes[fixture.assert.diagnostic]);
+  } else if (fixture.id === 'formatted-xlsx-memory') {
+    const xml = `<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Value</t></is></c></row><row r="${fixture.input.formattedRow}"><c r="Z${fixture.input.formattedRow}" s="9"/></row></sheetData></worksheet>`;
+    const values = parseWorksheetXml(xml);
+    assert.equal(values.length, fixture.assert.meaningfulRows);
+    assert.equal(values[0][0], 'Value');
+  } else if (fixture.id === 'wind-up-stats-drop-speed') {
+    for (const variant of fixture.input.variants) {
+      const item = findItem(database, fixture.input.item, variant);
+      assert.equal(item.dropSpeed, fixture.assert.dropSpeed);
+      assert.equal(item.statsForNerdsRow, fixture.assert.statsForNerdsRows[variant]);
+    }
   } else throw new Error(`Regression fixture has no executor: ${fixture.id}`);
 }
 

@@ -1,0 +1,2756 @@
+{
+  "importerVersion": 4,
+  "generatedAt": "2026-08-03T21:41:20.915Z",
+  "sourceWorkbook": "data/Tycoon Sim Database.xlsx",
+  "sourceHash": "95ac8b3c0fcdf04b7912613460f695ab9f20ea983bad8dcd1a760a6d47af1efa",
+  "sheet": "Ore SizeHeight",
+  "paths": [
+    {
+      "startingSize": 0.5,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "1419857/6400000",
+      "finalSize": 0.22185265625,
+      "row": 2
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "83521/320000",
+      "finalSize": 0.261003125,
+      "row": 3
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "4259571/16000000",
+      "finalSize": 0.2662231875,
+      "row": 4
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "4913/16000",
+      "finalSize": 0.3070625,
+      "row": 5
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "250563/800000",
+      "finalSize": 0.31320375,
+      "row": 6
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "44015567/128000000",
+      "finalSize": 0.3438716171875,
+      "row": 7
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "1419857/4000000",
+      "finalSize": 0.35496425,
+      "row": 8
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "289/800",
+      "finalSize": 0.36125,
+      "row": 9
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "14739/40000",
+      "finalSize": 0.368475,
+      "row": 10
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "12778713/32000000",
+      "finalSize": 0.39933478125,
+      "row": 11
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "2589151/6400000",
+      "finalSize": 0.40455484375,
+      "row": 12
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "132046701/320000000",
+      "finalSize": 0.412645940625,
+      "row": 13
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "83521/200000",
+      "finalSize": 0.417605,
+      "row": 14
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "17/40",
+      "finalSize": 0.425,
+      "row": 15
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "867/2000",
+      "finalSize": 0.4335,
+      "row": 16
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "1419857/3200000",
+      "finalSize": 0.4437053125,
+      "row": 17
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "751689/1600000",
+      "finalSize": 0.469805625,
+      "row": 18
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "152303/320000",
+      "finalSize": 0.475946875,
+      "row": 19
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "7767453/16000000",
+      "finalSize": 0.4854658125,
+      "row": 20
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "15618427/32000000",
+      "finalSize": 0.48807584375,
+      "row": 21
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "4913/10000",
+      "finalSize": 0.4913,
+      "row": 22
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "5/10",
+      "finalSize": 0.5,
+      "row": 23
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "51/100",
+      "finalSize": 0.51,
+      "row": 24
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "83521/160000",
+      "finalSize": 0.52200625,
+      "row": 25
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "4259571/8000000",
+      "finalSize": 0.532446375,
+      "row": 26
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "1364482577/2560000000",
+      "finalSize": 0.533001006640625,
+      "row": 27
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "44015567/80000000",
+      "finalSize": 0.5501945875,
+      "row": 28
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "44217/80000",
+      "finalSize": 0.5527125,
+      "row": 29
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "8959/16000",
+      "finalSize": 0.5599375,
+      "row": 30
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "456909/800000",
+      "finalSize": 0.57113625,
+      "row": 31
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "918731/1600000",
+      "finalSize": 0.574206875,
+      "row": 32
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "289/500",
+      "finalSize": 0.578,
+      "row": 33
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "6/10",
+      "finalSize": 0.6,
+      "row": 34
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "4913/8000",
+      "finalSize": 0.614125,
+      "row": 35
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "396140103/640000000",
+      "finalSize": 0.6189689109375,
+      "row": 36
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "9938999/16000000",
+      "finalSize": 0.6211874375,
+      "row": 37
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "250563/400000",
+      "finalSize": 0.6264075,
+      "row": 38
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "80263681/128000000",
+      "finalSize": 0.6270600078125,
+      "row": 39
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "4093447731/6400000000",
+      "finalSize": 0.63960120796875,
+      "row": 40
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "2589151/4000000",
+      "finalSize": 0.64728775,
+      "row": 41
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "2601/4000",
+      "finalSize": 0.65025,
+      "row": 42
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "527/800",
+      "finalSize": 0.65875,
+      "row": 43
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "4259571/6400000",
+      "finalSize": 0.66555796875,
+      "row": 44
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "26877/40000",
+      "finalSize": 0.671925,
+      "row": 45
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "54043/80000",
+      "finalSize": 0.6755375,
+      "row": 46
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "17/25",
+      "finalSize": 0.68,
+      "row": 47
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "44015567/64000000",
+      "finalSize": 0.687743234375,
+      "row": 48
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "289/400",
+      "finalSize": 0.7225,
+      "row": 49
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "23302359/32000000",
+      "finalSize": 0.72819871875,
+      "row": 50
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "584647/800000",
+      "finalSize": 0.73080875,
+      "row": 51
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "14739/20000",
+      "finalSize": 0.73695,
+      "row": 52
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "4721393/6400000",
+      "finalSize": 0.73771765625,
+      "row": 53
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "240791043/320000000",
+      "finalSize": 0.752472009375,
+      "row": 54
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "484171237/640000000",
+      "finalSize": 0.7565175578125,
+      "row": 55
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "152303/200000",
+      "finalSize": 0.761515,
+      "row": 56
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "153/200",
+      "finalSize": 0.765,
+      "row": 57
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "31/40",
+      "finalSize": 0.775,
+      "row": 58
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "250563/320000",
+      "finalSize": 0.783009375,
+      "row": 59
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1581/2000",
+      "finalSize": 0.7905,
+      "row": 60
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "3179/4000",
+      "finalSize": 0.79475,
+      "row": 61
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "12778713/16000000",
+      "finalSize": 0.7986695625,
+      "row": 62
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "8/10",
+      "finalSize": 0.8,
+      "row": 63
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "2589151/3200000",
+      "finalSize": 0.8091096875,
+      "row": 64
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "132046701/160000000",
+      "finalSize": 0.82529188125,
+      "row": 65
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "17/20",
+      "finalSize": 0.85,
+      "row": 66
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "1364482577/1600000000",
+      "finalSize": 0.852801610625,
+      "row": 67
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1370727/1600000",
+      "finalSize": 0.856704375,
+      "row": 68
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "34391/40000",
+      "finalSize": 0.859775,
+      "row": 69
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "867/1000",
+      "finalSize": 0.867,
+      "row": 70
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "277729/320000",
+      "finalSize": 0.867903125,
+      "row": 71
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "14164179/16000000",
+      "finalSize": 0.8852611875,
+      "row": 72
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "1419857/1600000",
+      "finalSize": 0.887410625,
+      "row": 73
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "28480661/32000000",
+      "finalSize": 0.89002065625,
+      "row": 74
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "8959/10000",
+      "finalSize": 0.8959,
+      "row": 75
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "9/10",
+      "finalSize": 0.9,
+      "row": 76
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "14739/16000",
+      "finalSize": 0.9211875,
+      "row": 77
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "93/100",
+      "finalSize": 0.93,
+      "row": 78
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "187/200",
+      "finalSize": 0.935,
+      "row": 79
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "751689/800000",
+      "finalSize": 0.93961125,
+      "row": 80
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "152303/160000",
+      "finalSize": 0.95189375,
+      "row": 81
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "12280343193/12800000000",
+      "finalSize": 0.959401811953125,
+      "row": 82
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "308108969/320000000",
+      "finalSize": 0.962840528125,
+      "row": 83
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "7767453/8000000",
+      "finalSize": 0.970931625,
+      "row": 84
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 5,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "15618427/16000000",
+      "finalSize": 0.9761516875,
+      "row": 85
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "10/10",
+      "finalSize": 1,
+      "row": 86
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "80263681/80000000",
+      "finalSize": 1.0032960125,
+      "row": 87
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "80631/80000",
+      "finalSize": 1.0078875,
+      "row": 88
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "2023/2000",
+      "finalSize": 1.0115,
+      "row": 89
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "51/50",
+      "finalSize": 1.02,
+      "row": 90
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 1,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "16337/16000",
+      "finalSize": 1.0210625,
+      "row": 91
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "132046701/128000000",
+      "finalSize": 1.0316148515625,
+      "row": 92
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "833187/800000",
+      "finalSize": 1.04148375,
+      "row": 93
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "83521/80000",
+      "finalSize": 1.0440125,
+      "row": 94
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1675333/1600000",
+      "finalSize": 1.047083125,
+      "row": 95
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "527/500",
+      "finalSize": 1.054,
+      "row": 96
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "1364482577/1280000000",
+      "finalSize": 1.06600201328125,
+      "row": 97
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "867/800",
+      "finalSize": 1.08375,
+      "row": 98
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "11/10",
+      "finalSize": 1.1,
+      "row": 99
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "44217/40000",
+      "finalSize": 1.105425,
+      "row": 100
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "8959/8000",
+      "finalSize": 1.119875,
+      "row": 101
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "722373129/640000000",
+      "finalSize": 1.1287080140625,
+      "row": 102
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "18124057/16000000",
+      "finalSize": 1.1327535625,
+      "row": 103
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "456909/400000",
+      "finalSize": 1.1422725,
+      "row": 104
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 4,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "918731/800000",
+      "finalSize": 1.14841375,
+      "row": 105
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "15009308347/12800000000",
+      "finalSize": 1.172602214609375,
+      "row": 106
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "4721393/4000000",
+      "finalSize": 1.18034825,
+      "row": 107
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "4743/4000",
+      "finalSize": 1.18575,
+      "row": 108
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "119/100",
+      "finalSize": 1.19,
+      "row": 109
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "12/10",
+      "finalSize": 1.2,
+      "row": 110
+    },
+    {
+      "startingSize": 0.5,
+      "shrinkers": 0,
+      "expanders": 2,
+      "operations": [
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "961/800",
+      "finalSize": 1.20125,
+      "row": 111
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "7767453/6400000",
+      "finalSize": 1.21366453125,
+      "row": 112
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 1,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "49011/40000",
+      "finalSize": 1.225275,
+      "row": 113
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "4913/4000",
+      "finalSize": 1.22825,
+      "row": 114
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "98549/80000",
+      "finalSize": 1.2318625,
+      "row": 115
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "396140103/320000000",
+      "finalSize": 1.237937821875,
+      "row": 116
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "31/25",
+      "finalSize": 1.24,
+      "row": 117
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "80263681/64000000",
+      "finalSize": 1.254120015625,
+      "row": 118
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "51/40",
+      "finalSize": 1.275,
+      "row": 119
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "4093447731/3200000000",
+      "finalSize": 1.2792024159375,
+      "row": 120
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "2601/2000",
+      "finalSize": 1.3005,
+      "row": 121
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "527/400",
+      "finalSize": 1.3175,
+      "row": 122
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "42492537/32000000",
+      "finalSize": 1.32789178125,
+      "row": 123
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1066121/800000",
+      "finalSize": 1.33265125,
+      "row": 124
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "26877/20000",
+      "finalSize": 1.34385,
+      "row": 125
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 3,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "54043/40000",
+      "finalSize": 1.351075,
+      "row": 126
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "44015567/32000000",
+      "finalSize": 1.37548646875,
+      "row": 127
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "882900491/640000000",
+      "finalSize": 1.3795320171875,
+      "row": 128
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "277729/200000",
+      "finalSize": 1.388645,
+      "row": 129
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "279/200",
+      "finalSize": 1.395,
+      "row": 130
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "14/10",
+      "finalSize": 1.4,
+      "row": 131
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "456909/320000",
+      "finalSize": 1.427840625,
+      "row": 132
+    },
+    {
+      "startingSize": 0.6,
+      "shrinkers": 0,
+      "expanders": 2,
+      "operations": [
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "2883/2000",
+      "finalSize": 1.4415,
+      "row": 133
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "289/200",
+      "finalSize": 1.445,
+      "row": 134
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "5797/4000",
+      "finalSize": 1.44925,
+      "row": 135
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "23302359/16000000",
+      "finalSize": 1.4563974375,
+      "row": 136
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "4721393/3200000",
+      "finalSize": 1.4754353125,
+      "row": 137
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "9551378039/6400000000",
+      "finalSize": 1.49240281859375,
+      "row": 138
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "15/10",
+      "finalSize": 1.5,
+      "row": 139
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "240791043/160000000",
+      "finalSize": 1.50494401875,
+      "row": 140
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 5,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "484171237/320000000",
+      "finalSize": 1.513035115625,
+      "row": 141
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "153/100",
+      "finalSize": 1.53,
+      "row": 142
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "31/20",
+      "finalSize": 1.55,
+      "row": 143
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "2499561/1600000",
+      "finalSize": 1.562225625,
+      "row": 144
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "62713/40000",
+      "finalSize": 1.567825,
+      "row": 145
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1581/1000",
+      "finalSize": 1.581,
+      "row": 146
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 2,
+      "expanders": 0,
+      "operations": [
+        "Shrink",
+        "Shrink"
+      ],
+      "exactFraction": "3179/2000",
+      "finalSize": 1.5895,
+      "row": 147
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "4093447731/2560000000",
+      "finalSize": 1.599003019921875,
+      "row": 148
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "2589151/1600000",
+      "finalSize": 1.618219375,
+      "row": 149
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "51935323/32000000",
+      "finalSize": 1.62297884375,
+      "row": 150
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 1,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "16337/10000",
+      "finalSize": 1.6337,
+      "row": 151
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "26877/16000",
+      "finalSize": 1.6798125,
+      "row": 152
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "17/10",
+      "finalSize": 1.7,
+      "row": 153
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "341/200",
+      "finalSize": 1.705,
+      "row": 154
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1370727/800000",
+      "finalSize": 1.71340875,
+      "row": 155
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "277729/160000",
+      "finalSize": 1.73580625,
+      "row": 156
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "561845767/320000000",
+      "finalSize": 1.755768021875,
+      "row": 157
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "14164179/8000000",
+      "finalSize": 1.770522375,
+      "row": 158
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 4,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "28480661/16000000",
+      "finalSize": 1.7800413125,
+      "row": 159
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "18/10",
+      "finalSize": 1.8,
+      "row": 160
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 1,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "147033/80000",
+      "finalSize": 1.8379125,
+      "row": 161
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "3689/2000",
+      "finalSize": 1.8445,
+      "row": 162
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "93/50",
+      "finalSize": 1.86,
+      "row": 163
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 1,
+      "expanders": 0,
+      "operations": [
+        "Shrink"
+      ],
+      "exactFraction": "187/100",
+      "finalSize": 1.87,
+      "row": 164
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "240791043/128000000",
+      "finalSize": 1.8811800234375,
+      "row": 165
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "152303/80000",
+      "finalSize": 1.9037875,
+      "row": 166
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "3055019/1600000",
+      "finalSize": 1.909386875,
+      "row": 167
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "12280343193/6400000000",
+      "finalSize": 1.91880362390625,
+      "row": 168
+    },
+    {
+      "startingSize": 0.8,
+      "shrinkers": 0,
+      "expanders": 2,
+      "operations": [
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "961/500",
+      "finalSize": 1.922,
+      "row": 169
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1581/800",
+      "finalSize": 1.97625,
+      "row": 170
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "20/10",
+      "finalSize": 2,
+      "row": 171
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "80631/40000",
+      "finalSize": 2.015775,
+      "row": 172
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 1,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "16337/8000",
+      "finalSize": 2.042125,
+      "row": 173
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "33049751/16000000",
+      "finalSize": 2.0656094375,
+      "row": 174
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "833187/400000",
+      "finalSize": 2.0829675,
+      "row": 175
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 3,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "1675333/800000",
+      "finalSize": 2.09416625,
+      "row": 176
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "1364482577/640000000",
+      "finalSize": 2.1320040265625,
+      "row": 177
+    },
+    {
+      "startingSize": 0.9,
+      "shrinkers": 0,
+      "expanders": 2,
+      "operations": [
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "8649/4000",
+      "finalSize": 2.16225,
+      "row": 178
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "217/100",
+      "finalSize": 2.17,
+      "row": 179
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 0,
+      "expanders": 0,
+      "operations": [],
+      "exactFraction": "22/10",
+      "finalSize": 2.2,
+      "row": 180
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 3,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "14164179/6400000",
+      "finalSize": 2.21315296875,
+      "row": 181
+    },
+    {
+      "startingSize": 2,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "8959/4000",
+      "finalSize": 2.23975,
+      "row": 182
+    },
+    {
+      "startingSize": 1.1,
+      "shrinkers": 1,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "179707/80000",
+      "finalSize": 2.2463375,
+      "row": 183
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 4,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "722373129/320000000",
+      "finalSize": 2.257416028125,
+      "row": 184
+    },
+    {
+      "startingSize": 1.5,
+      "shrinkers": 0,
+      "expanders": 1,
+      "operations": [
+        "Expand"
+      ],
+      "exactFraction": "93/40",
+      "finalSize": 2.325,
+      "row": 185
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 5,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "15009308347/6400000000",
+      "finalSize": 2.34520442921875,
+      "row": 186
+    },
+    {
+      "startingSize": 1.8,
+      "shrinkers": 1,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "4743/2000",
+      "finalSize": 2.3715,
+      "row": 187
+    },
+    {
+      "startingSize": 1,
+      "shrinkers": 0,
+      "expanders": 2,
+      "operations": [
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "961/400",
+      "finalSize": 2.4025,
+      "row": 188
+    },
+    {
+      "startingSize": 1.4,
+      "shrinkers": 2,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "1944103/800000",
+      "finalSize": 2.43012875,
+      "row": 189
+    },
+    {
+      "startingSize": 1.2,
+      "shrinkers": 1,
+      "expanders": 2,
+      "operations": [
+        "Shrink",
+        "Expand",
+        "Expand"
+      ],
+      "exactFraction": "49011/20000",
+      "finalSize": 2.45055,
+      "row": 190
+    },
+    {
+      "startingSize": 2.2,
+      "shrinkers": 2,
+      "expanders": 1,
+      "operations": [
+        "Shrink",
+        "Shrink",
+        "Expand"
+      ],
+      "exactFraction": "98549/40000",
+      "finalSize": 2.463725,
+      "row": 191
+    }
+  ],
+  "restrictions": [
+    {
+      "name": "Centering Conveyor",
+      "rarity": "Common",
+      "size": {
+        "width": 2,
+        "length": 2
+      },
+      "acceptable": [
+        2.06,
+        1.8
+      ],
+      "rejected": [
+        2.08,
+        1.8
+      ],
+      "notes": "1st=already centered blocks.\n2nd=off center/blocks that rotate",
+      "row": 3
+    },
+    {
+      "name": "Chartreuse Collider",
+      "rarity": "Rare",
+      "size": {
+        "width": 4,
+        "length": 3
+      },
+      "acceptable": [
+        2.43
+      ],
+      "rejected": [
+        2.45
+      ],
+      "notes": "will hit top but it will get through",
+      "row": 4
+    },
+    {
+      "name": "Cupcake-inator",
+      "rarity": "Epic",
+      "size": {
+        "width": 4,
+        "length": 3
+      },
+      "acceptable": [
+        1.83
+      ],
+      "rejected": [
+        1.84
+      ],
+      "notes": null,
+      "row": 5
+    },
+    {
+      "name": "Hoarded Treasure",
+      "rarity": "Legendary",
+      "size": {
+        "width": 4,
+        "length": 3
+      },
+      "acceptable": [
+        2.16
+      ],
+      "rejected": [
+        2.17
+      ],
+      "notes": null,
+      "row": 7
+    },
+    {
+      "name": "Lambda Upgrader",
+      "rarity": "Epic",
+      "size": {
+        "width": 4,
+        "length": 3
+      },
+      "acceptable": [
+        1.83
+      ],
+      "rejected": [
+        1.84
+      ],
+      "notes": null,
+      "row": 8
+    },
+    {
+      "name": "Ore Expander",
+      "rarity": "Epic",
+      "size": {
+        "width": 4,
+        "length": 3
+      },
+      "acceptable": [
+        2.5
+      ],
+      "rejected": [
+        2.6
+      ],
+      "notes": null,
+      "row": 9
+    },
+    {
+      "name": "Ore Shrinker",
+      "rarity": "Common",
+      "size": {
+        "width": 4,
+        "length": 2
+      },
+      "acceptable": [
+        2.6
+      ],
+      "rejected": [
+        2.635
+      ],
+      "notes": null,
+      "row": 10
+    },
+    {
+      "name": "Rocketship Upgrader",
+      "rarity": "Rare",
+      "size": {
+        "width": 4,
+        "length": 3
+      },
+      "acceptable": [
+        2.24
+      ],
+      "rejected": [
+        2.25
+      ],
+      "notes": "Will drag around rocket fins but it will get throgh",
+      "row": 11
+    },
+    {
+      "name": "Rubix's Polisher",
+      "rarity": "Rare",
+      "size": {
+        "width": 4,
+        "length": 3
+      },
+      "acceptable": [
+        2.25
+      ],
+      "rejected": [
+        2.32
+      ],
+      "notes": "Will clip on sides but get through",
+      "row": 12
+    },
+    {
+      "name": "Space Pirates",
+      "rarity": "Legendary",
+      "size": {
+        "width": 6,
+        "length": 3
+      },
+      "acceptable": [
+        2.01,
+        1.83
+      ],
+      "rejected": [
+        2.04,
+        1.84
+      ],
+      "notes": "Roof is slanted,\nOne side lets 2.01 through\nThe other side lets 1.83 Through",
+      "row": 13
+    },
+    {
+      "name": "Tiki Evaluator",
+      "rarity": "Legendary",
+      "size": {
+        "width": 5,
+        "length": 4
+      },
+      "acceptable": [
+        2.375
+      ],
+      "rejected": [
+        2.4
+      ],
+      "notes": "will drag on the roof but get through in decent time",
+      "row": 15
+    }
+  ]
+}

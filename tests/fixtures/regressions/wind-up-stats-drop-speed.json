@@ -1,0 +1,17 @@
+{
+  "id": "wind-up-stats-drop-speed",
+  "observed": "Wind-Up Dropper referred to Stats for Nerds, but the importer left its drop speed blank.",
+  "expected": "Complex dropper statistics from Stats for Nerds are merged into the canonical item records.",
+  "kind": "database-import",
+  "input": {
+    "item": "Wind-Up Dropper",
+    "variants": ["Base", "Shiny"]
+  },
+  "assert": {
+    "dropSpeed": 1.5,
+    "statsForNerdsRows": {
+      "Base": 323,
+      "Shiny": 324
+    }
+  }
+}

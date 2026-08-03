@@ -1,15 +1,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { FileBlob, SpreadsheetFile } from '@oai/artifact-tool';
 import { preferredRecord } from '../engine/database.mjs';
+import { openXlsx } from '../engine/xlsx-reader.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const workbookPath = path.join(root, 'data', 'Tycoon Sim Database.xlsx');
 const generatedPath = path.join(root, 'data', 'items.generated.js');
 const conflictPath = path.join(root, 'data', 'database-conflicts.json');
 const indexPath = path.join(root, 'data', 'items.index.json');
-const IMPORTER_VERSION = 3;
+const oreSizeIndexPath = path.join(root, 'data', 'ore-size-height.index.json');
+const IMPORTER_VERSION = 4;
 
 const workbookBytes = await fs.readFile(workbookPath);
 const sourceHash = crypto.createHash('sha256').update(workbookBytes).digest('hex');
@@ -18,6 +19,7 @@ if (!process.argv.includes('--force')) {
     const current = await fs.readFile(generatedPath, 'utf8');
     const payload = JSON.parse(current.slice(current.indexOf('=') + 1, current.lastIndexOf(';')));
     await fs.access(indexPath);
+    await fs.access(oreSizeIndexPath);
     if (payload.sourceHash === sourceHash && payload.importerVersion === IMPORTER_VERSION) {
       console.log(`Database unchanged (${sourceHash.slice(0, 12)}); skipped workbook import.`);
       process.exit(0);
@@ -38,7 +40,7 @@ const sheetDefinitions = [
   ['Merchant', null],
 ];
 
-const clean = (value) => String(value ?? '').replaceAll('\r', '').trim();
+const clean = (value) => String(value ?? '').replace(/[\r\u200b\u200c\u200d\ufeff]/g, '').trim();
 const headerKey = (value) => clean(value).toLowerCase().replace(/[^a-z0-9]+/g, '');
 const normalizeName = (value) => clean(value).replace(/\s+/g, ' ');
 
@@ -126,6 +128,74 @@ function parseRows(sheetName, defaultType, values) {
   });
 }
 
+function numericList(value) {
+  return clean(value).split('/').map(numeric).filter(Number.isFinite);
+}
+
+function parseOreSizeHeight(values) {
+  const headerIndex = values.findIndex((row) => (
+    firstIndex(row, ['Starting size']) >= 0
+    && firstIndex(row, ['Final ore size']) >= 0
+    && firstIndex(row, ['Valid operation order']) >= 0
+  ));
+  if (headerIndex < 0) return { paths: [], restrictions: [], sheet: 'Ore SizeHeight' };
+  const headers = values[headerIndex];
+  const paths = [];
+  const restrictions = [];
+  for (const [offset, row] of values.slice(headerIndex + 1).entries()) {
+    const sourceRow = headerIndex + offset + 2;
+    const startingSize = numeric(valueAt(row, headers, ['Starting size']));
+    const finalSize = numeric(valueAt(row, headers, ['Final ore size']));
+    const operationText = clean(valueAt(row, headers, ['Valid operation order']));
+    if (Number.isFinite(startingSize) && Number.isFinite(finalSize) && operationText) {
+      const operations = /no size upgrader/i.test(operationText)
+        ? []
+        : operationText.split(/\s*(?:→|->)\s*/).map(clean).filter(Boolean);
+      paths.push({
+        startingSize,
+        shrinkers: operations.filter((operation) => /^shrink/i.test(operation)).length,
+        expanders: operations.filter((operation) => /^expand/i.test(operation)).length,
+        operations,
+        exactFraction: clean(valueAt(row, headers, ['Exact fraction'])) || null,
+        finalSize,
+        row: sourceRow,
+      });
+    }
+    const name = normalizeName(valueAt(row, headers, ['Name']));
+    const acceptable = numericList(valueAt(row, headers, ['Acceptable']));
+    const rejected = numericList(valueAt(row, headers, ['Rejected']));
+    if (name && (acceptable.length || rejected.length)) {
+      restrictions.push({
+        name,
+        rarity: normalizeName(valueAt(row, headers, ['Rarity'])) || null,
+        size: parseSize(valueAt(row, headers, ['Size'])),
+        acceptable,
+        rejected,
+        notes: clean(valueAt(row, headers, ['Notes', 'Nots'])) || null,
+        row: sourceRow,
+      });
+    }
+  }
+  return { sheet: 'Ore SizeHeight', paths, restrictions };
+}
+
+function parseStatsForNerds(values) {
+  const overrides = new Map();
+  for (const [index, row] of values.entries()) {
+    const name = normalizeName(row[1]);
+    const variant = normalizeName(row[3]);
+    const description = clean(row[4]);
+    if (!name || !variant || !description) continue;
+    const dropSpeedMatch = description.match(/(?:constant\s+)?(\d+(?:\.\d+)?)\s+drop speed/i);
+    if (!dropSpeedMatch) continue;
+    overrides.set(`${name}::${variant}`.toLowerCase(), {
+      dropSpeed: Number(dropSpeedMatch[1]),
+      statsForNerdsRow: index + 1,
+    });
+  }
+  return overrides;
+}
+
 function canonical(value) {
   if (value == null || value === '' || value === 'N/A') return null;
   if (typeof value === 'number') return Number(value.toPrecision(12));
@@ -161,12 +231,27 @@ function findConflicts(records) {
   return conflicts;
 }
 
-const input = await FileBlob.load(workbookPath);
-const workbook = await SpreadsheetFile.importXlsx(input);
+const workbook = openXlsx(workbookBytes);
 const records = [];
 for (const [sheetName, defaultType] of sheetDefinitions) {
-  const sheet = workbook.worksheets.getItem(sheetName);
-  records.push(...parseRows(sheetName, defaultType, sheet.getUsedRange(true).values));
+  records.push(...parseRows(sheetName, defaultType, workbook.readSheet(sheetName, { maxRows: 2_000 })));
+}
+const complexStatOverrides = workbook.sheetNames.includes('Stats for Nerds')
+  ? parseStatsForNerds(workbook.readSheet('Stats for Nerds', { maxRows: 2_000 }))
+  : new Map();
+for (const record of records) {
+  const override = complexStatOverrides.get(record.key);
+  if (!override) continue;
+  if (Number.isFinite(override.dropSpeed)) record.dropSpeed = override.dropSpeed;
+  record.statsForNerdsRow = override.statsForNerdsRow;
+}
+const oreSizeHeight = workbook.sheetNames.includes('Ore SizeHeight')
+  ? parseOreSizeHeight(workbook.readSheet('Ore SizeHeight', { maxRows: 2_000 }))
+  : { sheet: 'Ore SizeHeight', paths: [], restrictions: [] };
+const restrictionsByName = new Map(oreSizeHeight.restrictions.map((restriction) => [normalizeName(restriction.name).toLowerCase(), restriction]));
+for (const record of records) {
+  const restriction = restrictionsByName.get(normalizeName(record.name).toLowerCase());
+  if (restriction) record.oreSizeRestriction = restriction;
 }
 
 const conflicts = findConflicts(records);
@@ -177,6 +262,7 @@ const payload = {
   sourceHash,
   records,
   conflicts,
+  oreSizeHeight,
 };
 const groups = new Map();
 for (const record of records) {
@@ -188,9 +274,17 @@ const compactPayload = { ...payload, records: [...groups.values()].map(preferred
 await fs.writeFile(generatedPath, `globalThis.TycoonDatabase = ${JSON.stringify(payload)};\n`);
 await fs.writeFile(indexPath, `${JSON.stringify(compactPayload)}\n`);
 await fs.writeFile(conflictPath, `${JSON.stringify({ generatedAt: payload.generatedAt, conflicts }, null, 2)}\n`);
+await fs.writeFile(oreSizeIndexPath, `${JSON.stringify({
+  importerVersion: IMPORTER_VERSION,
+  generatedAt: payload.generatedAt,
+  sourceWorkbook: payload.sourceWorkbook,
+  sourceHash,
+  ...oreSizeHeight,
+}, null, 2)}\n`);
 
 console.log(`Normalized ${records.length} item rows.`);
 console.log(`Found ${conflicts.length} cross-sheet conflicts.`);
+console.log(`Indexed ${oreSizeHeight.paths.length} ore-size paths and ${oreSizeHeight.restrictions.length} restricted items.`);
 if (conflicts.length) {
   for (const conflict of conflicts.slice(0, 25)) {
     console.log(`${conflict.item} / ${conflict.field}: ${JSON.stringify(conflict.alternatives)}`);

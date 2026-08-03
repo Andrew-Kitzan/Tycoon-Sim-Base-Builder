@@ -15,10 +15,28 @@ export function lintDatabase(database, rules) {
     if (!['dropper', 'upgrader', 'furnace', 'conveyor', 'decoration'].includes(normalize(record.type))) warnings.push({ code: 'DATABASE_TYPE', item: label, message: `Unrecognized type ${record.type}.` });
   }
   for (const conflict of database.conflicts ?? []) errors.push({ code: 'DATABASE_CONFLICT', item: conflict.item ?? conflict.key, message: 'Repeated workbook statistics disagree.' });
+  const oreSizeHeight = database.oreSizeHeight;
+  if (oreSizeHeight) {
+    for (const path of oreSizeHeight.paths ?? []) {
+      if (!Number.isFinite(path.startingSize) || !Number.isFinite(path.finalSize) || path.startingSize <= 0 || path.finalSize <= 0) {
+        errors.push({ code: 'ORE_SIZE_PATH', item: `Ore SizeHeight row ${path.row ?? '?'}`, message: 'Starting and final ore sizes must be positive numbers.' });
+      }
+      if (!Array.isArray(path.operations)) errors.push({ code: 'ORE_SIZE_PATH', item: `Ore SizeHeight row ${path.row ?? '?'}`, message: 'Operation order is missing.' });
+    }
+    for (const restriction of oreSizeHeight.restrictions ?? []) {
+      if (!restriction.name || !(restriction.acceptable?.length) || !(restriction.rejected?.length)) {
+        errors.push({ code: 'ORE_SIZE_RESTRICTION', item: restriction.name ?? `Ore SizeHeight row ${restriction.row ?? '?'}`, message: 'Restricted items require acceptable and rejected ore sizes.' });
+        continue;
+      }
+      if (restriction.acceptable.some((value) => !Number.isFinite(value) || value <= 0)
+        || restriction.rejected.some((value) => !Number.isFinite(value) || value <= 0)) {
+        errors.push({ code: 'ORE_SIZE_RESTRICTION', item: restriction.name, message: 'Restriction thresholds must be positive numbers.' });
+      }
+    }
+  }
   for (const [effect, definition] of Object.entries(rules.effectDefinitions ?? {})) {
     if (!definition.type) errors.push({ code: 'EFFECT_SCHEMA', item: effect, message: 'Effect type is missing.' });
     if (definition.type === 'destructive' && !Number.isFinite(definition.timerSeconds)) errors.push({ code: 'EFFECT_TIMER', item: effect, message: 'Destructive effect timer is missing.' });
   }
   return { valid: errors.length === 0, errors, warnings, recordCount: database.records?.length ?? 0 };
 }
-

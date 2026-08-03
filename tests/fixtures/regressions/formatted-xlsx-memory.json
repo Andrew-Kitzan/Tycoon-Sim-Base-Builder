@@ -1,0 +1,12 @@
+{
+  "id": "formatted-xlsx-memory",
+  "observed": "The workbook importer materialized more than one million empty formatted cells and ran out of memory.",
+  "expected": "The importer reads only cells containing values and ignores distant formatting-only cells.",
+  "kind": "database-import",
+  "input": {
+    "formattedRow": 44059
+  },
+  "assert": {
+    "meaningfulRows": 1
+  }
+}

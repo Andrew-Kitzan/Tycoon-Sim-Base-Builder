@@ -144,6 +144,14 @@ Workbook sizes use `WIDTH × LENGTH`.
 - Some droppers have extended drop points that can reach over nearby items.
   Handle those as documented edge cases rather than as the default rule.
 
+## Ore size and height
+
+- The workbook's `Ore SizeHeight` sheet is authoritative for exact reachable ore sizes and item size restrictions.
+- Its left table records the starting ore size, ordered Shrinker/Expander path, and exact final size.
+- Its right table lists only items with a current ore-size restriction. A blank entry or an item absent from that table has no known size restriction.
+- Slash-separated accepted or rejected sizes describe conditional limits. Read the row's Notes field to determine which threshold applies.
+- A route must reject an ore that exceeds the applicable accepted threshold before entering the restricted item.
+
 ## Ore movement and removal
 
 Ore must move on an item's internal conveyor or an external conveyor. Ore is
