@@ -1,0 +1,19 @@
+{
+  "plotSize": 20,
+  "rebirth": 3,
+  "dropper": { "name": "Iron Dropper", "variant": "Base", "quantity": null },
+  "highestCrate": "Space",
+  "variants": "any",
+  "payment": "f2p",
+  "merchantItems": [],
+  "secretItems": [],
+  "achievementItems": [],
+  "specialItems": [],
+  "premiumItems": [],
+  "inventory": {},
+  "inventoryMode": "unlimited-unless-listed",
+  "requiredItems": [],
+  "forbiddenItems": [],
+  "objective": "cash-per-minute",
+  "specialPreference": "Highest expected cash per minute"
+}

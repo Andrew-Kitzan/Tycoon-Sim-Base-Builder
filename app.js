@@ -413,6 +413,9 @@ function loadGeneratedPlan(plan) {
     finalCapgraderOutput: optimization.valueBeforeFurnace ?? 0,
     expectedCashPerMinute: metrics.expectedCashPerMinute ?? 0,
     expectedCashPerSecond: metrics.expectedCashPerSecond ?? 0,
+    incomeUncertainty: metrics.uncertainty ?? null,
+    optimizationComparison: optimization.comparison ?? null,
+    rejectionCounts: optimization.rejectionCounts ?? null,
     throughputLimitedByOreCap: metrics.limitedByOreCap ?? false,
     toxicExposureSeconds: 0,
     fireExposureSeconds: 0,
@@ -567,6 +570,9 @@ function renderWorkflow() {
       → $${validation.finalCapgraderOutput.toLocaleString(undefined, { maximumFractionDigits: 2 })}
       <br><strong>Expected income:</strong> ${abbreviatedRate(validation.expectedCashPerMinute)}
       · ${abbreviatedPerSecond(validation.expectedCashPerSecond)}
+      ${validation.incomeUncertainty ? `<br><strong>Simulation range:</strong> ${abbreviatedRate(validation.incomeUncertainty.lowP10)} low / ${abbreviatedRate(validation.incomeUncertainty.medianP50)} median / ${abbreviatedRate(validation.incomeUncertainty.highP90)} high (${validation.incomeUncertainty.runs} seeded runs)` : ''}
+      ${validation.optimizationComparison ? `<br><strong>Winner comparison:</strong> ${abbreviatedRate(validation.optimizationComparison.cashPerMinuteGain)} more than the runner-up / ${validation.optimizationComparison.tilesDifference} tile difference / ${validation.optimizationComparison.secondsDifference.toFixed(3)}s route difference` : ''}
+      ${validation.rejectionCounts ? `<br><strong>Search pruning:</strong> ${validation.rejectionCounts.useLimit} use-limit / ${validation.rejectionCounts.prerequisite} prerequisite / ${validation.rejectionCounts.areaBudget} space / ${validation.rejectionCounts.dominatedOrBeamPruned} dominated or beam-pruned` : ''}
       ${validation.throughputLimitedByOreCap ? ' · ore-cap limited' : ''}
       · <strong>Space:</strong> ${validation.reservedTiles} reserved / ${validation.remainingTiles} remaining
       <br><strong>Effect safety:</strong> Toxic ${validation.toxicExposureSeconds}s / 5s

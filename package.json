@@ -4,11 +4,12 @@
   "private": true,
   "description": "Grid-based Tycoon Sim 2 base planner and validation rules.",
   "scripts": {
-    "test": "node tests/validate-planner.js && node tests/engine.test.mjs",
-    "check": "node --check planner-core.js && node --check app.js && node --check scripts/sync-database.mjs && node --check scripts/report-database-conflicts.mjs && node --check scripts/planner-cli.mjs && node tests/validate-planner.js && node tests/engine.test.mjs",
+    "test": "node tests/validate-planner.js && node tests/engine.test.mjs && node tests/regression-fixtures.test.mjs",
+    "check": "node --check planner-core.js && node --check app.js && node --check scripts/sync-database.mjs && node --check scripts/report-database-conflicts.mjs && node --check scripts/planner-cli.mjs && node --check scripts/full-build.mjs && node tests/validate-planner.js && node tests/engine.test.mjs && node tests/regression-fixtures.test.mjs",
     "database:sync": "node scripts/sync-database.mjs && node scripts/report-database-conflicts.mjs",
     "database:index": "node scripts/build-database-index.mjs",
     "database:report": "node scripts/report-database-conflicts.mjs",
+    "database:lint": "node scripts/lint-database.mjs",
     "item": "node scripts/planner-cli.mjs item",
     "legal-pool": "node scripts/planner-cli.mjs legal-pool",
     "solve-cap": "node scripts/planner-cli.mjs solve-cap",
@@ -22,6 +23,8 @@
     "finalize-winner": "node scripts/planner-cli.mjs finalize-winner",
     "workflow-stage": "node scripts/planner-cli.mjs workflow-stage",
     "plan:summary": "node scripts/planner-cli.mjs summary --compact",
-    "plan:clear": "node scripts/planner-cli.mjs clear --compact"
+    "plan:clear": "node scripts/planner-cli.mjs clear --compact",
+    "plan:full": "node scripts/full-build.mjs",
+    "verify:commit": "npm.cmd run database:lint && npm.cmd run check && node scripts/verify-clean-state.mjs"
   }
 }

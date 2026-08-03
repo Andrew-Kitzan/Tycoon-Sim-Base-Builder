@@ -38,10 +38,13 @@ export function appliedEffectsForItem(item, rules) {
     .map(([effect]) => effect);
 }
 
-export function canActivateItem(item, state) {
-  // Acid Plant only triggers on a completely effect-free ore. Its own Toxic
-  // effect therefore prevents another Acid Plant from triggering.
-  return item.name !== 'Acid Plant' || !(state.effects?.length);
+export function itemRequirements(item, rules) {
+  return rules?.itemRequirements?.[item.name] ?? {};
+}
+
+export function canActivateItem(item, state, rules = null) {
+  const requirements = itemRequirements(item, rules);
+  return !requirements.requiresNoEffects || !(state.effects?.length);
 }
 
 export function applyDeterministicItem(item, state, useNumber = 1, profile = {}, rules = null) {
@@ -53,7 +56,7 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
   let oreSize = state.oreSize ?? 1;
   const model = (profile.complexItemModels ?? {})[item.name];
 
-  const activates = canActivateItem(item, state);
+  const activates = canActivateItem(item, state, rules);
   if (!activates) {
     value = before;
   } else if (model) {

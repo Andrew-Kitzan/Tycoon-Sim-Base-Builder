@@ -17,7 +17,7 @@
       "properties": {
         "name": { "type": "string" },
         "variant": { "type": "string" },
-        "quantity": { "type": "integer", "minimum": 1 }
+        "quantity": { "type": ["integer", "null"], "minimum": 1 }
       }
     },
     "highestCrate": { "type": "string" },
@@ -28,8 +28,10 @@
     "achievementItems": { "type": "array", "items": { "type": "string" } },
     "premiumItems": { "type": "array", "items": { "type": "string" } },
     "inventory": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "inventoryMode": { "enum": ["unlimited-unless-listed", "exact"] },
     "requiredItems": { "type": "array", "items": { "type": "string" } },
     "forbiddenItems": { "type": "array", "items": { "type": "string" } },
-    "objective": { "enum": ["cash-per-minute", "cash-per-second", "low-ore-limit", "space", "time"] }
+    "objective": { "enum": ["cash-per-minute", "cash-per-second", "low-ore-limit", "space", "time"] },
+    "specialPreference": { "type": "string" }
   }
 }

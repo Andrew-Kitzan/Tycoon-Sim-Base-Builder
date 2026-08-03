@@ -3,12 +3,14 @@ import path from 'node:path';
 import { loadDatabase, loadRules, findItem } from '../engine/database.mjs';
 import { buildLegalPool } from '../engine/profile.mjs';
 import { compareOptimizationMetrics, optimizeCapgraders } from '../engine/optimizer.mjs';
-import { seededOreSimulation } from '../engine/simulation.mjs';
+import { seededOreSimulation, simulationDistribution } from '../engine/simulation.mjs';
 import { validatePlan } from '../engine/validate.mjs';
 import { destructiveEffectsInChain, evaluateEffectSafety } from '../engine/effects.mjs';
 import { validateCoordinateMap } from '../engine/coordinate-map.mjs';
 import { readJson } from '../engine/utils.mjs';
 import { appliedEffectsForItem, applyDeterministicItem, canActivateItem } from '../engine/models.mjs';
+import { plannerCacheKey } from '../engine/cache.mjs';
+import { lintDatabase } from '../engine/database-lint.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const [database, rules, profile] = await Promise.all([
@@ -71,6 +73,14 @@ const simulationInput = {
   furnaceMultiplier: 2,
 };
 assert.deepEqual(seededOreSimulation(simulationInput), seededOreSimulation(simulationInput), 'same seed must produce the same simulation');
+const distribution = simulationDistribution(simulationInput, { runs: 7, firstSeed: 10 });
+assert(distribution.lowP10 <= distribution.medianP50 && distribution.medianP50 <= distribution.highP90, 'simulation uncertainty percentiles must be ordered');
+assert.equal(distribution.runs, 7);
+const databaseLint = lintDatabase(database, rules);
+assert.equal(databaseLint.valid, true, JSON.stringify(databaseLint.errors));
+const cacheKey = await plannerCacheKey(root, profile, { mode: 'test' });
+assert.equal(cacheKey, await plannerCacheKey(root, profile, { mode: 'test' }), 'identical planner inputs need an identical cache key');
+assert.notEqual(cacheKey, await plannerCacheKey(root, { ...profile, plotSize: profile.plotSize + 1 }, { mode: 'test' }), 'profile changes must invalidate the planner cache');
 
 const flamethrower = findItem(database, 'Ore Flamethrower', 'Base');
 const oasis = findItem(database, 'Oasis Cleanser', 'Base');
@@ -89,7 +99,7 @@ assert(rules.effectDefinitions.Nuclear.appliedBy.includes('Nuclear Upgrader'), '
 const cleanOre = { value: 100, survival: 1, replication: 1, oreSize: 1, effects: [], timeSeconds: 0, area: 0 };
 const firstAcid = applyDeterministicItem(acidPlant, cleanOre, 1, profile, rules);
 assert(firstAcid.value > cleanOre.value && firstAcid.effects.includes('Toxic'), 'Acid Plant must trigger on effect-free ore and apply Toxic');
-assert.equal(canActivateItem(acidPlant, firstAcid), false, 'a second Acid Plant must not trigger after the first applies Toxic');
+assert.equal(canActivateItem(acidPlant, firstAcid, rules), false, 'a second Acid Plant must not trigger after the first applies Toxic');
 assert.equal(applyDeterministicItem(acidPlant, firstAcid, 2, profile, rules).value, firstAcid.value, 'a second Acid Plant must not upgrade Toxic ore');
 const rainbowOre = applyDeterministicItem(prismatic, cleanOre, 1, profile, rules);
 assert(rainbowOre.effects.includes('Rainbow'), 'Prismatic must register its Rainbow effect');

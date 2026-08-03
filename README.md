@@ -78,6 +78,18 @@ npm.cmd run validate-plan -- plans/active-plan.json --compact
 npm.cmd run plan:summary
 ```
 
+For a new setup, the preferred one-command workflow uses the reusable profile
+format in `profiles/template.json`:
+
+```powershell
+npm.cmd run plan:full -- profiles/my-player.json --compact
+```
+
+It validates the player profile and database, searches item and layout
+candidates, strictly validates every route, finalizes the winner, and writes the
+grid artifacts. Add `--quick` for a smaller diagnostic search. Identical inputs
+reuse a content-addressed cache until `npm.cmd run plan:clear` is run.
+
 For a completed setup, use the resumable batch optimizer instead of manually
 running individual candidates:
 
@@ -89,6 +101,16 @@ It checkpoints every tested configuration, skips completed configurations when
 resumed, prints only a compact winning summary, runs strict directed-route
 validation, finalizes the grid, and writes `PROJECT_STATE.md`. A new Codex task
 can read that state file plus the rule files without replaying the old chat.
+
+Before committing reusable engine changes, run:
+
+```powershell
+npm.cmd run verify:commit
+```
+
+Confirmed regressions live as structured fixtures in
+`tests/fixtures/regressions/`. Repository-wide Codex workflow instructions are
+in `AGENTS.md`.
 
 `build` writes `plans/active-plan.json` plus the browser loader at
 `data/active-plan.js`. The renderer reads that recipe automatically; it no

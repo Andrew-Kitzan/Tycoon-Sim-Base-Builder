@@ -1,0 +1,8 @@
+{
+  "id": "portable-after-cap",
+  "observed": "A portable beam touched ore before it exited the final capgrader.",
+  "expected": "Every portable beam first touches the route after the final capgrader.",
+  "kind": "coordinate-map",
+  "input": { "fixture": "preCapPortableMap" },
+  "assert": { "valid": false, "diagnostic": "PORTABLE_BEFORE_CAP" }
+}

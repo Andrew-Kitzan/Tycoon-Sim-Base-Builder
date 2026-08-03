@@ -110,7 +110,7 @@ export function optimizeCapgraders({ initialValue, initialOreSize = 1, initialEf
     for (const state of frontier) {
       for (const item of capgraders) {
         const range = parseRange(item.range);
-        if (state.value < range.minimum || state.value > range.maximum || !useAllowed(item, state, profile, rules, 'cap') || !canActivateItem(item, state)) continue;
+        if (state.value < range.minimum || state.value > range.maximum || !useAllowed(item, state, profile, rules, 'cap') || !canActivateItem(item, state, rules)) continue;
         const useNumber = (state.uses[normalize(item.name)] ?? 0) + 1;
         const applied = applyDeterministicItem(item, state, useNumber, profile, rules);
         const candidate = {
@@ -159,14 +159,15 @@ export function optimizePostCap({ initialState, legalItems, profile, rules, maxS
   let frontier = [initial];
   let best = initial;
   const candidates = [initial];
+  const rejectionCounts = { useLimit: 0, prerequisite: 0, areaBudget: 0, dominatedOrBeamPruned: 0 };
   const score = (state) => Math.log(Math.max(1, expectedCashWeight(state))) - state.timeSeconds * 0.002 - state.area * 0.0005;
   for (let depth = 0; depth < maxSteps; depth += 1) {
     const next = [];
     for (const state of frontier) {
       for (const item of items) {
-        if (!useAllowed(item, state, profile, rules)) continue;
-        if (!canActivateItem(item, state)) continue;
-        if (state.area + itemArea(item) > areaBudget) continue;
+        if (!useAllowed(item, state, profile, rules)) { rejectionCounts.useLimit += 1; continue; }
+        if (!canActivateItem(item, state, rules)) { rejectionCounts.prerequisite += 1; continue; }
+        if (state.area + itemArea(item) > areaBudget) { rejectionCounts.areaBudget += 1; continue; }
         const useNumber = (state.uses[normalize(item.name)] ?? 0) + 1;
         const applied = applyDeterministicItem(item, state, useNumber, profile, rules);
         const candidate = {
@@ -181,6 +182,7 @@ export function optimizePostCap({ initialState, legalItems, profile, rules, maxS
     }
     if (!next.length) break;
     frontier = prune(next, beamWidth, score);
+    rejectionCounts.dominatedOrBeamPruned += Math.max(0, next.length - frontier.length);
   }
   const ranked = candidates.sort((a, b) => score(b) - score(a));
   const byAddedLength = new Map();
@@ -200,6 +202,7 @@ export function optimizePostCap({ initialState, legalItems, profile, rules, maxS
     alternatives,
     searchedStates: candidates.length,
     score: expectedCashWeight(best),
+    rejectionCounts,
   };
 }
 

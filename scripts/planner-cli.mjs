@@ -491,6 +491,7 @@ if (command === 'item') {
   await fs.rm(path.join(root, 'plans', 'optimization-progress.json'), { force: true });
   await fs.rm(path.join(root, 'plans', 'optimization-winner.json'), { force: true });
   await fs.rm(path.join(root, 'plans', 'winner-validation.json'), { force: true });
+  await fs.rm(path.join(root, '.planner-cache'), { recursive: true, force: true });
   await fs.rm(path.join(root, 'PROJECT_STATE.md'), { force: true });
   if (activeProfileName && activeProfileName !== 'example') {
     await fs.rm(path.join(root, 'profiles', `${activeProfileName}.json`), { force: true });

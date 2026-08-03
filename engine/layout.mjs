@@ -1,4 +1,5 @@
 import { diagnostic, normalize } from './utils.mjs';
+import { itemRequirements } from './models.mjs';
 
 const DIRECTIONS = ['north', 'east', 'south', 'west'];
 const opposite = { north: 'south', south: 'north', east: 'west', west: 'east' };
@@ -375,7 +376,7 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
     if (index === 0) firstMergeTargets = externalCells.length ? externalCells.slice(0, Math.min(4, externalCells.length)) : target;
     externalCells.forEach((cell, pathIndex) => {
       const direction = cell.flowDirection ?? pathDirection(cell, externalCells[pathIndex + 1], next.direction);
-      const conveyor = { id: `conveyor-${conveyors.length + 1}`, name: `Quarter Conveyor ${conveyors.length + 1}`, conveyor: 'Quarter Conveyor', x: cell.x, y: cell.y, width: 1, height: 1, direction, speed: 12, stageIndex: index, lane: next.item.name === 'Oil Well' ? 'top' : undefined };
+      const conveyor = { id: `conveyor-${conveyors.length + 1}`, name: `Quarter Conveyor ${conveyors.length + 1}`, conveyor: 'Quarter Conveyor', x: cell.x, y: cell.y, width: 1, height: 1, direction, speed: 12, stageIndex: index, lane: itemRequirements(next.item, rules).requiredLane === 'top' ? 'top' : undefined };
       conveyors.push(conveyor);
       route.push({ kind: 'conveyor', id: conveyor.id });
     });
@@ -466,7 +467,7 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
   // Lane-sensitive upgraders need a fresh centering operation after the last
   // odd-width Oil Well, not merely one somewhere near the droppers.
   for (let targetIndex = 1; targetIndex < logicalItems.length; targetIndex += 1) {
-    if (!['Fine Point Upgrader', 'Prismatic Upgrader'].includes(logicalItems[targetIndex].name)) continue;
+    if (itemRequirements(logicalItems[targetIndex], rules).requiredLane !== 'center') continue;
     const priorOilIndex = logicalItems.slice(0, targetIndex).map((item) => item.name).lastIndexOf('Oil Well');
     if (priorOilIndex < 0) continue;
     const candidate = compressed.find((conveyor) => conveyor.stageIndex === targetIndex - 1 && conveyor.conveyor === 'Supercharged Conveyor');

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tycoon Sim planner regression case",
+  "type": "object",
+  "required": ["id", "observed", "expected", "kind", "input", "assert"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "observed": { "type": "string", "minLength": 1 },
+    "expected": { "type": "string", "minLength": 1 },
+    "kind": { "enum": ["item-transition", "coordinate-map", "profile", "database"] },
+    "input": { "type": "object" },
+    "assert": { "type": "object" }
+  },
+  "additionalProperties": false
+}

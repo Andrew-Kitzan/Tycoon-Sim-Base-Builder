@@ -3,7 +3,7 @@ import { loadDatabase, loadRules, findItem } from './database.mjs';
 import { buildLegalPool } from './profile.mjs';
 import { compareOptimizationMetrics, optimizeCapgraders, optimizePostCap, chooseFurnace } from './optimizer.mjs';
 import { autoLayout } from './layout.mjs';
-import { analyticOreFlow, seededOreSimulation } from './simulation.mjs';
+import { analyticOreFlow, seededOreSimulation, simulationDistribution } from './simulation.mjs';
 import { compactNumber, diagnostic, normalize } from './utils.mjs';
 import { evaluateEffectSafety } from './effects.mjs';
 import { appliedEffectsForItem, applyDeterministicItem } from './models.mjs';
@@ -118,6 +118,11 @@ function itemStats({ placed, type, entry, chainIndex, chain, quantity, layout, e
     const arrival = (entry.timeBefore ?? 0) + connectorTime;
     stats['Arrival time from droppers'] = Array.from({ length: quantity }, (_, index) => `${String.fromCharCode(65 + index)}: ${formatDuration(arrival)}`).join(' · ');
     stats['Time across upgrader'] = formatDuration((entry.timeAfter ?? 0) - (entry.timeBefore ?? 0));
+    stats['Effective value multiplier'] = `${(entry.after / Math.max(0.000001, entry.before)).toFixed(3)}x`;
+    stats['Selection reason'] = type === 'capgrader'
+      ? 'Chosen as part of the highest-ranked near-cap chain that fits and validates.'
+      : 'Chosen as part of the highest expected-cash validated post-cap chain.';
+    stats['Footprint cost'] = `${placed.width * placed.height} tiles`;
     if ((entry.survival ?? 1) < (entry.survivalBefore ?? 1)) {
       stats['Destruction at this upgrader'] = `${((1 - entry.survival / entry.survivalBefore) * 100).toFixed(2)}%`;
       stats['Total ore destruction by this point'] = `${((1 - entry.survival) * 100).toFixed(2)}%`;
@@ -151,6 +156,13 @@ function includesRequiredItems(state, dropper, furnace, profile) {
   return (profile.requiredItems ?? []).every((name) => used.has(normalize(name)));
 }
 
+function rejectionSummary(rejected) {
+  return Object.fromEntries([...rejected.reduce((counts, entry) => {
+    counts.set(entry.reason, (counts.get(entry.reason) ?? 0) + 1);
+    return counts;
+  }, new Map())].sort((left, right) => right[1] - left[1]));
+}
+
 export async function compilePlan(profile, options = {}) {
   const root = options.root ?? path.resolve(import.meta.dirname, '..');
   const [database, rules] = await Promise.all([loadDatabase(root), loadRules(root)]);
@@ -174,13 +186,14 @@ export async function compilePlan(profile, options = {}) {
   const furnace = chooseFurnace(pool.legal, cap.best, profile, rules);
   if (!furnace) return { version: 1, profile, diagnostics: [diagnostic('ITEM_ILLEGAL', 'No deterministic legal furnace is available.')], valid: false };
   let selected = null;
+  let runnerUp = null;
   let closestAttemptDiagnostics = [];
   // Couple item selection to physical fit: test several high-quality cap chains,
   // then retain the highest-value post-cap candidate that actually maps.
   // Small plots may need a slightly lower-value cap chain whose footprint is
   // much smaller. Keep enough near-cap alternatives for the physical-fit pass
   // instead of stopping before the first compact candidate.
-  for (const capState of [cap.best, ...cap.alternatives].slice(0, 96)) {
+  for (const capState of [cap.best, ...cap.alternatives].slice(0, options.capAlternativeLimit ?? 96)) {
     const minimumDroppers = Array.from({ length: profile.dropper.quantity ?? 1 }, () => legalDropper);
     const capLayout = autoLayout({ dropper: legalDropper, droppers: minimumDroppers, chain: uniqueChainEntries(capState.chain), furnace, plotSize: profile.plotSize, rules });
     if (hasHardLayoutError(capLayout)) continue;
@@ -202,8 +215,12 @@ export async function compilePlan(profile, options = {}) {
         const effectSafety = evaluateEffectSafety({ dropper: legalDropper, dropperCount: quantity, chain: postState.chain, layout, rules });
         if (!effectSafety.safe) continue;
         const optimizationMetrics = candidateOptimizationMetrics(postState, layout, furnace, quantity, profile.plotSize);
+        const candidate = { capState, postState, postResult, layout, optimizationMetrics, quantity, effectSafety };
         if (!selected || compareOptimizationMetrics(optimizationMetrics, selected.optimizationMetrics, rules) > 0) {
-          selected = { capState, postState, postResult, layout, optimizationMetrics, quantity, effectSafety };
+          runnerUp = selected;
+          selected = candidate;
+        } else if (!runnerUp || compareOptimizationMetrics(optimizationMetrics, runnerUp.optimizationMetrics, rules) > 0) {
+          runnerUp = candidate;
         }
         break;
       }
@@ -219,15 +236,16 @@ export async function compilePlan(profile, options = {}) {
   const oresPerSecond = Number(legalDropper.dropSpeed ?? 0) * dropQuantity(legalDropper);
   const droppers = Array.from({ length: quantity }, (_, index) => ({ label: String.fromCharCode(65 + index), oresPerSecond, value: initialValue }));
   const economy = analyticOreFlow({ droppers, routeTimeSeconds, finalState: postState, furnaceMultiplier: furnace.mainStat, oreCap: rules.oreCap });
-  const simulation = seededOreSimulation({
+  const simulationInput = {
     seconds: options.simulationSeconds ?? 300,
-    seed: options.seed ?? 1,
     droppers,
     routeTimeSeconds,
     stages: simulationStages(postState.chain),
     furnaceMultiplier: furnace.mainStat,
     oreCap: rules.oreCap,
-  });
+  };
+  const simulation = seededOreSimulation({ ...simulationInput, seed: options.seed ?? 1 });
+  const uncertainty = simulationDistribution(simulationInput, { runs: options.uncertaintyRuns ?? 7 });
   const diagnostics = [...layout.diagnostics];
   const finalCapRatio = capState.finalCap ? capState.finalInput / capState.finalCap : null;
   if (finalCapRatio != null && finalCapRatio < 1 - rules.finalCapTolerance) diagnostics.push(diagnostic('CAP_RANGE', `Best final capgrader input is ${(finalCapRatio * 100).toFixed(2)}% of its cap; below the preferred band.`, { ratio: finalCapRatio }));
@@ -238,7 +256,7 @@ export async function compilePlan(profile, options = {}) {
     profile,
     title: `${profile.life ? `Life ${profile.life}` : `Rebirth ${profile.rebirth}`} ${legalDropper.variant} ${legalDropper.name}`,
     valid: hardErrors.length === 0,
-    legalPool: { accepted: pool.legal.length, rejected: pool.rejected.length },
+    legalPool: { accepted: pool.legal.length, rejected: pool.rejected.length, rejectionReasons: rejectionSummary(pool.rejected) },
     items: orderedItems.map((placed, index) => {
       const type = placed.sequenceIndex >= quantity && placed.sequenceIndex < quantity + capState.chain.length ? 'capgrader' : renderType(placed.item);
       const chainIndex = placed.sequenceIndex - quantity;
@@ -269,10 +287,19 @@ export async function compilePlan(profile, options = {}) {
       routeTimeSeconds,
       dropperQuantity: quantity,
       effectSafety,
+      rejectionCounts: post.rejectionCounts,
+      comparison: runnerUp ? {
+        winner: selected.optimizationMetrics,
+        runnerUp: runnerUp.optimizationMetrics,
+        cashPerMinuteGain: selected.optimizationMetrics.expectedCashPerMinute - runnerUp.optimizationMetrics.expectedCashPerMinute,
+        tilesDifference: selected.optimizationMetrics.remainingTiles - runnerUp.optimizationMetrics.remainingTiles,
+        secondsDifference: selected.optimizationMetrics.routeTimeSeconds - runnerUp.optimizationMetrics.routeTimeSeconds,
+      } : null,
     },
     metrics: {
       ...economy,
       seededSimulation: simulation,
+      uncertainty,
       expectedCashPerMinuteText: `${compactNumber(economy.expectedCashPerMinute)}/min`,
       expectedCashPerSecondText: `${compactNumber(economy.expectedCashPerSecond)}/sec`,
     },

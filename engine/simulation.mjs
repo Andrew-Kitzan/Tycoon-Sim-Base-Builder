@@ -69,3 +69,18 @@ export function seededOreSimulation({ seconds = 300, seed = 1, droppers, routeTi
   flushUntil(seconds);
   return { seconds, seed, processed, destroyed, cash, cashPerMinute: cash / seconds * 60 };
 }
+
+export function simulationDistribution(input, { runs = 7, firstSeed = 101 } = {}) {
+  const samples = Array.from({ length: runs }, (_, index) => seededOreSimulation({ ...input, seed: firstSeed + index }).cashPerMinute)
+    .sort((left, right) => left - right);
+  const percentile = (ratio) => samples[Math.min(samples.length - 1, Math.max(0, Math.round((samples.length - 1) * ratio)))];
+  return {
+    runs,
+    lowP10: percentile(0.1),
+    medianP50: percentile(0.5),
+    highP90: percentile(0.9),
+    mean: samples.reduce((sum, value) => sum + value, 0) / samples.length,
+    minimum: samples[0],
+    maximum: samples.at(-1),
+  };
+}

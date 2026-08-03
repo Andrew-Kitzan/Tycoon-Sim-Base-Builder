@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [
+    {
+      "code": "DATABASE_DROP_SPEED",
+      "item": "Base Wind-Up Dropper",
+      "message": "Dropper has no positive drop speed."
+    },
+    {
+      "code": "DATABASE_DROP_SPEED",
+      "item": "Shiny Wind-Up Dropper",
+      "message": "Dropper has no positive drop speed."
+    }
+  ],
+  "recordCount": 355
+}

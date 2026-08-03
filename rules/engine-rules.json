@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "crateProgression": [
     "Basic", "Advanced", "Factory", "Quarry", "Futuristic", "Toxic",
     "Desert", "Fantasy", "Space", "Candy", "Periastron", "Ancient",
@@ -25,6 +25,14 @@
   },
   "defaultPortableBeamLength": 2,
   "portableSpinnerBeamRadius": 1,
+  "portableRequirements": { "phase": "post-cap", "beamMustTouchRoute": true },
+  "itemRequirements": {
+    "Acid Plant": { "requiresNoEffects": true, "appliesEffects": ["Toxic"] },
+    "Oil Well": { "requiredLane": "top", "outputLane": "top" },
+    "Fine Point Upgrader": { "requiredLane": "center" },
+    "Prismatic Upgrader": { "requiredLane": "center", "appliesEffects": ["Rainbow"] },
+    "Lambda Upgrader": { "appliesEffects": ["Sparkles"], "effectPolicy": "conservative" }
+  },
   "defaultFurnaceZone": { "across": 2, "depth": 2, "placement": "front-center" },
   "furnaceOverrides": {
     "Krakatoa": { "across": 2, "depth": 1, "placement": "front-center" },

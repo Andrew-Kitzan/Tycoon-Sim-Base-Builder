@@ -1,0 +1,8 @@
+{
+  "id": "acid-plant-effect-free",
+  "observed": "Acid Plant upgraded ore that already had Rainbow, Sparkles, or Toxic.",
+  "expected": "Acid Plant only activates when the ore has no effects.",
+  "kind": "item-transition",
+  "input": { "item": "Acid Plant", "blockedEffects": ["Rainbow", "Sparkles", "Toxic"] },
+  "assert": { "activated": false, "valueUnchanged": true }
+}

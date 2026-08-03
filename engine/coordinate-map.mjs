@@ -1,5 +1,5 @@
 import { findItem } from './database.mjs';
-import { appliedEffectsForItem, applyDeterministicItem } from './models.mjs';
+import { appliedEffectsForItem, applyDeterministicItem, itemRequirements } from './models.mjs';
 import { buildLegalPool } from './profile.mjs';
 import { itemKey, normalize, parseRange } from './utils.mjs';
 import { validatePlan } from './validate.mjs';
@@ -39,6 +39,48 @@ function parseGridRange(value) {
     y: Math.min(start.y, end.y),
     width: Math.abs(end.x - start.x) + 1,
     height: Math.abs(end.y - start.y) + 1,
+  };
+}
+
+function columnName(number) {
+  let value = number;
+  let output = '';
+  while (value > 0) {
+    value -= 1;
+    output = String.fromCharCode(65 + (value % 26)) + output;
+    value = Math.floor(value / 26);
+  }
+  return output;
+}
+
+function gridRange(entry) {
+  const first = `${columnName(entry.x)}${entry.y}`;
+  const last = `${columnName(entry.x + entry.width - 1)}${entry.y + entry.height - 1}`;
+  return first === last ? first : `${first}:${last}`;
+}
+
+export function coordinateMapFromPlan(plan, profileName = 'current-build') {
+  return {
+    stage: 4,
+    status: 'optimization-candidate',
+    accepted: false,
+    plotSize: plan.profile.plotSize,
+    profile: profileName,
+    items: (plan.items ?? []).map((item) => ({
+      order: item.order,
+      name: item.name,
+      variant: item.variant,
+      topLeft: `${columnName(item.x)}${item.y}`,
+      bottomRight: `${columnName(item.x + item.width - 1)}${item.y + item.height - 1}`,
+      facing: item.direction,
+      section: item.type === 'capgrader' ? 'capgrader' : item.type === 'furnace' ? 'furnace' : 'post-cap',
+    })),
+    conveyorRuns: (plan.conveyors ?? []).map((conveyor) => ({
+      type: conveyor.conveyor,
+      cells: gridRange(conveyor),
+      facing: conveyor.direction,
+      ...(conveyor.lane ? { lane: conveyor.lane } : {}),
+    })),
   };
 }
 
@@ -366,9 +408,9 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       if (component.centers) lane = 'center';
       if (component.lane) lane = component.lane;
       if (component.kind !== 'item') continue;
-      if (component.name === 'Oil Well' && lane !== 'top') diagnostics.push({ code: 'WRONG_LANE', message: `${dropper.name} ${dropper.order} is not guaranteed on the top lane before Oil Well ${component.item.order}.` });
-      if (['Fine Point Upgrader', 'Prismatic Upgrader'].includes(component.name) && lane !== 'center') diagnostics.push({ code: 'WRONG_LANE', message: `${dropper.name} ${dropper.order} is not centered immediately before ${component.name} ${component.item.order}.` });
-      if (component.name === 'Oil Well') lane = 'top';
+      const requirements = itemRequirements(component.item.definition, rules);
+      if (requirements.requiredLane && lane !== requirements.requiredLane) diagnostics.push({ code: 'WRONG_LANE', message: `${dropper.name} ${dropper.order} is not guaranteed in the ${requirements.requiredLane} lane before ${component.name} ${component.item.order}.` });
+      if (requirements.outputLane) lane = requirements.outputLane;
     }
     const simulated = routeValue(path, portables, dropper, profile, rules);
     for (const stage of simulated.stages) {
