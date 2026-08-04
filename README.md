@@ -6,6 +6,12 @@ This repository contains a browser-based grid for building, saving, loading, and
 
 ## Download and open the planner
 
+Choose **one** of the setup methods below. You can download the repository as a ZIP, clone it with Git, or fork it and then clone your fork. You do not need to use every method.
+
+- **Download ZIP — recommended for most players:** Choose this if you only want to use the planner. It is the easiest option and does not require Git or a GitHub account.
+- **Clone with Git:** Choose this if you want a local copy connected to the original repository so you can pull future updates or make local changes with version control.
+- **Fork and clone:** Choose this if you want your own GitHub copy, plan to publish or share your changes, or may want to contribute changes back to the original repository.
+
 ### Download as a ZIP
 
 1. Open the repository page on GitHub.
@@ -22,6 +28,22 @@ cd "Tycoon Sim 2"
 ```
 
 Then open `index.html` in your browser. The grid does not require an installation, build command, or web server.
+
+### Fork and clone
+
+1. Sign in to GitHub and open the repository page.
+2. Select **Fork**, then create the fork under your GitHub account.
+3. Open your new fork and copy its repository URL from the **Code** menu.
+4. Clone your fork and enter its folder:
+
+```powershell
+git clone <your-fork-url>
+cd "Tycoon Sim 2"
+```
+
+5. Open `index.html` in your browser.
+
+Forking by itself only creates a copy on GitHub. You must also clone your fork or download its ZIP before you can open the planner on your computer.
 
 Keep all repository files and folders together. The planner needs the JavaScript files and the `data` folder beside `index.html`.
 
