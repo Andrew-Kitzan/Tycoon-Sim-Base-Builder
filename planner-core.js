@@ -800,6 +800,7 @@
         effects: effectsAppliedBy(definition?.name),
       };
       const useCounts = new Map();
+      let oreSizeDiagnosticIssued = false;
       const stages = [];
       const portableHits = portables.map((portable) => {
         const beam = portableBeamCells(portable);
@@ -840,12 +841,15 @@
             message: `${dropper.name} #${dropper.order} reaches ${itemDefinition.variant ?? 'Base'} ${component.item.name} #${component.item.order} for use ${uses}, exceeding its limit of ${useLimit} use${useLimit === 1 ? '' : 's'} per ore.`,
           });
           const oreSizeLimit = maximumAcceptedOreSize(itemDefinition);
-          if (exceedsOreSizeLimit(itemDefinition, before.oreSize)) diagnostics.push({
-            code: 'ORE_SIZE',
-            dropperId: dropper.id,
-            itemId: component.item.id,
-            message: `${dropper.name} #${dropper.order} enters ${itemDefinition.variant ?? 'Base'} ${component.item.name} #${component.item.order} at ore size ${before.oreSize.toFixed(3)}, above its maximum confirmed acceptable size ${oreSizeLimit}.`,
-          });
+          if (!oreSizeDiagnosticIssued && exceedsOreSizeLimit(itemDefinition, before.oreSize)) {
+            oreSizeDiagnosticIssued = true;
+            diagnostics.push({
+              code: 'ORE_SIZE',
+              dropperId: dropper.id,
+              itemId: component.item.id,
+              message: `${dropper.name} #${dropper.order} enters ${itemDefinition.variant ?? 'Base'} ${component.item.name} #${component.item.order} at ore size ${before.oreSize.toFixed(3)}, above its maximum confirmed acceptable size ${oreSizeLimit}.`,
+            });
+          }
           state = applyItem(itemDefinition, state, uses);
           stages.push({
             itemId: component.item.id,
@@ -891,12 +895,15 @@
             message: `${dropper.name} #${dropper.order} reaches ${portable.definition?.variant ?? 'Base'} ${portable.name} #${portable.order} for use ${uses}, exceeding its limit of ${useLimit} use${useLimit === 1 ? '' : 's'} per ore.`,
           });
           const oreSizeLimit = maximumAcceptedOreSize(portable.definition);
-          if (exceedsOreSizeLimit(portable.definition, before.oreSize)) diagnostics.push({
-            code: 'ORE_SIZE',
-            dropperId: dropper.id,
-            itemId: portable.id,
-            message: `${dropper.name} #${dropper.order} enters ${portable.definition?.variant ?? 'Base'} ${portable.name} #${portable.order} at ore size ${before.oreSize.toFixed(3)}, above its maximum confirmed acceptable size ${oreSizeLimit}.`,
-          });
+          if (!oreSizeDiagnosticIssued && exceedsOreSizeLimit(portable.definition, before.oreSize)) {
+            oreSizeDiagnosticIssued = true;
+            diagnostics.push({
+              code: 'ORE_SIZE',
+              dropperId: dropper.id,
+              itemId: portable.id,
+              message: `${dropper.name} #${dropper.order} enters ${portable.definition?.variant ?? 'Base'} ${portable.name} #${portable.order} at ore size ${before.oreSize.toFixed(3)}, above its maximum confirmed acceptable size ${oreSizeLimit}.`,
+            });
+          }
           state = applyItem(portable.definition, state, uses);
           stages.push({
             itemId: portable.id,

@@ -2436,6 +2436,7 @@ function renderKeybindGuide() {
       <h2>Group selection</h2>
       <div class="keybind-row"><kbd>R</kbd><span>Rotate all 90Â°</span></div>
       <div class="keybind-row"><kbd>M</kbd><span>Move selection</span></div>
+      <div class="keybind-row"><kbd>Backspace / Del</kbd><span>Delete selection</span></div>
       <div class="keybind-row"><kbd>Esc</kbd><span>Cancel selection</span></div>`;
     return;
   }
@@ -3602,6 +3603,11 @@ document.addEventListener('keydown', (event) => {
     if (key === 'm') {
       event.preventDefault();
       startMassMove();
+      return;
+    }
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      event.preventDefault();
+      deleteMassSelection();
       return;
     }
     if (event.key === 'Escape') {

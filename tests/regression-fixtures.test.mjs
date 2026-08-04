@@ -5,7 +5,7 @@ import { loadDatabase, loadRules, findItem } from '../engine/database.mjs';
 import { applyDeterministicItem } from '../engine/models.mjs';
 import { evaluateEffectSafety } from '../engine/effects.mjs';
 import { isFastTurnBlocked } from '../engine/routing.mjs';
-import { exceedsItemUseLimit, exceedsOreSizeLimit, itemUseLimit, maximumAcceptedOreSize } from '../engine/item-constraints.mjs';
+import { exceedsItemUseLimit, exceedsOreSizeLimit, firstOreSizeViolation, itemUseLimit, maximumAcceptedOreSize } from '../engine/item-constraints.mjs';
 import { crimsonPhantomZoneEstimate } from '../engine/crimson.mjs';
 import { connectTeleporterPairs } from '../engine/teleporters.mjs';
 import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
@@ -133,6 +133,15 @@ for (const fixture of fixtures) {
     const item = findItem(database, fixture.input.item, fixture.input.variant);
     assert.equal(maximumAcceptedOreSize(item), fixture.assert.maximumAccepted);
     assert.equal(exceedsOreSizeLimit(item, fixture.input.incomingOreSize), fixture.assert.violates);
+  } else if (fixture.id === 'ore-size-first-block-only') {
+    const item = findItem(database, fixture.input.item, fixture.input.variant);
+    const stages = Array.from({ length: fixture.input.repeatedItems }, (_, index) => ({
+      item: { id: `item-${index + 1}`, definition: item },
+      beforeOreSize: fixture.input.incomingOreSize,
+    }));
+    const first = firstOreSizeViolation(stages);
+    assert.equal(stages.indexOf(first), fixture.assert.firstViolationIndex);
+    assert.equal(first ? 1 : 0, fixture.assert.maximumDiagnosticsPerDropper);
   } else if (fixture.id === 'crimson-phantom-zone-corridor') {
     const item = findItem(database, fixture.input.item, fixture.input.variant);
     const before = { value: fixture.input.startingValue, survival: 1, replication: 1, oreSize: 1, effects: [], timeSeconds: 0, area: 0 };

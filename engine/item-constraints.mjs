@@ -21,3 +21,7 @@ export function exceedsOreSizeLimit(item, oreSize) {
   const maximum = maximumAcceptedOreSize(item);
   return maximum != null && Number(oreSize) > maximum + 1e-9;
 }
+
+export function firstOreSizeViolation(stages = []) {
+  return stages.find((stage) => exceedsOreSizeLimit(stage.item?.definition ?? stage.item, stage.beforeOreSize)) ?? null;
+}

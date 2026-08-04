@@ -4,7 +4,7 @@ import { buildLegalPool } from './profile.mjs';
 import { itemKey, normalize, parseRange } from './utils.mjs';
 import { validatePlan } from './validate.mjs';
 import { isFastTurnBlocked } from './routing.mjs';
-import { exceedsItemUseLimit, exceedsOreSizeLimit, itemUseLimit, maximumAcceptedOreSize } from './item-constraints.mjs';
+import { exceedsItemUseLimit, firstOreSizeViolation, itemUseLimit, maximumAcceptedOreSize } from './item-constraints.mjs';
 import { crimsonPhantomZoneEstimate, isCrimsonPillars } from './crimson.mjs';
 import { connectTeleporterPairs, teleporterJumps } from './teleporters.mjs';
 
@@ -450,6 +450,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       if (requirements.outputLane) lane = requirements.outputLane;
     }
     const simulated = routeValue(path, portables, dropper, profile, rules);
+    const firstOversizedStage = firstOreSizeViolation(simulated.stages);
     for (const stage of simulated.stages) {
       if (stage.range && (stage.before < stage.range.minimum || stage.before > stage.range.maximum)) diagnostics.push({
         code: 'CAP_RANGE',
@@ -459,7 +460,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
         code: 'USE_LIMIT',
         message: `${dropper.name} ${dropper.order} reaches ${stage.item.variant} ${stage.item.name} ${stage.item.order} for use ${stage.useNumber}, exceeding its limit of ${stage.useLimit} use${stage.useLimit === 1 ? '' : 's'} per ore.`,
       });
-      if (exceedsOreSizeLimit(stage.item.definition, stage.beforeOreSize)) {
+      if (stage === firstOversizedStage) {
         const maximum = maximumAcceptedOreSize(stage.item.definition);
         diagnostics.push({
           code: 'ORE_SIZE',

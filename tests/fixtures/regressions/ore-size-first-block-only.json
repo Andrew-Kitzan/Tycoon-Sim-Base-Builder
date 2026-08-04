@@ -1,0 +1,16 @@
+{
+  "id": "ore-size-first-block-only",
+  "kind": "route-ore-size-first-block",
+  "observed": "A dropper produced the same ORE_SIZE warning for every downstream restricted upgrader after its ore had already failed to fit through the first one.",
+  "expected": "Each dropper reports only its first ore-size obstruction because that ore cannot physically reach later items on the route.",
+  "input": {
+    "item": "Lambda Upgrader",
+    "variant": "Base",
+    "incomingOreSize": 2.403,
+    "repeatedItems": 3
+  },
+  "assert": {
+    "firstViolationIndex": 0,
+    "maximumDiagnosticsPerDropper": 1
+  }
+}
