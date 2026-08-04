@@ -1,9 +1,30 @@
+import { internalTransportRect } from './internal-transport.mjs';
+
 export const CRIMSON_PHANTOM_WINDOW_SECONDS = 15;
 export const CRIMSON_PHANTOM_MINIMUM_DELAY_SECONDS = 1;
 export const CRIMSON_PHANTOM_LIFETIME_SECONDS = 30;
 
 export function isCrimsonPillars(item) {
   return item?.name === 'Crimson Pillars';
+}
+
+const cellKey = ({ x, y }) => `${x},${y}`;
+
+function rectangleCells(rect) {
+  const result = [];
+  for (let y = rect.y; y < rect.y + rect.height; y += 1) {
+    for (let x = rect.x; x < rect.x + rect.width; x += 1) result.push({ x, y });
+  }
+  return result;
+}
+
+export function isCrimsonWallLandingCell(crimson, cell, rules = {}) {
+  if (!isCrimsonPillars(crimson) || !cell) return false;
+  const path = internalTransportRect(crimson, rules);
+  if (!path) return false;
+  const crimsonCells = new Set(rectangleCells(crimson).map(cellKey));
+  const pathCells = new Set(rectangleCells(path).map(cellKey));
+  return crimsonCells.has(cellKey(cell)) && !pathCells.has(cellKey(cell));
 }
 
 export function crimsonPhantomZoneCorridor(

@@ -4,13 +4,16 @@ import path from 'node:path';
 import { loadDatabase, loadRules, findItem } from '../engine/database.mjs';
 import { applyDeterministicItem } from '../engine/models.mjs';
 import { evaluateEffectSafety } from '../engine/effects.mjs';
-import { isFastTurnBlocked } from '../engine/routing.mjs';
+import { isFastTurnBlocked, routeFailureKind, routeFalloffCells } from '../engine/routing.mjs';
 import { exceedsItemUseLimit, exceedsOreSizeLimit, firstOreSizeViolation, itemUseLimit, maximumAcceptedOreSize } from '../engine/item-constraints.mjs';
-import { crimsonPhantomZoneEstimate } from '../engine/crimson.mjs';
+import { crimsonPhantomZoneEstimate, isCrimsonWallLandingCell } from '../engine/crimson.mjs';
 import { connectTeleporterPairs } from '../engine/teleporters.mjs';
 import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
 import { internalTransportProfile, internalTransportRect } from '../engine/internal-transport.mjs';
 import { portableUpgradeCells, portableZoneEntryIndices } from '../engine/coordinate-map.mjs';
+import { validatePlan } from '../engine/validate.mjs';
+import { furnaceMultiplierForOre } from '../engine/furnaces.mjs';
+import { expectedRouteOccupancySeconds, itemDestructionChance } from '../engine/destruction.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const directory = path.join(root, 'tests', 'fixtures', 'regressions');
@@ -67,6 +70,22 @@ for (const fixture of fixtures) {
     const entries = portableZoneEntryIndices(fixture.input.path, fixture.input.zoneCells);
     assert.deepEqual(entries, fixture.assert.entryIndices);
     assert.equal(entries.length, fixture.assert.uses);
+  } else if (fixture.id === 'crimson-dropper-wall-landing') {
+    assert.equal(isCrimsonWallLandingCell(fixture.input.crimson, fixture.input.wallCell, rules), fixture.assert.wallRedirects);
+    assert.equal(isCrimsonWallLandingCell(fixture.input.crimson, fixture.input.conveyorCell, rules), fixture.assert.conveyorIsNotWall);
+    assert.equal(isCrimsonWallLandingCell(fixture.input.crimson, fixture.input.outsideCell, rules), fixture.assert.outsideDoesNotRedirect);
+    const plan = {
+      version: 1,
+      profile: { plotSize: 12 },
+      items: [fixture.input.dropper, fixture.input.crimson, fixture.input.furnace],
+      conveyors: [],
+      route: [],
+      furnaceZone: { x: 4, y: 7, width: 2, height: 2 },
+      diagnostics: [],
+    };
+    assert.equal(validatePlan(plan, rules).valid, fixture.assert.strictRouteValid);
+    const overlapping = { ...plan, items: [{ ...fixture.input.dropper, x: 6 }, fixture.input.crimson, fixture.input.furnace] };
+    assert.equal(validatePlan(overlapping, rules).diagnostics.some((entry) => entry.code === 'COLLISION'), fixture.assert.overlapRejected);
   } else if (fixture.id === 'formatted-xlsx-memory') {
     const xml = `<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Value</t></is></c></row><row r="${fixture.input.formattedRow}"><c r="Z${fixture.input.formattedRow}" s="9"/></row></sheetData></worksheet>`;
     const values = parseWorksheetXml(xml);
@@ -77,6 +96,20 @@ for (const fixture of fixtures) {
       const item = findItem(database, fixture.input.item, variant);
       assert.equal(item.dropSpeed, fixture.assert.dropSpeed);
       assert.equal(item.statsForNerdsRow, fixture.assert.statsForNerdsRows[variant]);
+    }
+  } else if (fixture.id === 'shiny-8-ball-multiplier') {
+    const item = findItem(database, fixture.input.item, fixture.input.variant);
+    assert.equal(item.mainStat, fixture.assert.mainStat);
+  } else if (fixture.id === 'krakatoa-effect-multiplier') {
+    const furnace = findItem(database, fixture.input.item, fixture.input.variant);
+    assert.equal(rules.krakatoaFireWindowSeconds, fixture.input.fireWindowSeconds);
+    for (const testCase of fixture.input.cases) {
+      const result = furnaceMultiplierForOre(furnace, {
+        activeEffects: testCase.effects,
+        fireAppliedSecondsAgo: testCase.fireAge ?? Number.POSITIVE_INFINITY,
+        fireWindowSeconds: fixture.input.fireWindowSeconds,
+      });
+      assert.deepEqual(result, { multiplier: testCase.multiplier, condition: testCase.condition });
     }
   } else if (fixture.id === 'scanner-hit-chances') {
     for (const [name, chance] of Object.entries(fixture.input.scanners)) {
@@ -91,6 +124,28 @@ for (const fixture of fixtures) {
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, []), fixture.assert.unblocked);
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, [fixture.input.wall]), fixture.assert.wallBlocked);
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, [fixture.input.portable]), fixture.assert.portableBlocked);
+  } else if (fixture.id === 'route-falloff-zone') {
+    assert.deepEqual(routeFalloffCells(fixture.input.path, null, fixture.input.plotSize), fixture.assert.falloffCells);
+    assert.deepEqual(routeFalloffCells(fixture.input.boundaryPath, null, fixture.input.plotSize), fixture.assert.boundaryCells);
+    const occupied = new Set(fixture.input.occupiedExitCells.map(({ x, y }) => `${x},${y}`));
+    assert.deepEqual(
+      routeFalloffCells(fixture.input.path, null, fixture.input.plotSize, ({ x, y }) => occupied.has(`${x},${y}`)),
+      fixture.assert.connectedTransportIsNotFalloff,
+    );
+  } else if (fixture.id === 'route-gap-detail') {
+    const common = { hasStart: true, pathIds: fixture.input.pathIds, plotSize: fixture.input.plotSize };
+    assert.equal(routeFailureKind({ ...common, hasStart: false }), fixture.assert.unconnected);
+    assert.equal(routeFailureKind({ ...common, nextIds: fixture.input.loopNextIds }), fixture.assert.loop);
+    assert.equal(routeFailureKind({ ...common, nextIds: fixture.input.blockedNextIds }), fixture.assert.directionBlocked);
+    assert.equal(routeFailureKind({ ...common, exitCells: fixture.input.gapExitCells }), fixture.assert.gap);
+    assert.equal(routeFailureKind({ ...common, exitCells: fixture.input.boundaryExitCells }), fixture.assert.boundary);
+  } else if (fixture.id === 'ore-replicator-portable') {
+    const replicator = findItem(database, fixture.input.item, fixture.input.variant);
+    assert.equal(replicator.conveyorSpeed, fixture.assert.databaseConveyorSpeed);
+    for (const relativePath of fixture.assert.requiredPatternFiles) {
+      const source = await fs.readFile(path.join(root, relativePath), 'utf8');
+      assert.match(source, /Ore Replicator/);
+    }
   } else if (fixture.id === 'incremental-use-multipliers') {
     for (const [variant, multipliers] of Object.entries(fixture.input.variants)) {
       const item = findItem(database, fixture.input.item, variant);
@@ -164,6 +219,24 @@ for (const fixture of fixtures) {
     assert.equal(secondUse.outcomeModel?.kind, fixture.assert.outcomeModel);
     assert.equal(secondUse.outcomeModel.outcomes.length, fixture.assert.outcomeCount);
     assert.equal(secondUse.value, fixture.assert.secondUseValue);
+  } else if (fixture.id === 'minefield-destruction-occupancy') {
+    const minefield = findItem(database, fixture.input.item, fixture.input.variant);
+    const before = { value: fixture.input.startingValue, survival: 1, replication: 1, oreSize: 1, effects: [], timeSeconds: 0, area: 0 };
+    const after = applyDeterministicItem(minefield, before, 1, {}, rules);
+    assert.equal(itemDestructionChance(minefield), fixture.assert.destructionChance);
+    assert(Math.abs(after.destructionChance - fixture.assert.destructionChance) < 1e-12);
+    assert.equal(after.survival, fixture.assert.survival);
+    assert.equal(after.value, fixture.assert.survivorValue);
+    assert.equal(expectedRouteOccupancySeconds({
+      routeTimeSeconds: fixture.input.routeTimeSeconds,
+      stages: [{
+        arrivalSeconds: fixture.input.destructionTimeSeconds,
+        survivalAfter: after.survival,
+        replicationAfter: after.replication,
+      }],
+      finalSurvival: after.survival,
+      finalReplication: after.replication,
+    }), fixture.assert.occupancySeconds);
   } else if (fixture.id === 'manual-effect-timer-route') {
     const source = findItem(database, fixture.input.effectSource, 'Base');
     const remover = findItem(database, fixture.input.remover, 'Base');

@@ -1,5 +1,6 @@
 import { diagnostic } from './utils.mjs';
 import { internalTransportRect } from './internal-transport.mjs';
+import { isCrimsonWallLandingCell } from './crimson.mjs';
 
 const HARD_CODES = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'ITEM_ILLEGAL', 'USE_LIMIT', 'ORE_SIZE', 'WRONG_LANE']);
 const conveyorRules = {
@@ -41,7 +42,15 @@ function connectivityDiagnostics(plan, rules) {
   plan.conveyors.filter((entry) => !entry.wall && entry.conveyor !== 'Conveyor Wall')
     .forEach((entry) => rectCells(entry).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
   plan.items.forEach((entry) => itemPathCells(entry, rules).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
-  const starts = plan.items.filter((item) => item.type === 'dropper').flatMap(dropFrontCells).filter(({ x, y }) => traversable.has(cellKey(x, y)));
+  const crimsonItems = plan.items.filter((item) => item.name === 'Crimson Pillars');
+  const starts = plan.items.filter((item) => item.type === 'dropper').flatMap((dropper) => (
+    dropFrontCells(dropper).flatMap((cell) => {
+      if (traversable.has(cellKey(cell.x, cell.y))) return [cell];
+      return crimsonItems
+        .filter((crimson) => isCrimsonWallLandingCell(crimson, cell, rules))
+        .flatMap((crimson) => itemPathCells(crimson, rules));
+    })
+  ));
   const furnace = plan.items.find((item) => item.type === 'furnace');
   const goals = new Set(rectCells(plan.furnaceZone ?? furnace ?? {}).map(({ x, y }) => cellKey(x, y)));
   goals.forEach((goal) => traversable.add(goal));

@@ -1,0 +1,8 @@
+{
+  "id": "ore-replicator-portable",
+  "kind": "item-render-classification",
+  "observed": "Ore Replicator was treated as a built-in conveyor upgrader, producing a missing conveyor-speed diagnostic and a false route break.",
+  "expected": "Ore Replicator is a portable with an external beam and never requires conveyor speed.",
+  "input": { "item": "Ore Replicator", "variant": "Base" },
+  "assert": { "databaseConveyorSpeed": 0, "renderType": "portable", "requiredPatternFiles": ["app.js", "engine/coordinate-map.mjs", "engine/compiler.mjs", "engine/layout.mjs"] }
+}

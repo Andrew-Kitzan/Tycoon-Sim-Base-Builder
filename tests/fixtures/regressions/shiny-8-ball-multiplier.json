@@ -1,0 +1,8 @@
+{
+  "id": "shiny-8-ball-multiplier",
+  "kind": "database-stat-correction",
+  "observed": "Shiny 8-Ball Refiner was imported with a mistyped 1.42 multiplier.",
+  "expected": "Shiny 8-Ball Refiner uses the corrected 1.32 multiplier from the authoritative workbook.",
+  "input": { "item": "8-Ball Refiner", "variant": "Shiny" },
+  "assert": { "mainStat": 1.32 }
+}

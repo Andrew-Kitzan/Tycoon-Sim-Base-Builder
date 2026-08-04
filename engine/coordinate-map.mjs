@@ -6,8 +6,10 @@ import { itemKey, normalize, parseRange } from './utils.mjs';
 import { validatePlan } from './validate.mjs';
 import { isFastTurnBlocked } from './routing.mjs';
 import { exceedsItemUseLimit, firstOreSizeViolation, itemUseLimit, maximumAcceptedOreSize } from './item-constraints.mjs';
-import { crimsonPhantomZoneEstimate, isCrimsonPillars } from './crimson.mjs';
+import { crimsonPhantomZoneEstimate, isCrimsonPillars, isCrimsonWallLandingCell } from './crimson.mjs';
 import { connectTeleporterPairs, teleporterJumps } from './teleporters.mjs';
+import { furnaceMultiplierForOre } from './furnaces.mjs';
+import { expectedRouteOccupancySeconds } from './destruction.mjs';
 
 const conveyorDefinitions = {
   'Quarter Conveyor': { width: 1, length: 1, speed: 12 },
@@ -23,7 +25,7 @@ const conveyorDefinitions = {
   'Blue Teleporter Receiver': { width: 4, length: 2, speed: 12, teleporterColor: 'blue', teleporterRole: 'receiver' },
 };
 
-const portablePattern = /Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i;
+const portablePattern = /Portable Upgrader|Portable Spinner|Ore Glazer|Ore Replicator|Derp Blaster|Dragon/i;
 const key = ({ x, y }) => `${x},${y}`;
 const cells = ({ x, y, width, height }) => {
   const result = [];
@@ -395,17 +397,22 @@ function routeValue(path, portables, dropper, profile, rules) {
       const before = state.value;
       const beforeOreSize = state.oreSize;
       const beforeSurvival = state.survival;
+      const beforeReplication = state.replication;
+      const effectsBefore = [...(state.effects ?? [])];
       const range = parseRange(component.item.definition.range);
       const useNumber = nextUseNumber(component.item.definition);
       state = applyDeterministicItem(component.item.definition, state, useNumber, profile, rules);
-      stages.push({ item: component.item, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, survivalBefore: beforeSurvival, survivalAfter: state.survival, range, useNumber, useLimit: itemUseLimit(component.item.definition) });
+      stages.push({ item: component.item, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, survivalBefore: beforeSurvival, survivalAfter: state.survival, replicationBefore: beforeReplication, replicationAfter: state.replication, effectsBefore, effectsAfter: [...(state.effects ?? [])], arrivalSeconds: state.timeSeconds, range, useNumber, useLimit: itemUseLimit(component.item.definition) });
     } else state.timeSeconds += component.seconds;
     for (const { portable } of portableHits.filter((entry) => entry.index === index)) {
       const before = state.value;
       const beforeOreSize = state.oreSize;
+      const beforeSurvival = state.survival;
+      const beforeReplication = state.replication;
+      const effectsBefore = [...(state.effects ?? [])];
       const useNumber = nextUseNumber(portable.definition);
       state = applyDeterministicItem(portable.definition, state, useNumber, profile, rules);
-      stages.push({ item: portable, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, range: null, useNumber, useLimit: itemUseLimit(portable.definition) });
+      stages.push({ item: portable, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, survivalBefore: beforeSurvival, survivalAfter: state.survival, replicationBefore: beforeReplication, replicationAfter: state.replication, effectsBefore, effectsAfter: [...(state.effects ?? [])], arrivalSeconds: state.timeSeconds, range: null, useNumber, useLimit: itemUseLimit(portable.definition) });
     }
   }
   return { ...state, stages, portableUses: portableHits.length };
@@ -447,7 +454,11 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
   const routes = [];
   const routePaths = [];
   for (const dropper of droppers) {
-    const starts = [...new Set(dropFrontCells(dropper).flatMap((cell) => byCell.get(key(cell)) ?? []))];
+    const starts = [...new Set(dropFrontCells(dropper).flatMap((cell) => [
+      ...(byCell.get(key(cell)) ?? []),
+      ...components.filter((component) => component.kind === 'item'
+        && isCrimsonWallLandingCell(component.item, cell, rules)),
+    ]))];
     const path = zone ? findDirectedPath(starts, graph, zone) : null;
     if (!path) {
       diagnostics.push({ code: 'ROUTE_GAP', message: `${dropper.name} ${dropper.order} has no directed route to the furnace processing zone.` });
@@ -475,6 +486,18 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       if (requirements.outputLane) lane = requirements.outputLane;
     }
     const simulated = routeValue(path, portables, dropper, profile, rules);
+    const fireApplicationTimes = [
+      ...(appliedEffectsForItem(dropper.definition, rules).includes('Fire') ? [0] : []),
+      ...simulated.stages
+        .filter((stage) => appliedEffectsForItem(stage.item.definition, rules).includes('Fire') && stage.effectsAfter.includes('Fire'))
+        .map((stage) => stage.arrivalSeconds),
+    ];
+    const lastFireApplication = fireApplicationTimes.length ? Math.max(...fireApplicationTimes) : Number.NEGATIVE_INFINITY;
+    const furnaceRate = furnaceMultiplierForOre(furnace?.definition, {
+      activeEffects: simulated.effects,
+      fireAppliedSecondsAgo: simulated.timeSeconds - lastFireApplication,
+      fireWindowSeconds: Number(rules.krakatoaFireWindowSeconds ?? 3),
+    });
     const firstOversizedStage = firstOreSizeViolation(simulated.stages);
     for (const stage of simulated.stages) {
       if (stage.range && (stage.before < stage.range.minimum || stage.before > stage.range.maximum)) diagnostics.push({
@@ -527,6 +550,16 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       phantomZones,
       portableUses: simulated.portableUses,
       valueBeforeFurnace: simulated.value,
+      survival: simulated.survival,
+      replication: simulated.replication,
+      occupancySeconds: expectedRouteOccupancySeconds({
+        routeTimeSeconds: simulated.timeSeconds,
+        stages: simulated.stages,
+        finalSurvival: simulated.survival,
+        finalReplication: simulated.replication,
+      }),
+      furnaceMultiplier: furnaceRate.multiplier,
+      furnaceCondition: furnaceRate.condition,
       finalCapgrader: finalCapStage ? {
         name: finalCapStage.item.name,
         input: finalCapStage.before,
@@ -568,7 +601,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
   const oresPerSecond = droppers.reduce((total, dropper) => total + Number(dropper.definition.dropSpeed ?? 0), 0);
   const projectedActiveOres = routes.reduce((total, route) => {
     const dropper = droppers.find((entry) => entry.order === route.dropperOrder);
-    return total + route.seconds * Number(dropper?.definition.dropSpeed ?? 0);
+    return total + route.occupancySeconds * Number(dropper?.definition.dropSpeed ?? 0);
   }, 0);
   const throughputScale = Math.min(1, rules.oreCap / Math.max(1, projectedActiveOres));
   for (const route of routes) {
@@ -584,11 +617,18 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       });
     }
   }
-  const furnaceEntriesPerMinute = oresPerSecond * throughputScale * 60;
-  const furnaceMultiplier = Number(furnace?.definition.mainStat ?? 0);
+  const sourceOresPerMinute = oresPerSecond * throughputScale * 60;
+  const furnaceEntriesPerMinute = routes.reduce((total, route) => {
+    const dropper = droppers.find((entry) => entry.order === route.dropperOrder);
+    return total + Number(dropper?.definition.dropSpeed ?? 0) * route.survival * route.replication * throughputScale * 60;
+  }, 0);
+  const destroyedOresPerMinute = routes.reduce((total, route) => {
+    const dropper = droppers.find((entry) => entry.order === route.dropperOrder);
+    return total + Number(dropper?.definition.dropSpeed ?? 0) * (1 - route.survival) * throughputScale * 60;
+  }, 0);
   const expectedCashPerMinute = routes.reduce((total, route) => {
     const dropper = droppers.find((entry) => entry.order === route.dropperOrder);
-    return total + Number(dropper?.definition.dropSpeed ?? 0) * throughputScale * 60 * route.valueBeforeFurnace * furnaceMultiplier;
+    return total + Number(dropper?.definition.dropSpeed ?? 0) * route.survival * route.replication * throughputScale * 60 * route.valueBeforeFurnace * route.furnaceMultiplier;
   }, 0);
   const reservedTiles = items.reduce((total, item) => total + item.width * item.height, 0)
     + conveyors.reduce((total, conveyor) => total + conveyor.width * conveyor.height, 0);
@@ -606,6 +646,9 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       rawOresPerSecond: oresPerSecond,
       throughputScale,
       furnaceEntriesPerMinute,
+      sourceOresPerMinute,
+      destroyedOresPerMinute,
+      survivalToFurnace: sourceOresPerMinute > 0 ? furnaceEntriesPerMinute / sourceOresPerMinute : 1,
       expectedCashPerMinute,
       reservedTiles,
       remainingTiles: Math.max(0, map.plotSize ** 2 - reservedTiles),

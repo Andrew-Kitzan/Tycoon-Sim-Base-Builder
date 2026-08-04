@@ -1,0 +1,17 @@
+{
+  "id": "route-falloff-zone",
+  "kind": "route-visual-diagnostic",
+  "observed": "A disconnected ore route reported a route-gap error but did not identify the grid cell where the ore fell off.",
+  "expected": "The route exposes the first cells beyond its final connected component, with an in-bounds fallback when the route exits the plot.",
+  "input": {
+    "plotSize": 10,
+    "path": [{ "direction": "east", "path": { "x": 2, "y": 3, "width": 2, "height": 2 } }],
+    "boundaryPath": [{ "direction": "east", "path": { "x": 9, "y": 3, "width": 2, "height": 2 } }],
+    "occupiedExitCells": [{ "x": 4, "y": 3 }, { "x": 4, "y": 4 }]
+  },
+  "assert": {
+    "falloffCells": [{ "x": 4, "y": 3 }, { "x": 4, "y": 4 }],
+    "boundaryCells": [{ "x": 10, "y": 3 }, { "x": 10, "y": 4 }],
+    "connectedTransportIsNotFalloff": []
+  }
+}

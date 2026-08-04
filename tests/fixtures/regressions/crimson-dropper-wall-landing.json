@@ -1,0 +1,15 @@
+{
+  "id": "crimson-dropper-wall-landing",
+  "kind": "dropper-route-entry-exception",
+  "observed": "A dropper beside Crimson Pillars was treated as disconnected when its output appeared to land on a decorative wall cell.",
+  "expected": "The dropper remains outside the Pillars with no overlap, and output aimed at a decorative wall cell enters the Pillars' internal conveyor path.",
+  "input": {
+    "crimson": { "name": "Crimson Pillars", "type": "upgrader", "x": 3, "y": 3, "width": 4, "height": 4, "itemWidth": 4, "itemLength": 4, "direction": "south" },
+    "dropper": { "id": "wall-dropper", "name": "Test Dropper", "type": "dropper", "x": 7, "y": 4, "width": 2, "height": 2, "itemWidth": 2, "itemLength": 2, "conveyorWidth": 0, "direction": "west" },
+    "furnace": { "id": "wall-furnace", "name": "Test Furnace", "type": "furnace", "x": 4, "y": 7, "width": 2, "height": 2, "itemWidth": 2, "itemLength": 2, "direction": "south" },
+    "wallCell": { "x": 6, "y": 4 },
+    "conveyorCell": { "x": 5, "y": 4 },
+    "outsideCell": { "x": 7, "y": 4 }
+  },
+  "assert": { "wallRedirects": true, "conveyorIsNotWall": false, "outsideDoesNotRedirect": false, "strictRouteValid": true, "overlapRejected": true }
+}

@@ -16,7 +16,7 @@ function gridSize(item, direction) {
 }
 
 function isPortable(item) {
-  return /Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i.test(item.name);
+  return /Portable Upgrader|Portable Spinner|Ore Glazer|Ore Replicator|Derp Blaster|Dragon/i.test(item.name);
 }
 
 function rectCells(rect) {

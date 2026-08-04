@@ -1,0 +1,19 @@
+{
+  "id": "minefield-destruction-occupancy",
+  "kind": "expected-value-survival-and-ore-cap",
+  "observed": "Minefield Refiner did not reduce survival, and destroyed ore occupied an ore-limit slot for the entire route.",
+  "expected": "Minefield destroys 30% of entering ore, only 70% reaches the furnace, and destroyed ore frees its slot at Minefield.",
+  "input": {
+    "item": "Minefield Refiner",
+    "variant": "Shiny",
+    "startingValue": 100,
+    "routeTimeSeconds": 10,
+    "destructionTimeSeconds": 4
+  },
+  "assert": {
+    "destructionChance": 0.3,
+    "survival": 0.7,
+    "survivorValue": 220.00000000000003,
+    "occupancySeconds": 8.2
+  }
+}

@@ -81,7 +81,7 @@ const savedLoadoutsStorageKey = 'tycoon-sim-2:saved-loadouts:v1';
 const loadoutFileType = 'tycoon-sim-2-loadout';
 const crateProgression = ['Basic', 'Advanced', 'Factory', 'Quarry', 'Futuristic', 'Toxic',
   'Desert', 'Fantasy', 'Space', 'Candy', 'Periastron', 'Ancient', 'Alien', 'Tropical', 'Ocean', 'Trinket', 'Toy'];
-const portableItemPattern = /Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i;
+const portableItemPattern = /Portable Upgrader|Portable Spinner|Ore Glazer|Ore Replicator|Derp Blaster|Dragon/i;
 const conveyorCatalog = [
   { key: 'conveyor::quarter', name: 'Quarter Conveyor', type: 'conveyor', size: { width: 1, length: 1 }, speed: 12 },
   { key: 'conveyor::half', name: 'Half Conveyor', type: 'conveyor', size: { width: 2, length: 1 }, speed: 12 },
@@ -503,6 +503,7 @@ function liveRangePresentation(stage) {
 function liveRouteStatus(route) {
   if (!route) return { className: 'is-error', text: 'The selected dropper is not connected to a route yet.' };
   if (route.routeStatus === 'furnace') return { className: 'is-complete', text: 'Route reaches the furnace.' };
+  if (route.failureReason) return { className: 'is-error', text: `Route cannot reach the furnace: ${String(route.failureReason).replace(/[.]+$/, '')}.` };
   if (route.routeStatus === 'ambiguous') return { className: 'is-error', text: 'The connected route branches. Showing the longest reachable branch.' };
   if (route.routeStatus === 'disconnected') return { className: 'is-error', text: 'No conveyor or upgrader is connected to this dropper output.' };
   const last = route.stages?.at(-1)?.item;
@@ -631,8 +632,8 @@ function manualSimulationItemHtml(item) {
   } else if (item.type === 'furnace') {
     const successful = validation.routes.filter((route) => route.reachedFurnace);
     rows = successful.length ? `<table class="simulation-hover-table">
-      <thead><tr><th>Dropper</th><th>Before furnace</th><th>After furnace</th><th>Survival</th></tr></thead>
-      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${simulationMoney(route.cashPerOre)}</td><td>${((route.survival ?? 0) * 100).toFixed(2)}%</td></tr>`).join('')}</tbody>
+      <thead><tr><th>Dropper</th><th>Before furnace</th><th>Furnace rate</th><th>After furnace</th><th>Survival</th></tr></thead>
+      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${route.furnaceMultiplier}&times; &middot; ${escapeHtml(route.furnaceCondition)}</td><td>${simulationMoney(route.cashPerOre)}</td><td>${((route.survival ?? 0) * 100).toFixed(2)}%</td></tr>`).join('')}</tbody>
     </table>` : '<p>No simulated ore reaches this furnace.</p>';
   } else if (routeStages.length) {
     rows = `<table class="simulation-hover-table">
@@ -711,8 +712,8 @@ function categorizedManualSimulationHtml(item) {
   if (item.type === 'furnace') {
     const successful = validation.routes.filter((route) => route.reachedFurnace);
     const rows = successful.length ? `<table class="simulation-hover-table">
-      <thead><tr><th>Dropper</th><th>Before furnace</th><th>Cash per ore</th></tr></thead>
-      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${simulationMoney(route.cashPerOre)}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>Dropper</th><th>Before furnace</th><th>Furnace rate</th><th>Cash per ore</th></tr></thead>
+      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${route.furnaceMultiplier}&times; &middot; ${escapeHtml(route.furnaceCondition)}</td><td>${simulationMoney(route.cashPerOre)}</td></tr>`).join('')}</tbody>
     </table>` : '<p>No simulated ore reaches this furnace.</p>';
     return `<section class="item-stat-section value-tracking simulation-item-tracking"><h3>Furnace payout</h3>${rows}</section>${diagnosticsHtml}`;
   }
@@ -1949,6 +1950,54 @@ function renderPhantomZoneOverlays() {
   return groups.length;
 }
 
+function routeFalloffOverlayGroups() {
+  let routes = validation?.kind === 'manual-simulation' ? validation.routes : null;
+  if (!routes && plannerMode === 'build' && activePlan?.items?.some((item) => item.type === 'dropper')) {
+    try {
+      routes = globalThis.TycoonPlanner.simulateManualBase({
+        items: activePlan.items,
+        conveyors: activePlan.lanes,
+        database: globalThis.TycoonDatabase,
+        plotSize: Number(sizeSlider.value),
+        oreCap: 100,
+        allowPartialRoutes: true,
+      }).routes;
+    } catch {
+      routes = [];
+    }
+  }
+  const groups = new Map();
+  for (const route of routes ?? []) {
+    if (route.reachedFurnace) continue;
+    for (const cell of route.falloffCells ?? []) {
+      const groupKey = `${cell.x},${cell.y}`;
+      const group = groups.get(groupKey) ?? { cell, routes: [] };
+      group.routes.push(route);
+      groups.set(groupKey, group);
+    }
+  }
+  return [...groups.values()];
+}
+
+function renderRouteFalloffOverlays() {
+  const groups = routeFalloffOverlayGroups();
+  for (const group of groups) {
+    const overlay = document.createElement('div');
+    overlay.className = 'route-falloff-overlay';
+    overlay.style.left = `calc(${group.cell.x - 1} * var(--tile))`;
+    overlay.style.top = `calc(${group.cell.y - 1} * var(--tile))`;
+    overlay.style.width = 'var(--tile)';
+    overlay.style.height = 'var(--tile)';
+    const dropperNumbers = [...new Set(group.routes.map((route) => route.dropperOrder))];
+    overlay.title = `Ore falls off here for dropper${dropperNumbers.length === 1 ? '' : 's'} #${dropperNumbers.join(', #')}. The route is not connected to the furnace.`;
+    const label = document.createElement('span');
+    label.textContent = `! ${dropperNumbers.join('/')}`;
+    overlay.append(label);
+    grid.append(overlay);
+  }
+  return groups.length;
+}
+
 const conveyorAbbreviations = {
   'Normal Conveyor': 'Con',
   'Supercharged Conveyor': 'Sup',
@@ -2089,7 +2138,7 @@ function renderWorkflow() {
           <div class="simulation-metric"><span>Space</span><strong>${metrics.reservedTiles} used / ${metrics.remainingTiles} free</strong></div>
         </div>
         ${validation.routes.length ? `<table class="simulation-route-table">
-          <thead><tr><th>Dropper</th><th>Reaches furnace</th><th>Teleporter</th><th>Travel time</th><th>Survival</th><th>Destroyed/min</th><th>Value before furnace</th><th>Value after furnace</th></tr></thead>
+          <thead><tr><th>Dropper</th><th>Reaches furnace</th><th>Teleporter</th><th>Travel time</th><th>Survival</th><th>Destroyed/min</th><th>Value before furnace</th><th>Furnace rate</th><th>Value after furnace</th></tr></thead>
           <tbody>${validation.routes.map((route) => `<tr>
             <td>${escapeHtml(route.dropper)}</td>
             <td>${route.reachedFurnace ? 'Yes' : 'No'}</td>
@@ -2098,6 +2147,7 @@ function renderWorkflow() {
             <td>${route.reachedFurnace ? `${((route.survival ?? 0) * 100).toFixed(2)}%` : 'N/A'}</td>
             <td>${route.reachedFurnace ? (route.destroyedOresPerMinute ?? 0).toFixed(2) : 'N/A'}</td>
             <td>${route.valueBeforeFurnace == null ? 'N/A' : simulationMoney(route.valueBeforeFurnace)}</td>
+            <td>${route.furnaceMultiplier == null ? 'N/A' : `${route.furnaceMultiplier}&times; &middot; ${escapeHtml(route.furnaceCondition)}`}</td>
             <td>${route.cashPerOre == null ? 'N/A' : simulationMoney(route.cashPerOre)}</td>
           </tr>`).join('')}</tbody>
         </table>` : ''}
@@ -2584,16 +2634,19 @@ function displayItemDescription(item) {
 function refreshPlacementMetadata(item) {
   const record = databaseRecordForItem(item);
   const stats = { ...(item?.stats ?? {}), ...(record ? recordStats(record) : {}) };
-  const transport = internalTransportProfile(item.name, item.itemWidth, item.type);
+  const type = record ? databaseRenderType(record) : item.type;
+  const transport = internalTransportProfile(item.name, item.itemWidth, type);
   delete stats.Effects;
   delete stats.Description;
-  return {
+  return updateItemGeometry({
     ...item,
+    type,
     description: record ? recordDescription(record) : displayItemDescription(item),
     stats,
     conveyorWidth: transport?.across ?? 0,
     conveyorOffset: transport?.northOffset ?? 0,
-  };
+    beamLength: type === 'portable' ? (item.beamLength || 2) : 0,
+  });
 }
 
 function recordStats(record) {
@@ -3675,10 +3728,13 @@ function renderPlan(size) {
   renderMassSelectionEmphasis();
   if (massMoveInteraction) renderMassMoveGhosts();
 
+  const falloffOverlayCount = renderRouteFalloffOverlays();
   const phantomOverlayCount = renderPhantomZoneOverlays();
-  const visibleLegendItems = phantomOverlayCount
-    ? [...legendItems, ['phantom-zone', 'PZ = possible Crimson phantom zone']]
-    : legendItems;
+  const visibleLegendItems = [
+    ...legendItems,
+    ...(falloffOverlayCount ? [['route-falloff', 'Red = ore falls off broken route']] : []),
+    ...(phantomOverlayCount ? [['phantom-zone', 'PZ = possible Crimson phantom zone']] : []),
+  ];
   legend.innerHTML = visibleLegendItems.map(([type, label]) => `<span class="legend-key"><span class="legend-swatch ${type}"></span>${label}</span>`).join('');
   const reservedTiles = validateCoordinateMap(activePlan.items, size)
     + validateRouteSegments(activePlan.lanes ?? [], activePlan.items, size, {

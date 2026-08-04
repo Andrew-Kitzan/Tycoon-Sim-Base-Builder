@@ -43,7 +43,7 @@ export function lockedCapResult(initialValue, initialOreSize, lockedChain, legal
 }
 
 function renderType(item) {
-  if (/Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i.test(item.name)) return 'portable';
+  if (/Portable Upgrader|Portable Spinner|Ore Glazer|Ore Replicator|Derp Blaster|Dragon/i.test(item.name)) return 'portable';
   return item.type;
 }
 

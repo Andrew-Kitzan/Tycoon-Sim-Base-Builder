@@ -44,6 +44,7 @@
     "Proficient Furnace": { "across": 2, "depth": 2, "placement": "front-corner" },
     "Toxic Wasteland": { "across": 2, "depth": 2, "placement": "front-corner" }
   },
+  "krakatoaFireWindowSeconds": 3,
   "scannerFinalCapgraderOnly": true,
   "defaultScannerHitChance": 0.25,
   "scannerHitChances": {

@@ -301,6 +301,9 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   destruction risk, estimate cap usage from each outcome's time until destruction
   or furnace processing rather than treating every spawned ore as traveling the
   full route.
+- Minefield Refiner destroys 30% of ore that reaches it. Apply that loss at the
+  Minefield crossing for ore-cap occupancy, item hover destruction, and the
+  route's probability of reaching the furnace.
 - Include probabilistic scanner results, destructive machines, furnace rejection,
   and every other survival risk in the processed-ore rate and expected cash.
 - For a randomized upgrader such as Lambda, calculate the displayed expected ore
@@ -315,6 +318,9 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   furnace entries or cash.
 - The cash-per-ore input must include the furnace multiplier and every condition
   the build actually satisfies.
+- Krakatoa selects its rate per ore in this priority: Fire applied within the
+  previous 3 seconds, Frost, any other active effect, then no effects. Read the
+  exact rates from the selected Krakatoa variant in the item database.
 - Report the furnace entries/min, expected cash/min, and whether the estimate is
   production-limited or ore-cap-limited.
 - Display expected cash/min with a magnitude suffix and exactly two decimals,
@@ -516,6 +522,21 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 - Dragon's Breath has no intrinsic destruction on its first use. Its second
   upgrade-zone entry has a 30% chance to destroy the ore and 70% survival; report
   that loss through the same per-use RNG destruction model used by Lambda.
+- Items, including droppers, may not overlap Crimson Pillars. Crimson Pillars
+  has a special drop landing rule: a dropper placed outside it may aim at one of
+  its decorative wall cells, and the ore lands on its internal conveyor instead.
+  Other upgrader walls do not redirect dropper output this way.
+- A disconnected route reports the first grid cell immediately beyond its last
+  connected transport component as the ore falloff location. If the route ends
+  at the plot boundary, mark the final in-bounds edge cell instead. Do not mark
+  a falloff zone when that cell contains another transport component; report the
+  loop or direction problem separately.
+- Route-gap diagnostics must distinguish an unconnected dropper output, an
+  actual empty cell gap, an off-plot exit, a loop into an already traversed
+  component, and a connected component whose directed continuation cannot reach
+  the furnace. Include the last component, facing, and coordinates.
+- Ore Replicator is a portable upgrader. It has an external upgrade zone and
+  does not require or supply built-in conveyor speed.
 - Normal built-in conveyor upgraders cannot reverse direction internally, so
   multi-pass reuse is generally a portable routing technique.
 

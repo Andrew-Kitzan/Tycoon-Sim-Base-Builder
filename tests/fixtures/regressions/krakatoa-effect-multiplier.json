@@ -1,0 +1,19 @@
+{
+  "id": "krakatoa-effect-multiplier",
+  "kind": "engine-regression",
+  "observed": "Krakatoa's missing fixed main stat was treated as a 0x furnace multiplier.",
+  "expected": "Krakatoa checks recent Fire first, then Frost, then any effect, and otherwise uses its no-effects rate.",
+  "input": {
+    "item": "Krakatoa",
+    "variant": "Base",
+    "fireWindowSeconds": 3,
+    "cases": [
+      { "effects": ["Fire", "Frost"], "fireAge": 3, "multiplier": 25, "condition": "Fire within 3s" },
+      { "effects": ["Fire", "Frost"], "fireAge": 3.001, "multiplier": 35, "condition": "Frost" },
+      { "effects": ["Frost"], "fireAge": null, "multiplier": 35, "condition": "Frost" },
+      { "effects": ["Neon"], "fireAge": null, "multiplier": 15, "condition": "Any effect (Neon)" },
+      { "effects": [], "fireAge": null, "multiplier": 50, "condition": "No effects" }
+    ]
+  },
+  "assert": { "priority": ["recent Fire", "Frost", "any effect", "no effects"] }
+}

@@ -24,6 +24,59 @@
   };
   const EFFECT_CLEARERS = ['Chartreuse Collider'];
   const CRIMSON_PHANTOM_WINDOW_SECONDS = 15;
+  const KRAKATOA_FIRE_WINDOW_SECONDS = 3;
+
+  function itemDestructionChance(item) {
+    const text = `${item?.effects ?? ''}\n${item?.description ?? ''}`;
+    const match = text.match(/destroys?\s+([\d.]+)%\s+of (?:the )?ore/i);
+    return match ? Math.min(1, Math.max(0, Number(match[1]) / 100)) : 0;
+  }
+
+  function expectedRouteOccupancySeconds(route) {
+    const fatalEffect = (route.effectSafety ?? [])
+      .filter((effect) => (effect.destroyedOriginalFraction ?? 0) > 0)
+      .sort((left, right) => left.deadlineSeconds - right.deadlineSeconds)[0] ?? null;
+    const cutoff = fatalEffect ? Math.min(route.seconds, fatalEffect.deadlineSeconds) : route.seconds;
+    const events = (route.stages ?? [])
+      .filter((stage) => stage.arrivalSeconds <= cutoff)
+      .map((stage) => ({
+        time: stage.arrivalSeconds,
+        mass: stage.survivalAfter * stage.replicationAfter,
+      }))
+      .sort((left, right) => left.time - right.time);
+    let priorTime = 0;
+    let activeMass = 1;
+    let oreSeconds = 0;
+    for (const event of events) {
+      oreSeconds += Math.max(0, event.time - priorTime) * activeMass;
+      priorTime = event.time;
+      activeMass = event.mass;
+    }
+    oreSeconds += Math.max(0, cutoff - priorTime) * activeMass;
+    if (!fatalEffect) oreSeconds += Math.max(0, route.seconds - cutoff) * route.survival * route.replication;
+    return oreSeconds;
+  }
+
+  function furnaceMultiplierForOre(furnace, activeEffects, fireAppliedSecondsAgo) {
+    if (furnace?.name !== 'Krakatoa') {
+      return { multiplier: Number(furnace?.mainStat ?? 0), condition: 'Fixed multiplier' };
+    }
+    const text = `${furnace?.effects ?? ''}\n${furnace?.description ?? ''}`;
+    const rate = (pattern) => Number(text.match(pattern)?.[1] ?? 0);
+    const rates = {
+      anyEffect: rate(/([\d.]+)\s*for any effects?/i),
+      fire: rate(/([\d.]+)\s*if on fire/i),
+      frost: rate(/([\d.]+)\s*if (?:it )?has frost/i),
+      noEffects: rate(/([\d.]+)\s*if (?:it )?(?:has )?no effects?/i),
+    };
+    const effects = new Set(activeEffects ?? []);
+    if (effects.has('Fire') && fireAppliedSecondsAgo <= KRAKATOA_FIRE_WINDOW_SECONDS) {
+      return { multiplier: rates.fire, condition: `Fire within ${KRAKATOA_FIRE_WINDOW_SECONDS}s` };
+    }
+    if (effects.has('Frost')) return { multiplier: rates.frost, condition: 'Frost' };
+    if (effects.size) return { multiplier: rates.anyEffect, condition: `Any effect (${[...effects].join(', ')})` };
+    return { multiplier: rates.noEffects, condition: 'No effects' };
+  }
 
   function assertDirection(direction) {
     if (!DIRECTIONS.includes(direction)) throw new Error(`Invalid direction: ${direction}`);
@@ -162,6 +215,17 @@
       };
   }
 
+  function isCrimsonWallLandingCell(item, cell) {
+    if (item?.name !== 'Crimson Pillars' || !cell) return false;
+    const path = centeredTransportGeometry(item);
+    if (!path) return false;
+    const insideFootprint = cell.x >= item.x && cell.y >= item.y
+      && cell.x < item.x + item.width && cell.y < item.y + item.height;
+    const insideTransport = cell.x >= path.x && cell.y >= path.y
+      && cell.x < path.x + path.width && cell.y < path.y + path.height;
+    return insideFootprint && !insideTransport;
+  }
+
   function furnaceProcessingZone(item) {
     if (!item || item.type !== 'furnace') return null;
     const across = item.processingZoneAcross ?? 2;
@@ -197,6 +261,85 @@
       for (let offset = 0; offset < across; offset += 1) cells.push({ x: x + offset, y });
     }
     return cells;
+  }
+
+  function routeFalloffCells(path = [], dropper = null, plotSize = Infinity, hasConnectedTransport = () => false) {
+    const last = path.at(-1);
+    let targets;
+    if (last) {
+      const own = cellsInRect(last.path ?? last);
+      if (last.direction === 'east') {
+        const edge = Math.max(...own.map((cell) => cell.x));
+        targets = own.filter((cell) => cell.x === edge).map((cell) => ({ x: cell.x + 1, y: cell.y }));
+      } else if (last.direction === 'west') {
+        const edge = Math.min(...own.map((cell) => cell.x));
+        targets = own.filter((cell) => cell.x === edge).map((cell) => ({ x: cell.x - 1, y: cell.y }));
+      } else if (last.direction === 'south') {
+        const edge = Math.max(...own.map((cell) => cell.y));
+        targets = own.filter((cell) => cell.y === edge).map((cell) => ({ x: cell.x, y: cell.y + 1 }));
+      } else {
+        const edge = Math.min(...own.map((cell) => cell.y));
+        targets = own.filter((cell) => cell.y === edge).map((cell) => ({ x: cell.x, y: cell.y - 1 }));
+      }
+    } else if (dropper) {
+      targets = frontCells(dropper, true);
+    } else {
+      return [];
+    }
+    const visible = targets.filter(({ x, y }) => x >= 1 && y >= 1 && x <= plotSize && y <= plotSize);
+    if (visible.length || !last) return visible.filter((cell) => !hasConnectedTransport(cell));
+    const own = cellsInRect(last.path ?? last);
+    return own.filter(({ x, y }) => {
+      if (last.direction === 'east') return x === Math.max(...own.map((cell) => cell.x));
+      if (last.direction === 'west') return x === Math.min(...own.map((cell) => cell.x));
+      if (last.direction === 'south') return y === Math.max(...own.map((cell) => cell.y));
+      return y === Math.min(...own.map((cell) => cell.y));
+    });
+  }
+
+  function routeFailureDetails({ dropper, starts, path, graph, byCell, exitTargets, plotSize }) {
+    const outputCells = frontCells(dropper, true);
+    if (!starts.length) return {
+      kind: 'unconnected-output',
+      cells: outputCells,
+      message: `its output at ${outputCells.map((cell) => `(${cell.x}, ${cell.y})`).join(' and ')} has no conveyor or upgrader beneath it`,
+    };
+    const last = path.at(-1);
+    if (!last) return { kind: 'unconnected-output', cells: outputCells, message: 'its output has no connected transport component' };
+    const exits = exitTargets(last);
+    const next = [...new Set(exits.flatMap((cell) => byCell.get(`${cell.x},${cell.y}`) ?? []).filter((component) => component.id !== last.id))];
+    const pathIds = new Set(path.map((component) => component.id));
+    const revisited = next.filter((component) => pathIds.has(component.id));
+    const label = `${last.name} at (${last.path.x}, ${last.path.y}) facing ${last.direction}`;
+    const branch = path.find((component) => (graph.get(component.id) ?? []).length > 1);
+    const branchText = branch ? ` The route also branches at ${branch.name} (${branch.path.x}, ${branch.path.y}).` : '';
+    if (revisited.length) return {
+      kind: 'loop',
+      cells: exits,
+      lastComponentId: last.id,
+      nextComponentIds: revisited.map((component) => component.id),
+      message: `the route loops after ${label} back into ${revisited.map((component) => `${component.name} facing ${component.direction}`).join(' and ')}, which was already traversed; no branch reaches the furnace.${branchText}`,
+    };
+    if (next.length) return {
+      kind: 'direction-blocked',
+      cells: exits,
+      lastComponentId: last.id,
+      nextComponentIds: next.map((component) => component.id),
+      message: `${label} exits into ${next.map((component) => `${component.name} facing ${component.direction}`).join(' and ')}, but that directed continuation cannot reach the furnace.${branchText}`,
+    };
+    const inBounds = exits.filter(({ x, y }) => x >= 1 && y >= 1 && x <= plotSize && y <= plotSize);
+    if (!inBounds.length) return {
+      kind: 'plot-boundary',
+      cells: exits,
+      lastComponentId: last.id,
+      message: `${label} sends the ore beyond the ${plotSize}x${plotSize} plot boundary`,
+    };
+    return {
+      kind: 'gap',
+      cells: inBounds,
+      lastComponentId: last.id,
+      message: `the first empty transport cell${inBounds.length === 1 ? '' : 's'} after ${label} ${inBounds.length === 1 ? 'is' : 'are'} ${inBounds.map((cell) => `(${cell.x}, ${cell.y})`).join(' and ')}.${branchText}`,
+    };
   }
 
   function createItem(definition, placement) {
@@ -814,6 +957,18 @@
           ],
         };
       }
+      const intrinsicDestructionChance = activated ? itemDestructionChance(definition) : 0;
+      if (intrinsicDestructionChance > 0) {
+        survival *= 1 - intrinsicDestructionChance;
+        outcomeModel ??= {
+          kind: 'item-destruction',
+          expectedSurvivorValue: value,
+          outcomes: [
+            { label: 'Destroyed at this item', probability: intrinsicDestructionChance, destroyed: true },
+            { label: 'Survives this item', probability: 1 - intrinsicDestructionChance, value },
+          ],
+        };
+      }
       if (definition.name === 'Ore Expander') oreSize *= 1.55;
       if (definition.name === 'Ore Shrinker') oreSize *= .85;
       const effects = new Set(effectsBefore);
@@ -858,12 +1013,38 @@
     const routes = [];
     const turnBlockers = [...conveyors.filter((entry) => entry.wall || entry.nonTransport), ...portables];
     for (const dropper of droppers) {
-      const starts = [...new Set(frontCells(dropper, true).flatMap((cell) => byCell.get(key(cell)) ?? []))];
+      const starts = [...new Set(frontCells(dropper, true).flatMap((cell) => [
+        ...(byCell.get(key(cell)) ?? []),
+        ...components.filter((component) => component.kind === 'item'
+          && isCrimsonWallLandingCell(component.item, cell)),
+      ]))];
       const furnacePath = furnaceZone ? findPath(starts) : null;
-      const path = furnacePath ?? (allowPartialRoutes ? findLongestPath(starts) : null);
+      const partialPath = furnacePath ? null : findLongestPath(starts);
+      const path = furnacePath ?? (allowPartialRoutes ? partialPath : null);
       const reachedFurnace = Boolean(furnacePath);
+      const tracedPath = furnacePath ?? partialPath ?? [];
+      const failure = reachedFurnace ? null : routeFailureDetails({
+        dropper, starts, path: tracedPath, graph, byCell, exitTargets, plotSize: Number(plotSize),
+      });
+      const lastTracedComponent = tracedPath.at(-1);
+      const falloffCells = reachedFurnace ? [] : routeFalloffCells(
+        tracedPath,
+        dropper,
+        Number(plotSize),
+        (cell) => (byCell.get(key(cell)) ?? []).some((component) => component.id !== lastTracedComponent?.id),
+      );
+      const brokenRouteStatus = partialPath
+        ? (partialPath.some((component) => (graph.get(component.id) ?? []).length > 1) ? 'ambiguous' : 'incomplete')
+        : 'disconnected';
       if (!reachedFurnace) {
-        diagnostics.push({ code: 'ROUTE_GAP', dropperId: dropper.id, message: `${dropper.name} #${dropper.order} at (${dropper.x}, ${dropper.y}) cannot reach the furnace.` });
+        diagnostics.push({
+          code: 'ROUTE_GAP',
+          dropperId: dropper.id,
+          itemId: failure?.lastComponentId ?? dropper.id,
+          failureKind: failure?.kind,
+          cells: failure?.cells ?? [],
+          message: `${dropper.name} #${dropper.order} cannot reach the furnace because ${String(failure?.message ?? 'its route is incomplete').replace(/[.]+$/, '')}.`,
+        });
       }
       if (!path) {
         routes.push({
@@ -879,7 +1060,11 @@
           cashPerOre: null,
           stages: [],
           currentValue: Number(dropper.definition?.mainStat ?? 0),
-          routeStatus: 'disconnected',
+          routeStatus: brokenRouteStatus,
+          falloffCells,
+          failureKind: failure?.kind ?? null,
+          failureReason: failure?.message ?? null,
+          failureCells: failure?.cells ?? [],
         });
         continue;
       }
@@ -1092,7 +1277,18 @@
           message: `${dropper.name} #${dropper.order}'s ${firstUnsafeEffect.effect} effect from ${firstUnsafeEffect.appliedBy} reaches ${firstUnsafeEffect.removedBy} in ${firstUnsafeEffect.exposureSeconds.toFixed(3)}s; its ${firstUnsafeEffect.timerSeconds.toFixed(3)}s timer destroys the ore first.`,
         });
       }
-      const furnaceMultiplier = Number(furnace?.definition?.mainStat ?? 0);
+      const fireApplicationTimes = [
+        ...(effectsAppliedBy(definition?.name).includes('Fire') ? [0] : []),
+        ...stages
+          .filter((stage) => effectsAppliedBy(stage.item).includes('Fire') && (stage.effectsAfter ?? []).includes('Fire'))
+          .map((stage) => stage.arrivalSeconds),
+      ];
+      const lastFireApplication = fireApplicationTimes.length ? Math.max(...fireApplicationTimes) : Number.NEGATIVE_INFINITY;
+      const furnaceRate = furnaceMultiplierForOre(
+        furnace?.definition,
+        state.effects,
+        state.timeSeconds - lastFireApplication,
+      );
       const dropRate = Number(definition?.dropSpeed ?? 0);
       const phantomZones = stages.filter((stage) => stage.item === 'Crimson Pillars' && !stage.portable).map((stage) => {
         const sourceItem = normalizedItems.find((item) => item.id === stage.itemId);
@@ -1117,7 +1313,9 @@
         seconds: state.timeSeconds,
         currentValue: state.value,
         valueBeforeFurnace: reachedFurnace ? state.value : null,
-        cashPerOre: reachedFurnace ? state.value * furnaceMultiplier : null,
+        cashPerOre: reachedFurnace ? state.value * furnaceRate.multiplier : null,
+        furnaceMultiplier: reachedFurnace ? furnaceRate.multiplier : null,
+        furnaceCondition: reachedFurnace ? furnaceRate.condition : null,
         oresPerSecond: Number(definition?.dropSpeed ?? 0),
         survival: state.survival,
         replication: state.replication,
@@ -1131,10 +1329,15 @@
         routeStatus: reachedFurnace
           ? 'furnace'
           : (path.some((component) => (graph.get(component.id) ?? []).length > 1) ? 'ambiguous' : 'incomplete'),
+        falloffCells,
+        failureKind: failure?.kind ?? null,
+        failureReason: failure?.message ?? null,
+        failureCells: failure?.cells ?? [],
       });
     }
     const successful = routes.filter((route) => route.reachedFurnace);
-    const projectedActiveOres = successful.reduce((sum, route) => sum + route.oresPerSecond * route.seconds, 0);
+    successful.forEach((route) => { route.occupancySeconds = expectedRouteOccupancySeconds(route); });
+    const projectedActiveOres = successful.reduce((sum, route) => sum + route.oresPerSecond * route.occupancySeconds, 0);
     const throughputScale = projectedActiveOres > 0 ? Math.min(1, oreCap / projectedActiveOres) : 1;
     const sourceOresPerMinute = successful.reduce((sum, route) => sum + route.oresPerSecond * throughputScale * 60, 0);
     const destroyedOresPerMinute = successful.reduce((sum, route) => (
@@ -1288,6 +1491,7 @@
     createItem,
     createConveyor,
     centeredTransportGeometry,
+    isCrimsonWallLandingCell,
     furnaceProcessingZone,
     compressConveyors,
     transportPorts,
@@ -1307,6 +1511,10 @@
     traceManualDropper,
     portableUpgradeCells,
     portableZoneEntryIndices,
+    itemDestructionChance,
+    expectedRouteOccupancySeconds,
+    routeFalloffCells,
+    routeFailureDetails,
     createPlanner,
   });
 }(globalThis));

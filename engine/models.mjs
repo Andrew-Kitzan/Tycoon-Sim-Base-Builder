@@ -1,5 +1,6 @@
 import { integerUseLimit, normalize } from './utils.mjs';
 import { isCrimsonPillars } from './crimson.mjs';
+import { itemDestructionChance } from './destruction.mjs';
 
 export function crossingSeconds(item) {
   const speed = Number(item.conveyorSpeed);
@@ -162,6 +163,18 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
       outcomes: [
         { label: `Hit: ${item.mainStat}x`, probability: scannerHitChance, value: before * item.mainStat },
         { label: 'Miss: unchanged', probability: 1 - scannerHitChance, value: before },
+      ],
+    };
+  }
+  const intrinsicDestructionChance = activates && !model ? itemDestructionChance(item) : 0;
+  if (intrinsicDestructionChance > 0) {
+    survival *= 1 - intrinsicDestructionChance;
+    outcomeModel ??= {
+      kind: 'item-destruction',
+      expectedSurvivorValue: value,
+      outcomes: [
+        { label: 'Destroyed at this item', probability: intrinsicDestructionChance, destroyed: true },
+        { label: 'Survives this item', probability: 1 - intrinsicDestructionChance, value },
       ],
     };
   }

@@ -226,6 +226,7 @@ vm.createContext(appSandbox);
 vm.runInContext(`${appSource.slice(0, appEnd)}
 this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, conveyorCatalog,
   parseCoordinate, rotateDirection, updateConveyorGeometry, databaseRenderType, uniqueDatabaseRecords, mapPlacementCoordinates, placementFromRecord,
+  refreshPlacementMetadata,
   furnaceProcessingZoneGeometry, itemTransportGeometry, updateItemGeometry, portableBeamGeometry, completedStageForPlan, categorizedManualSimulationHtml,
   shouldShowLiveOreTracker,
   libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
@@ -418,6 +419,17 @@ assert.equal(uiDropper.conveyorWidth, 0);
 assert.deepEqual({ ...app.parseCoordinate('AA35') }, { x: 27, y: 35 });
 assert.equal(app.rotateDirection('north', 'right'), 'east');
 assert.equal(app.databaseRenderType({ name: 'Portable Spinner', type: 'upgrader' }), 'portable');
+assert.equal(app.databaseRenderType({ name: 'Ore Replicator', type: 'upgrader' }), 'portable');
+const oreReplicatorRecord = generatedDatabase.records.find((record) => record.key === 'ore replicator::base');
+const migratedOreReplicator = app.refreshPlacementMetadata({
+  id: 'old-ore-replicator', name: 'Ore Replicator', type: 'upgrader', x: 2, y: 2,
+  width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', beamLength: 0,
+  stats: { Variant: 'Base' },
+});
+assert(oreReplicatorRecord);
+assert.equal(migratedOreReplicator.type, 'portable');
+assert.equal(migratedOreReplicator.beamLength, 2);
+assert.equal(migratedOreReplicator.conveyorWidth, 0);
 assert.equal(app.databaseRenderType({ name: 'Fusion Upgrader', type: 'upgrader', sourceSheets: [{ sheet: 'Capgrader' }] }), 'capgrader');
 const solarRecords = app.uniqueDatabaseRecords(generatedDatabase.records.filter((record) => record.name === 'Solar Upgrader'));
 assert.deepEqual(JSON.parse(JSON.stringify(solarRecords.map((record) => record.variant))), ['Base', 'Shiny']);
@@ -615,6 +627,55 @@ assert.equal(liveTrace.route.routeStatus, 'incomplete');
 assert.equal(liveTrace.route.stages.length, 1);
 assert.equal(liveTrace.route.currentValue, 19);
 assert.equal(liveTrace.route.stages[0].outcomeModel.kind, 'scanner');
+assert.deepEqual(JSON.parse(JSON.stringify(liveTrace.route.falloffCells)), [{ x: 7, y: 1 }, { x: 7, y: 2 }]);
+assert.equal(liveTrace.route.failureKind, 'gap');
+assert.match(liveTrace.route.failureReason, /Azure Scanner.+facing east.+\(7, 1\)/);
+
+const loopTrace = planner.traceManualDropper({
+  dropperId: 'loop-d1',
+  plotSize: 12,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 10, dropSpeed: 1, oreSize: 1 },
+    { key: 'reverse upgrader::base', name: 'Reverse Upgrader', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 2, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+  ] },
+  items: [
+    { id: 'loop-d1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'loop-u1', order: 2, name: 'Reverse Upgrader', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, conveyorOffset: 0, direction: 'west', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'loop-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(loopTrace.route.failureKind, 'loop');
+assert.equal(loopTrace.route.falloffCells.length, 0);
+assert.match(loopTrace.route.failureReason, /loops after Reverse Upgrader.+facing west.+Normal Conveyor facing east.+already traversed/);
+assert.match(loopTrace.diagnostics.find((entry) => entry.code === 'ROUTE_GAP').message, /cannot reach the furnace because the route loops/);
+
+const crimsonWallLandingItem = {
+  id: 'wall-crimson', order: 2, name: 'Crimson Pillars', variant: 'Base', type: 'upgrader',
+  x: 3, y: 3, width: 4, height: 4, itemWidth: 4, itemLength: 4,
+  conveyorWidth: 2, conveyorOffset: 1, direction: 'south', stats: { Variant: 'Base' },
+};
+const adjacentWallDropper = {
+  id: 'wall-dropper', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper',
+  x: 7, y: 4, width: 2, height: 2, itemWidth: 2, itemLength: 2,
+  conveyorWidth: 0, conveyorOffset: 0, direction: 'west', stats: { Variant: 'Base' },
+};
+assert.equal(planner.isCrimsonWallLandingCell(crimsonWallLandingItem, { x: 6, y: 4 }), true);
+assert.equal(planner.validatePlacements([crimsonWallLandingItem, adjacentWallDropper], 12).valid, true);
+assert.equal(planner.validatePlacements([crimsonWallLandingItem, { ...adjacentWallDropper, x: 6 }], 12).valid, false);
+const crimsonWallTrace = planner.traceManualDropper({
+  dropperId: adjacentWallDropper.id,
+  plotSize: 12,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 10, dropSpeed: 1, oreSize: 1 },
+    { key: 'crimson pillars::base', name: 'Crimson Pillars', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 1.5, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+  ] },
+  items: [adjacentWallDropper, crimsonWallLandingItem],
+  conveyors: [],
+});
+assert.equal(crimsonWallTrace.route.routeStatus, 'incomplete');
+assert.equal(crimsonWallTrace.route.stages[0].item, 'Crimson Pillars');
 
 const teleporterSimulation = planner.simulateManualBase({
   plotSize: 14,
@@ -679,6 +740,8 @@ assert.deepEqual(
 );
 assert.match(appSource, /function renderPhantomZoneOverlays/);
 assert.match(stylesSource, /\.phantom-zone-overlay/);
+assert.match(stylesSource, /\.route-falloff-overlay/);
+assert.match(appSource, /renderRouteFalloffOverlays/);
 app.setValidation({ ...crimsonSimulation, kind: 'manual-simulation' });
 const crimsonTooltipHtml = app.categorizedManualSimulationHtml({ id: 'crimson-u1', type: 'upgrader' });
 assert.match(crimsonTooltipHtml, /Phantom-zone estimate/);
@@ -740,6 +803,35 @@ assert.equal(rngSimulation.routes[0].stages[0].afterValue, 15200);
 assert(Math.abs(rngSimulation.routes[0].stages[0].destructionChance - 1 / 3) < 1e-12);
 assert(Math.abs(rngSimulation.metrics.destroyedOresPerMinute - 20) < 1e-12);
 assert.equal(rngSimulation.metrics.survivalToFurnace, 2 / 3);
+
+const minefieldSimulation = planner.simulateManualBase({
+  plotSize: 12,
+  oreCap: 100,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 100, dropSpeed: 1, oreSize: 1 },
+    { key: 'minefield refiner::shiny', name: 'Minefield Refiner', variant: 'Shiny', type: 'upgrader', sheet: 'Upgraders', mainStat: 2.2, mainStatType: 'Multiplicative', conveyorSpeed: 12, effects: 'destroys 30% of the ore that passes through' },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+  ] },
+  items: [
+    { id: 'mine-d1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'mine-u1', order: 2, name: 'Minefield Refiner', variant: 'Shiny', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Shiny' } },
+    { id: 'mine-f1', order: 3, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 9, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'mine-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+    { id: 'mine-c2', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(minefieldSimulation.valid, true);
+assert.equal(minefieldSimulation.routes[0].survival, .7);
+assert(Math.abs(minefieldSimulation.routes[0].stages[0].destructionChance - .3) < 1e-12);
+assert.equal(minefieldSimulation.metrics.survivalToFurnace, .7);
+assert(minefieldSimulation.metrics.projectedActiveOres < minefieldSimulation.routes[0].oresPerSecond * minefieldSimulation.routes[0].seconds);
+app.setValidation({ ...minefieldSimulation, kind: 'manual-simulation' });
+const minefieldHtml = app.categorizedManualSimulationHtml({ id: 'mine-u1', name: 'Minefield Refiner', type: 'upgrader' });
+assert.match(minefieldHtml, /Ore destruction/);
+assert.match(minefieldHtml, />30\.00%</);
+assert.match(minefieldHtml, /Chance destroyed/);
 
 const effectDatabase = { records: [
   { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 100, dropSpeed: 1, oreSize: 1 },

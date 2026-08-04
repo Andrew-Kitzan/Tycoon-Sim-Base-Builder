@@ -1,0 +1,21 @@
+{
+  "id": "route-gap-detail",
+  "kind": "route-diagnostic-detail",
+  "observed": "ROUTE_GAP only said that a dropper could not reach the furnace, without identifying whether the route had a gap, loop, boundary exit, or direction problem.",
+  "expected": "The route failure is classified so the UI can name the final component, its facing, the next component, and relevant coordinates.",
+  "input": {
+    "plotSize": 10,
+    "pathIds": ["a", "b"],
+    "loopNextIds": ["a"],
+    "blockedNextIds": ["c"],
+    "gapExitCells": [{ "x": 6, "y": 4 }],
+    "boundaryExitCells": [{ "x": 11, "y": 4 }]
+  },
+  "assert": {
+    "unconnected": "unconnected-output",
+    "loop": "loop",
+    "directionBlocked": "direction-blocked",
+    "gap": "gap",
+    "boundary": "plot-boundary"
+  }
+}

@@ -1,11 +1,11 @@
 {
   "fileType": "tycoon-sim-2-loadout",
   "version": 1,
-  "id": "loadout-1785831023210-f807d6d4408e08",
+  "id": "loadout-1785838123921-d05c580ff5364",
   "name": "maxed out test",
-  "createdAt": "2026-08-04T08:10:23.204Z",
-  "updatedAt": "2026-08-04T08:10:23.204Z",
-  "databaseHash": "3be34b7cc44f8d3877dbac4a486d7bd1e449a6a96f99ccb4fc0966b069cb4a46",
+  "createdAt": "2026-08-04T10:08:43.920Z",
+  "updatedAt": "2026-08-04T10:08:43.920Z",
+  "databaseHash": "13b4e0c44323db363e1d08cabcf1c19a51ffc3e0797fb7477d75abe10a58f230",
   "plan": {
     "plotSize": 35,
     "items": [
@@ -146,7 +146,8 @@
           }
         ],
         "coordinateRange": "A1:E4",
-        "conveyorOffset": 0
+        "conveyorOffset": 0,
+        "liveDropperNumber": 1
       },
       {
         "id": "manual-item-1785827636986-7620c05fc5c74",
@@ -790,7 +791,7 @@
         "stats": {
           "Variant": "Shiny",
           "Rarity": "Common",
-          "Main stat": 1.42,
+          "Main stat": 1.32,
           "Range": "10B-50B",
           "Conveyor speed": 12
         },
@@ -2071,11 +2072,11 @@
         "processingZoneDepth": 0,
         "processingZonePlacement": null,
         "sourceDroppers": null,
-        "direction": "north",
+        "direction": "south",
         "type": "upgrader",
         "topLeft": "AF33",
         "bottomRight": "AI34",
-        "facing": "north",
+        "facing": "south",
         "footprint": {
           "width": 4,
           "height": 2
@@ -3915,11 +3916,11 @@
         "processingZoneDepth": 0,
         "processingZonePlacement": null,
         "sourceDroppers": null,
-        "direction": "south",
+        "direction": "north",
         "type": "upgrader",
         "topLeft": "Y6",
         "bottomRight": "AD9",
-        "facing": "south",
+        "facing": "north",
         "footprint": {
           "width": 6,
           "height": 4
@@ -6421,11 +6422,11 @@
         "processingZoneDepth": 0,
         "processingZonePlacement": null,
         "sourceDroppers": null,
-        "direction": "south",
+        "direction": "north",
         "type": "upgrader",
         "topLeft": "Q6",
         "bottomRight": "T9",
-        "facing": "south",
+        "facing": "north",
         "footprint": {
           "width": 4,
           "height": 4
@@ -6516,126 +6517,8 @@
         "conveyorOffset": 1
       },
       {
-        "id": "manual-item-1785829669224-f4c74665364a9",
-        "order": 71,
-        "name": "King Dropper",
-        "label": "KING DROPPER",
-        "description": "Attend an Admin Abuse Achievement",
-        "stats": {
-          "Variant": "Base",
-          "Rarity": "Legendary",
-          "Main stat": 11111,
-          "Drop speed": 3,
-          "Ore size": 1
-        },
-        "x": 19,
-        "y": 10,
-        "itemWidth": 2,
-        "itemLength": 2,
-        "conveyorWidth": 0,
-        "width": 2,
-        "height": 2,
-        "beamLength": 0,
-        "processingZoneAcross": 0,
-        "processingZoneDepth": 0,
-        "processingZonePlacement": null,
-        "sourceDroppers": null,
-        "direction": "north",
-        "type": "dropper",
-        "topLeft": "S10",
-        "bottomRight": "T11",
-        "facing": "north",
-        "footprint": {
-          "width": 2,
-          "height": 2
-        },
-        "occupiedCells": [
-          {
-            "x": 19,
-            "y": 10,
-            "coordinate": "S10"
-          },
-          {
-            "x": 20,
-            "y": 10,
-            "coordinate": "T10"
-          },
-          {
-            "x": 19,
-            "y": 11,
-            "coordinate": "S11"
-          },
-          {
-            "x": 20,
-            "y": 11,
-            "coordinate": "T11"
-          }
-        ],
-        "coordinateRange": "S10:T11",
-        "conveyorOffset": 0
-      },
-      {
-        "id": "manual-item-1785829824016-211a93c775ad88",
-        "order": 72,
-        "name": "Ore Replicator",
-        "label": "ORE REPLICATOR",
-        "description": "Clones Ore · Obtained from alien crate",
-        "stats": {
-          "Variant": "Shiny",
-          "Rarity": "Epic",
-          "Main stat": 1.1,
-          "Range": "N/A",
-          "Conveyor speed": 0
-        },
-        "x": 12,
-        "y": 6,
-        "itemWidth": 2,
-        "itemLength": 2,
-        "conveyorWidth": 2,
-        "width": 2,
-        "height": 2,
-        "beamLength": 0,
-        "processingZoneAcross": 0,
-        "processingZoneDepth": 0,
-        "processingZonePlacement": null,
-        "sourceDroppers": null,
-        "direction": "east",
-        "type": "upgrader",
-        "topLeft": "L6",
-        "bottomRight": "M7",
-        "facing": "east",
-        "footprint": {
-          "width": 2,
-          "height": 2
-        },
-        "occupiedCells": [
-          {
-            "x": 12,
-            "y": 6,
-            "coordinate": "L6"
-          },
-          {
-            "x": 13,
-            "y": 6,
-            "coordinate": "M6"
-          },
-          {
-            "x": 12,
-            "y": 7,
-            "coordinate": "L7"
-          },
-          {
-            "x": 13,
-            "y": 7,
-            "coordinate": "M7"
-          }
-        ],
-        "coordinateRange": "L6:M7",
-        "conveyorOffset": 0
-      },
-      {
         "id": "manual-item-1785829871680-9417a2364f2da8",
-        "order": 73,
+        "order": 71,
         "name": "Dual Plasma Upgrader",
         "label": "DUAL PLASMA",
         "description": "Upgrades only duplicated ore.\nIf non-duped ore tries to upgrade it gets destroyed. · Obtained from alien crate",
@@ -6764,7 +6647,7 @@
       },
       {
         "id": "manual-item-1785830121575-76e92b3ba4de9",
-        "order": 74,
+        "order": 72,
         "name": "Ore Glazer",
         "label": "ORE GLAZER",
         "description": "Removes the Neon Effect from ore · Obtained from candy crate",
@@ -6823,7 +6706,7 @@
       },
       {
         "id": "manual-item-1785830174617-3a35a955d0e798",
-        "order": 75,
+        "order": 73,
         "name": "Robot Apocalypse",
         "label": "ROBOT APOCALYPSE",
         "description": "Applies the Electrified Effect · Obtained from toy crate",
@@ -7012,7 +6895,7 @@
       },
       {
         "id": "manual-item-1785830187219-bda22672c92868",
-        "order": 76,
+        "order": 74,
         "name": "World Eater",
         "label": "WORLD EATER",
         "description": "If ore has Electrified then 2.75 instead · Enchanter Exlusive",
@@ -7141,7 +7024,7 @@
       },
       {
         "id": "manual-item-1785830207859-b9c2780f755e8",
-        "order": 77,
+        "order": 75,
         "name": "Ore Wash",
         "label": "ORE WASH",
         "description": "Removes all effects off ore except neon. If ore with overcharged goes into ore washer the ore will explode. · Enchanter Exclusive",
@@ -7360,7 +7243,7 @@
       },
       {
         "id": "manual-item-1785830239168-72b0ec4e97df3",
-        "order": 78,
+        "order": 76,
         "name": "Incremental Upgrader",
         "label": "INCREMENTAL",
         "description": "1.21 multi first time through, 1.375 second time, and 1.925 3rd time · Obtained from factory crate",
@@ -7438,7 +7321,7 @@
       },
       {
         "id": "manual-item-1785830240202-4d0d34ad7b6328",
-        "order": 79,
+        "order": 77,
         "name": "Incremental Upgrader",
         "label": "INCREMENTAL",
         "description": "1.21 multi first time through, 1.375 second time, and 1.925 3rd time · Obtained from factory crate",
@@ -7516,7 +7399,7 @@
       },
       {
         "id": "manual-item-1785830240972-f047e3482497d8",
-        "order": 80,
+        "order": 78,
         "name": "Incremental Upgrader",
         "label": "INCREMENTAL",
         "description": "1.21 multi first time through, 1.375 second time, and 1.925 3rd time · Obtained from factory crate",
@@ -7594,7 +7477,7 @@
       },
       {
         "id": "manual-item-1785830249123-c3158cc1c45c3",
-        "order": 81,
+        "order": 79,
         "name": "Hoarded Treasure",
         "label": "HOARDED TREASURE",
         "description": "P2W · Buy Hoarded Treasure or Space Pirates Bundle",
@@ -7693,7 +7576,7 @@
       },
       {
         "id": "manual-item-1785830390000-5c3032e475a7c8",
-        "order": 82,
+        "order": 80,
         "name": "Ore Glazer",
         "label": "ORE GLAZER",
         "description": "Removes the Neon Effect from ore · Obtained from candy crate",
@@ -7752,7 +7635,7 @@
       },
       {
         "id": "manual-item-1785830425719-3a5608f13add18",
-        "order": 83,
+        "order": 81,
         "name": "Portable Spinner",
         "label": "PORTABLE SPINNER",
         "description": "P2W · Buy Fidget Pack",
@@ -7811,7 +7694,7 @@
       },
       {
         "id": "manual-item-1785830536788-2b6b576c682ef8",
-        "order": 84,
+        "order": 82,
         "name": "Star Scanner",
         "label": "STAR SCANNER",
         "description": "Scanner · Enchanter Exclusive",
@@ -7910,7 +7793,7 @@
       },
       {
         "id": "manual-item-1785830587383-fc92b36a221ff8",
-        "order": 85,
+        "order": 83,
         "name": "Ore Glazer",
         "label": "ORE GLAZER",
         "description": "Removes the Neon Effect from ore · Obtained from candy crate",
@@ -7969,7 +7852,7 @@
       },
       {
         "id": "manual-item-1785830588846-b36116c68c25b8",
-        "order": 86,
+        "order": 84,
         "name": "Ore Glazer",
         "label": "ORE GLAZER",
         "description": "Removes the Neon Effect from ore · Obtained from candy crate",
@@ -8028,7 +7911,7 @@
       },
       {
         "id": "manual-item-1785830599228-44bd6e8891df9",
-        "order": 87,
+        "order": 85,
         "name": "Acid Plant",
         "label": "ACID PLANT",
         "description": "Only upgrades ores with no effect, and applies the toxic Effect to ore\n(neon doesnt effect) · Obtained from toxic crate",
@@ -8127,7 +8010,7 @@
       },
       {
         "id": "manual-item-1785830614265-59aca01e5373a",
-        "order": 88,
+        "order": 86,
         "name": "Leviathans' Wrath",
         "label": "LEVIATHANS' WRATH",
         "description": "Removes Fire Effect from ore, If not then gives Frost Effect. · Obtained from ocean crate",
@@ -8316,7 +8199,7 @@
       },
       {
         "id": "manual-item-1785830624749-ab3895c7039dd",
-        "order": 89,
+        "order": 87,
         "name": "Atlantis Remnant",
         "label": "ATLANTIS REMNANT",
         "description": "Destroys ore with Neon or Fire Effect\nIf ore has Frost Effect then 6 instead · Obtained from ocean crate",
@@ -8505,7 +8388,7 @@
       },
       {
         "id": "manual-item-1785830636673-9a237133ac856",
-        "order": 90,
+        "order": 88,
         "name": "Runic Array",
         "label": "RUNIC ARRAY",
         "description": "multi starts at 1.5x and exponentialy increases to 4.5x over 2 min\nFormula: (3^(ore_age / 120) ) * variant_modifier · Obtained from ancient crate",
@@ -8634,7 +8517,7 @@
       },
       {
         "id": "manual-item-1785830664910-f15a73392631f8",
-        "order": 91,
+        "order": 89,
         "name": "Krakatoa",
         "label": "KRAKATOA",
         "description": "22.5 for any effects\n37.5 if on fire\n52.5 if has frost\n75 if no effects · Obtained from the tropical crate",
@@ -8820,7 +8703,7 @@
       },
       {
         "id": "manual-item-1785830707179-8239fa1aa0c52",
-        "order": 92,
+        "order": 90,
         "name": "Coconut Beam",
         "label": "COCONUT BEAM",
         "description": "Obtained from tropical crate",
@@ -8916,6 +8799,125 @@
           }
         ],
         "coordinateRange": "A25:F26"
+      },
+      {
+        "id": "manual-item-1785838066660-6735fa47ac5d8",
+        "order": 91,
+        "name": "Ore Replicator",
+        "label": "ORE REPLICATOR",
+        "description": "Clones Ore · Obtained from alien crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Epic",
+          "Main stat": 1.1,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 12,
+        "y": 6,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "conveyorWidth": 0,
+        "conveyorOffset": 0,
+        "width": 2,
+        "height": 2,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "L6",
+        "bottomRight": "M7",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 12,
+            "y": 6,
+            "coordinate": "L6"
+          },
+          {
+            "x": 13,
+            "y": 6,
+            "coordinate": "M6"
+          },
+          {
+            "x": 12,
+            "y": 7,
+            "coordinate": "L7"
+          },
+          {
+            "x": 13,
+            "y": 7,
+            "coordinate": "M7"
+          }
+        ],
+        "coordinateRange": "L6:M7"
+      },
+      {
+        "id": "manual-item-1785838075079-d13ee3a94de528",
+        "order": 92,
+        "name": "Intern Dropper",
+        "label": "INTERN DROPPER",
+        "description": "From code \"intern\"",
+        "stats": {
+          "Variant": "Base",
+          "Rarity": "Common",
+          "Main stat": 10,
+          "Drop speed": 1,
+          "Ore size": 1
+        },
+        "x": 19,
+        "y": 10,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "conveyorWidth": 0,
+        "conveyorOffset": 0,
+        "width": 2,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "dropper",
+        "topLeft": "S10",
+        "bottomRight": "T11",
+        "facing": "north",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 19,
+            "y": 10,
+            "coordinate": "S10"
+          },
+          {
+            "x": 20,
+            "y": 10,
+            "coordinate": "T10"
+          },
+          {
+            "x": 19,
+            "y": 11,
+            "coordinate": "S11"
+          },
+          {
+            "x": 20,
+            "y": 11,
+            "coordinate": "T11"
+          }
+        ],
+        "coordinateRange": "S10:T11",
+        "liveDropperNumber": 2
       }
     ],
     "lanes": [
@@ -11242,8 +11244,7 @@
       ],
       "achievement": [
         "Aether Gate (Shiny Mythic)",
-        "Clockwork (Base)",
-        "King Dropper (Base)"
+        "Clockwork (Base)"
       ],
       "premium": [
         "Space Pirates (Shiny)",
@@ -11254,34 +11255,21 @@
       ]
     },
     "oreLimit": 100,
-    "activeOres": 0,
-    "projectedActiveOres": 0,
-    "limitedByOreCap": false,
-    "destroyedOresPerMinute": 0,
-    "survivalToFurnace": 1,
-    "furnaceEntriesPerMinute": 0,
-    "longestRouteSeconds": 0,
+    "activeOres": 100,
+    "projectedActiveOres": 120.41535594035594,
+    "limitedByOreCap": true,
+    "destroyedOresPerMinute": 91.327228759554,
+    "survivalToFurnace": 0.38904440232622184,
+    "furnaceEntriesPerMinute": 58.15536720533065,
+    "longestRouteSeconds": 51.82642797017797,
     "routesTotal": 2,
-    "routesReachingFurnace": 0,
+    "routesReachingFurnace": 2,
     "reservedTiles": 1164,
     "remainingTiles": 61,
     "itemCount": 92,
     "conveyorCount": 67,
-    "diagnosticCount": 3,
-    "simulationValid": false
+    "diagnosticCount": 0,
+    "simulationValid": true
   },
-  "diagnostics": [
-    {
-      "code": "DATABASE_MISSING",
-      "message": "Ore Replicator has no conveyor speed for route timing."
-    },
-    {
-      "code": "ROUTE_GAP",
-      "message": "Meltdown Dropper #1 at (1, 1) cannot reach the furnace."
-    },
-    {
-      "code": "ROUTE_GAP",
-      "message": "King Dropper #71 at (19, 10) cannot reach the furnace."
-    }
-  ]
+  "diagnostics": []
 }
