@@ -1,258 +1,125 @@
 # Tycoon Sim 2 Base Planner
 
-A browser-based grid planner for constructing and validating Tycoon Sim 2 bases.
-The application can scale from 14×14 through 35×35 and opens on a clean canvas.
-Completed setups are compact plan recipes loaded only after the reusable
-geometry and continuous-route validators accept them.
+This repository contains a browser-based grid for building, saving, loading, and simulating Tycoon Sim 2 bases.
 
-## Repository contents
+> **Base generation is in beta and should not be used yet.** Use **Build mode** to create and test layouts manually.
 
-- `index.html` — planner interface.
-- `styles.css` — grid, item, conveyor, workflow, and coordinate styling.
-- `app.js` — planner interaction and rendering logic.
-- `planner-core.js` — reusable rotation, conveyor compression, database checks,
-  and continuous-route simulation.
-- `engine/` — legal-item filtering, cap/post-cap search, A* placement,
-  destructive-effect timing, seeded simulation, and independent validation.
-- `rules/engine-rules.json` — machine-readable rules and diagnostic codes.
-- `schemas/` — player-profile and generated-plan contracts.
-- `profiles/` — compact player inputs that replace repeated large edits to
-  `app.js`.
-- `data/items.generated.js` — normalized workbook records used by recipes.
-- `data/database-conflicts.json` — exact cross-sheet disagreements.
-- `scripts/sync-database.mjs` — workbook normalization command.
-- `data/Tycoon Sim Database.xlsx` — source-of-truth game database.
-- `docs/BUILD_RULES.md` — complete shared base-building rules.
-- `docs/PLANNER_WORKFLOW.md` — low-token setup recipe workflow.
-- `docs/DATABASE_CONFLICTS.md` — readable workbook consistency report.
-- `tests/validate-planner.js` — automated geometry and calculation checks.
+## Download and open the planner
 
-## Quick start
+### Download as a ZIP
 
-No build step or web server is required:
+1. Open the repository page on GitHub.
+2. Select **Code → Download ZIP**.
+3. Extract the entire ZIP to a normal folder. Do not open `index.html` from inside the ZIP.
+4. Open the extracted folder.
+5. Double-click `index.html` to open the planner in your browser.
 
-1. Clone the repository and switch to your testing branch.
-2. Open `index.html` in a browser.
-3. Move the Base size slider to test plots from 14×14 through 35×35.
-
-The board starts empty. When a setup is cleared or replaced, its superseded item,
-route, active-plan, and validation data must be removed from `app.js` rather than
-retained.
-
-## Run automated checks
-
-Install a current Node.js LTS release, then run:
+### Clone with Git
 
 ```powershell
-npm.cmd test
+git clone <repository-url>
+cd "Tycoon Sim 2"
 ```
 
-The test has no third-party dependencies. It verifies:
+Then open `index.html` in your browser. The grid does not require an installation, build command, or web server.
 
-- database width/length rotation;
-- odd/even internal conveyor widths;
-- plot boundaries;
-- item/item and conveyor/item overlaps;
-- blank-board state and reusable interaction controls;
-- reusable route, dropper, ore-cap, and economy calculations;
-- furnace processing-zone geometry;
-- the included database file; and
-- that no retired setup remains loaded as the active plan.
+Keep all repository files and folders together. The planner needs the JavaScript files and the `data` folder beside `index.html`.
 
-For a syntax-only check:
+## Access the grid
 
-```powershell
-npm.cmd run check
-```
+The planner opens in **Build mode**. The item library is on the left and the grid is on the right.
 
-## Low-token engine commands
+- **Base size:** Drag the slider or use its `−` and `+` buttons.
+- **Grid zoom:** Drag the slider or use its `−` and `+` buttons.
+- **Clear grid:** Removes the current layout after confirmation.
+- Base size, zoom, and the current Build-mode layout are saved automatically in the browser and restored after a refresh.
 
-The planner accepts a compact JSON profile and performs the repetitive work in
-code. The normal loop is:
+## Use the build menu
 
-```powershell
-npm.cmd run legal-pool -- profiles/example.json --compact
-npm.cmd run solve-cap -- profiles/example.json --compact
-npm.cmd run build -- profiles/example.json --compact
-npm.cmd run validate-plan -- plans/active-plan.json --compact
-npm.cmd run plan:summary
-```
+1. Choose **Droppers**, **Upgraders**, **Furnaces**, or **Conveyors**.
+2. Search for an item by name, or open **Filter & sort** to filter by tier or variant and change the sorting order.
+3. Select an item from the list.
+4. Move the pointer over the grid to preview its footprint, processing area, portable beam, and facing direction.
+5. Press `R` to rotate it 90° clockwise.
+6. Click an open location to place it.
 
-For a new setup, the preferred one-command workflow uses the reusable profile
-format in `profiles/template.json`:
+The selected item keeps its current direction after placement, allowing several copies to be placed with the same orientation.
 
-```powershell
-npm.cmd run plan:full -- profiles/my-player.json --compact
-```
+To place many copies in a straight line, hold the left mouse button and drag. Placement locks to the horizontal or vertical axis.
 
-It validates the player profile and database, searches item and layout
-candidates, strictly validates every route, finalizes the winner, and writes the
-grid artifacts. Add `--quick` for a smaller diagnostic search. Identical inputs
-reuse a content-addressed cache until `npm.cmd run plan:clear` is run.
+Press `Esc` while placing an item to cancel placement.
 
-For a completed setup, use the resumable batch optimizer instead of manually
-running individual candidates:
+## Edit placed items
 
-```powershell
-npm.cmd run optimize
-```
+Hover over a placed item or conveyor to use these shortcuts:
 
-It checkpoints every tested configuration, skips completed configurations when
-resumed, prints only a compact winning summary, runs strict directed-route
-validation, finalizes the grid, and writes `PROJECT_STATE.md`. A new Codex task
-can read that state file plus the rule files without replaying the old chat.
+| Control | Action |
+| --- | --- |
+| `M` | Move the highlighted placement with the mouse |
+| `C` | Copy the highlighted placement and begin placing another copy |
+| `Backspace` or `Delete` | Remove the highlighted placement |
 
-Before committing reusable engine changes, run:
+Clicking a placed item also opens its editor. The editor can move it to a typed coordinate, move it with the mouse, rotate it left or right, or remove it.
 
-```powershell
-npm.cmd run verify:commit
-```
+While moving an item:
 
-Confirmed regressions live as structured fixtures in
-`tests/fixtures/regressions/`. Repository-wide Codex workflow instructions are
-in `AGENTS.md`.
+| Control | Action |
+| --- | --- |
+| `R` | Rotate it 90° clockwise |
+| Click | Place it at the previewed location |
+| `Esc` | Cancel the move |
 
-`build` writes `plans/active-plan.json` plus the browser loader at
-`data/active-plan.js`. The renderer reads that recipe automatically; it no
-longer requires a hand-written setup inside `app.js`.
+Invalid placements are rejected when they overlap another placement or extend outside the selected plot size.
 
-Use `npm.cmd run item -- "Item Name" --compact` for a focused database lookup.
-The engine reads `data/items.index.json`, which merges repeated workbook rows
-while preserving source sheets and ownership restrictions. Database sync hashes
-the workbook and skips the expensive import when nothing changed.
+## Select and edit a group
 
-## Branch testing workflow
+When no build-menu item is selected, drag from an empty grid tile to draw a selection box. Every placement touched by the box becomes part of the group.
 
-```powershell
-git switch -c test/my-layout
-npm.cmd test
-```
+Selected placements receive a gold outline and a large direction arrow. The group panel provides **Rotate all 90°**, **Move selection**, and **Delete selection**.
 
-Make changes on the branch, rerun `npm.cmd test`, then commit and push the branch.
-Do not change `main` directly when multiple people are testing.
+| Control | Action |
+| --- | --- |
+| `R` | Rotate all selected placements 90° clockwise |
+| `M` | Move the selected group while preserving its spacing |
+| `Esc` | Cancel and clear the group selection |
 
-## Database and rule precedence
+Group rotations and moves are only accepted when every selected placement remains valid.
 
-Use these sources in order:
+## Simulate a base
 
-1. Explicit player restrictions and inventory.
-2. `docs/BUILD_RULES.md`.
-3. `data/Tycoon Sim Database.xlsx`.
-4. A documented item exception or screenshot supplied for the current test.
+Select **Simulate base** after finishing a layout. The simulation calculates route completion, travel time, active ore, the ore limit, furnace throughput, ore destruction, survival, expected cash per minute, and remaining space. Hover over simulated items to see their route-specific before-and-after values and other relevant effects.
 
-If a required fact is missing or contradictory, ask before finalizing the route.
+Editing the grid invalidates the old simulation. Run **Simulate base** again after any change.
 
-## Coordinate system
+## Save and share bases
 
-- Coordinates are one-based.
-- Columns use letters: `A` through `AI`.
-- Rows use numbers: `1` through `35`.
-- An item's coordinate is its top-left occupied tile after rotation.
-- Database size is always `WIDTH × LENGTH`.
-- North/south items occupy `width × length` on the grid.
-- East/west items occupy `length × width` on the grid.
+The **Load Bases** and **Save Base** controls are beside the Base Planner title.
 
-## Add or update an item placement
+**Save Base** stays disabled until the current grid has been simulated. After simulation:
 
-Use `placeItem` in `app.js`:
+1. Select **Save Base**.
+2. Enter a setup name.
+3. Review the automatically detected benchmark information.
+4. Select **Save Base** in the dialog.
+5. Choose this repository's `saved-loadouts` folder if the browser asks for a destination.
 
-```js
-placeItem(
-  order,
-  'Item Name',
-  columnNumber,
-  rowNumber,
-  databaseWidth,
-  databaseLength,
-  'north',
-  'capgrader',
-  {
-    description: 'What the item does',
-    stats: { Multiplier: '3x', Speed: 12 },
-  },
-);
-```
+The planner keeps the loadout in its browser library and creates a shareable `*.tycoon-loadout.json` file. If direct folder access is unavailable, the file downloads normally; move it into `saved-loadouts` manually.
 
-Valid directions are `north`, `east`, `south`, and `west`. Never manually swap
-the database width and length; `placeItem` performs the rotation. The final
-first optional value declares the render category: `dropper`, `capgrader`,
-`upgrader`, `portable`, or `furnace`. Droppers and furnaces can also be inferred
-from their names. The final optional details object can provide `description`,
-`stats`, `label`, and a stable `id` for the grid's item information and editor.
+To share a setup, send its `.tycoon-loadout.json` file to another player. They can copy it into their own `saved-loadouts` folder.
 
-Rendered items are interactive. Hovering or keyboard-focusing an item shows its
-name, description, stats, database size, rendered footprint, top-left coordinate,
-and facing direction. Clicking opens controls to move it by a new top-left
-coordinate, rotate it 90 degrees left or right, or remove it from the plan. Moves
-and rotations are rejected if they leave the active base or overlap another item
-or external conveyor. An accepted edit marks the route for revalidation.
+## Load a saved base
 
-Internal path width is automatic:
+1. Select **Load Bases** beside the Base Planner title.
+2. If necessary, choose **Import saved-loadouts folder** or **Import JSON files**.
+3. Select a loadout from the scrollable list to view its important statistics.
+4. Choose one of the available actions:
+   - **Preview:** Displays the saved layout without changing the current grid.
+   - **Load Base:** Opens a final warning before replacing the current grid.
+   - **Delete:** Removes the loadout from the browser library and list.
+5. To replace the current grid, select **Load anyway**. Select **Never mind** to keep the current layout unchanged.
 
-- even item width → two-tile centered path;
-- odd item width → one-tile centered path.
+Always save the current base first if you may want to return to it.
 
-## Add an external conveyor
+## Generation mode warning
 
-Add a record to `routeSegments`:
-
-```js
-{
-  name: 'Descriptive route name',
-  conveyor: 'Supercharged',
-  label: 'SC',
-  x: 10,
-  y: 17,
-  width: 2,
-  height: 2,
-  direction: 'east',
-  speed: 18,
-}
-```
-
-Use the true conveyor footprint. Quarter Conveyors are 1×1. A normal Conveyor,
-Supercharged Conveyor, and Centering Conveyor are 2×2. An Ultracharged Conveyor
-is 4×2 before rotation.
-
-## Render a plan
-
-The normal blank state is:
-
-```js
-let workflowStage = 0;
-let activePlan = null;
-```
-
-To render a verified plan during a branch test, point `activePlan` at the plan
-object and advance `workflowStage` only after the corresponding checks pass.
-Before merging a reusable planner change, restore the board to the blank state
-unless the pull request intentionally adds a default example.
-
-## Timing and ore-count calculation
-
-Use:
-
-```text
-section time = length in tiles × 3 ÷ conveyor speed
-```
-
-Calculate each dropper separately when their entry paths differ:
-
-```text
-projected ores = Σ(dropper travel time × that dropper's ores/second)
-active ores = min(projected ores, 100)
-```
-
-When cash-in value is known:
-
-```text
-expected cash/min = expected cash per processed ore × processed furnace entries/min
-```
-
-If the ore cap is saturated and no measured furnace rate is available, the
-planner reduces spawning according to average time until each ore is either
-destroyed or processed. Destroyed and rejected ores produce no cash, but their
-removal frees ore-cap space earlier.
-
-See `docs/BUILD_RULES.md` for the complete capgrader, effect, inventory, portable,
-conveyor-wall, progression, and optimization rules.
+**Generation mode is currently in beta and should not be used yet.** Its automatic base-generation workflow is unfinished. Stay in **Build mode** for creating, editing, simulating, saving, and loading bases.
