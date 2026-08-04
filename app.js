@@ -540,9 +540,11 @@ function liveStageHtml(stage, routeDiagnostics) {
 
 function renderLiveOreTracker() {
   if (!liveOreTracker || !liveDropperSelect || !liveOreContent) return;
-  const visible = shouldShowLiveOreTracker(plannerMode, validation);
-  liveOreTracker.hidden = !visible;
-  if (!visible) return;
+  const trackerContentVisible = shouldShowLiveOreTracker(plannerMode, validation);
+  const simulationResultsActive = plannerMode === 'build' && validation?.kind === 'manual-simulation';
+  liveOreTracker.hidden = plannerMode !== 'build';
+  liveOreTracker.classList.toggle('is-simulation-hidden', simulationResultsActive);
+  if (!trackerContentVisible) return;
   const droppers = reconcileLiveDropperSelection({ persist: true });
   liveDropperSelect.replaceChildren();
   if (!droppers.length) {

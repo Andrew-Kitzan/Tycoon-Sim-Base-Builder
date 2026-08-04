@@ -132,6 +132,8 @@ body.mode-generation .board-layout { grid-template-columns: minmax(0, 1fr); }
 .board-viewport { min-width: 0; padding: 16px; overflow: auto; max-height: calc(100vh - 190px); }
 .live-ore-tracker { position: sticky; top: 16px; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 10px; height: calc(100vh - 190px); max-height: 780px; margin: 16px 16px 16px 0; padding: 14px; overflow: hidden; border: 1px solid #3f6575; border-radius: 10px; background: #10212b; box-shadow: 0 8px 24px rgba(0,0,0,.22); }
 .live-ore-tracker[hidden] { display: none; }
+.live-ore-tracker.is-simulation-hidden { border-color: transparent; background: transparent; box-shadow: none; }
+.live-ore-tracker.is-simulation-hidden > :not(.keybind-guide) { visibility: hidden; pointer-events: none; }
 body.mode-generation .live-ore-tracker { display: none; }
 .live-tracker-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .live-tracker-heading h2 { margin: 3px 0 0; font-size: 1.05rem; }
