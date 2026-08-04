@@ -9,6 +9,7 @@ import { exceedsItemUseLimit, exceedsOreSizeLimit, firstOreSizeViolation, itemUs
 import { crimsonPhantomZoneEstimate } from '../engine/crimson.mjs';
 import { connectTeleporterPairs } from '../engine/teleporters.mjs';
 import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
+import { internalTransportProfile, internalTransportRect } from '../engine/internal-transport.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const directory = path.join(root, 'tests', 'fixtures', 'regressions');
@@ -54,6 +55,33 @@ for (const fixture of fixtures) {
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, []), fixture.assert.unblocked);
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, [fixture.input.wall]), fixture.assert.wallBlocked);
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, [fixture.input.portable]), fixture.assert.portableBlocked);
+  } else if (fixture.id === 'asymmetric-internal-conveyors') {
+    for (const [name, expected] of Object.entries(fixture.input.items)) {
+      const definition = findItem(database, name, 'Base');
+      const profile = internalTransportProfile(definition, rules);
+      assert.equal(profile.across, expected.across);
+      assert.equal(profile.northOffset, expected.northOffset);
+      for (const direction of fixture.input.directions) {
+        const horizontal = direction === 'east' || direction === 'west';
+        const placed = {
+          ...fixture.input.origin,
+          name,
+          type: 'upgrader',
+          itemWidth: definition.size.width,
+          itemLength: definition.size.length,
+          width: horizontal ? definition.size.length : definition.size.width,
+          height: horizontal ? definition.size.width : definition.size.length,
+          direction,
+        };
+        const rect = internalTransportRect(placed, rules);
+        assert.equal(horizontal ? rect.height : rect.width, expected.across);
+        const actualOffset = horizontal ? rect.y - placed.y : rect.x - placed.x;
+        const rotatedOffset = direction === 'south' || direction === 'west'
+          ? definition.size.width - expected.northOffset - expected.across
+          : expected.northOffset;
+        assert.equal(actualOffset, rotatedOffset);
+      }
+    }
   } else if (fixture.id === 'rng-output-and-ore-destruction') {
     const before = { value: fixture.input.startingValue, survival: 1, replication: 1, oreSize: 1, effects: [], timeSeconds: 0, area: 0 };
     const lambda = findItem(database, 'Lambda Upgrader', 'Base');

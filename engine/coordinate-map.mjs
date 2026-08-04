@@ -1,6 +1,7 @@
 import { findItem } from './database.mjs';
 import { appliedEffectsForItem, applyDeterministicItem, itemRequirements } from './models.mjs';
 import { buildLegalPool } from './profile.mjs';
+import { internalTransportProfile, internalTransportRect } from './internal-transport.mjs';
 import { itemKey, normalize, parseRange } from './utils.mjs';
 import { validatePlan } from './validate.mjs';
 import { isFastTurnBlocked } from './routing.mjs';
@@ -108,15 +109,6 @@ function rotatedSize(item, direction, type = renderType(item)) {
     : { width: item.size.width, height: item.size.length };
 }
 
-function pathRect(item) {
-  if (['dropper', 'portable', 'furnace'].includes(item.type)) return null;
-  const horizontal = item.direction === 'east' || item.direction === 'west';
-  const across = item.conveyorWidth;
-  return horizontal
-    ? { x: item.x, y: item.y + (item.height - across) / 2, width: item.width, height: across }
-    : { x: item.x + (item.width - across) / 2, y: item.y, width: across, height: item.height };
-}
-
 function dropFrontCells(item) {
   const across = item.itemWidth % 2 === 0 ? 2 : 1;
   if (item.direction === 'east' || item.direction === 'west') {
@@ -145,7 +137,7 @@ function furnaceZone(item, rules) {
   return { x: item.x + (item.width - across) / 2, y: item.y + item.height - depth, width: across, height: depth };
 }
 
-function normalizeItems(map, database) {
+function normalizeItems(map, database, rules) {
   return map.items.map((saved, index) => {
     const definition = findItem(database, saved.name, saved.variant);
     if (!definition) throw new Error(`${saved.variant} ${saved.name} is missing from the database.`);
@@ -153,6 +145,9 @@ function normalizeItems(map, database) {
     const bottomRight = parseGridCoordinate(saved.bottomRight);
     const type = renderType(definition);
     const size = rotatedSize(definition, saved.facing, type);
+    const transport = ['dropper', 'portable', 'furnace'].includes(type)
+      ? null
+      : internalTransportProfile(definition, rules);
     return {
       id: `item-${index + 1}`,
       order: saved.order ?? index + 1,
@@ -167,7 +162,8 @@ function normalizeItems(map, database) {
       expectedHeight: size.height,
       itemWidth: definition.size.width,
       itemLength: definition.size.length,
-      conveyorWidth: ['dropper', 'portable', 'furnace'].includes(type) ? 0 : (definition.size.width % 2 === 0 ? 2 : 1),
+      conveyorWidth: transport?.across ?? 0,
+      conveyorOffset: transport?.northOffset ?? 0,
       direction: saved.facing,
       beam: saved.beam,
       section: saved.section,
@@ -249,7 +245,7 @@ function exitTargets(component) {
   return ownCells.filter((cell) => cell.y === edge).map((cell) => ({ x: cell.x, y: cell.y - 1 }));
 }
 
-function routeComponents(items, conveyors) {
+function routeComponents(items, conveyors, rules) {
   const result = conveyors.filter((conveyor) => !conveyor.wall && !conveyor.nonTransport).map((conveyor) => ({
     id: conveyor.id,
     kind: 'conveyor',
@@ -264,7 +260,7 @@ function routeComponents(items, conveyors) {
     path: { x: conveyor.x, y: conveyor.y, width: conveyor.width, height: conveyor.height },
   }));
   for (const item of items) {
-    const path = pathRect(item);
+    const path = internalTransportRect(item, rules);
     if (!path) continue;
     result.push({
       id: item.id,
@@ -388,7 +384,7 @@ function routeValue(path, portables, dropper, profile, rules) {
 
 export function validateCoordinateMap({ map, database, rules, profile }) {
   const diagnostics = [];
-  const items = normalizeItems(map, database);
+  const items = normalizeItems(map, database, rules);
   const conveyors = normalizeConveyors(map);
   const legalPool = buildLegalPool(database, profile, rules);
   diagnostics.push(...legalPool.diagnostics);
@@ -413,7 +409,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
   const physical = validatePlan(plan, rules);
   diagnostics.push(...physical.diagnostics);
 
-  const components = routeComponents(items, conveyors);
+  const components = routeComponents(items, conveyors, rules);
   const { graph, byCell, teleporterDiagnostics } = componentGraph(components);
   diagnostics.push(...teleporterDiagnostics);
   const droppers = items.filter((item) => item.type === 'dropper');

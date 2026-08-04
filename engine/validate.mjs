@@ -1,4 +1,5 @@
 import { diagnostic } from './utils.mjs';
+import { internalTransportRect } from './internal-transport.mjs';
 
 const HARD_CODES = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'ITEM_ILLEGAL', 'USE_LIMIT', 'ORE_SIZE', 'WRONG_LANE']);
 const conveyorRules = {
@@ -18,17 +19,9 @@ const rectCells = (rect) => {
   return cells;
 };
 
-function itemPathCells(item) {
-  if (item.type === 'dropper' || item.type === 'portable') return [];
-  if (item.type === 'furnace') return [];
-  const across = item.conveyorWidth;
-  const horizontal = item.direction === 'east' || item.direction === 'west';
-  if (horizontal) {
-    const y = item.y + (item.height - across) / 2;
-    return rectCells({ x: item.x, y, width: item.width, height: across });
-  }
-  const x = item.x + (item.width - across) / 2;
-  return rectCells({ x, y: item.y, width: across, height: item.height });
+function itemPathCells(item, rules) {
+  const path = internalTransportRect(item, rules);
+  return path ? rectCells(path) : [];
 }
 
 function dropFrontCells(item) {
@@ -43,11 +36,11 @@ function dropFrontCells(item) {
   return Array.from({ length: across }, (_, offset) => ({ x: x + offset, y }));
 }
 
-function connectivityDiagnostics(plan) {
+function connectivityDiagnostics(plan, rules) {
   const traversable = new Set();
   plan.conveyors.filter((entry) => !entry.wall && entry.conveyor !== 'Conveyor Wall')
     .forEach((entry) => rectCells(entry).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
-  plan.items.forEach((entry) => itemPathCells(entry).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
+  plan.items.forEach((entry) => itemPathCells(entry, rules).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
   const starts = plan.items.filter((item) => item.type === 'dropper').flatMap(dropFrontCells).filter(({ x, y }) => traversable.has(cellKey(x, y)));
   const furnace = plan.items.find((item) => item.type === 'furnace');
   const goals = new Set(rectCells(plan.furnaceZone ?? furnace ?? {}).map(({ x, y }) => cellKey(x, y)));
@@ -128,7 +121,7 @@ export function validatePlan(plan, rules) {
     const next = halves.get(horizontal ? cellKey(conveyor.x + 1, conveyor.y) : cellKey(conveyor.x, conveyor.y + 1));
     if (next?.direction === conveyor.direction) diagnostics.push(diagnostic('SCHEMA', `Half pair at ${conveyor.x},${conveyor.y} must be a full conveyor.`));
   }
-  diagnostics.push(...connectivityDiagnostics(plan));
+  diagnostics.push(...connectivityDiagnostics(plan, rules));
   diagnostics.push(...(plan.diagnostics ?? []).filter((entry) => HARD_CODES.has(entry.code)));
   const unique = [...new Map(diagnostics.map((entry) => [`${entry.code}|${entry.message}|${JSON.stringify(entry.context ?? {})}`, entry])).values()];
   return { valid: !unique.some((entry) => HARD_CODES.has(entry.code)), diagnostics: unique };

@@ -1,0 +1,17 @@
+{
+  "id": "asymmetric-internal-conveyors",
+  "kind": "geometry",
+  "observed": "Five-tile-wide Tiki Evaluator and Gumball Enhancer were rendered and routed with centered one-tile conveyors.",
+  "expected": "Both use two-tile conveyors with their documented north-facing wall offsets, and the entire pattern rotates with the item.",
+  "input": {
+    "items": {
+      "Gumball Enhancer": { "northOffset": 1, "across": 2 },
+      "Tiki Evaluator": { "northOffset": 2, "across": 2 }
+    },
+    "origin": { "x": 10, "y": 10 },
+    "directions": ["north", "east", "south", "west"]
+  },
+  "assert": {
+    "rotatesWithoutRecentering": true
+  }
+}

@@ -8,6 +8,7 @@ import { compactNumber, diagnostic, normalize } from './utils.mjs';
 import { evaluateEffectSafety } from './effects.mjs';
 import { appliedEffectsForItem, applyDeterministicItem } from './models.mjs';
 import { parseRange } from './utils.mjs';
+import { internalTransportProfile } from './internal-transport.mjs';
 
 function uniqueChainEntries(chain) { return chain.map((entry) => entry.item); }
 
@@ -261,11 +262,15 @@ export async function compilePlan(profile, options = {}) {
       const type = placed.sequenceIndex >= quantity && placed.sequenceIndex < quantity + capState.chain.length ? 'capgrader' : renderType(placed.item);
       const chainIndex = placed.sequenceIndex - quantity;
       const entry = chainIndex >= 0 && chainIndex < postState.chain.length ? postState.chain[chainIndex] : null;
+      const transport = ['dropper', 'furnace', 'portable'].includes(renderType(placed.item))
+        ? null
+        : internalTransportProfile(placed.item, rules);
       return ({
       id: placed.id, order: index + 1, name: placed.item.name, variant: placed.item.variant,
       type, x: placed.x, y: placed.y, width: placed.width, height: placed.height,
       itemWidth: placed.item.size.width, itemLength: placed.item.size.length,
-      direction: placed.direction, conveyorWidth: ['dropper', 'furnace', 'portable'].includes(renderType(placed.item)) ? 0 : (placed.item.size.width % 2 === 0 ? 2 : 1),
+      direction: placed.direction, conveyorWidth: transport?.across ?? 0,
+      conveyorOffset: transport?.northOffset ?? 0,
       beamLength: renderType(placed.item) === 'portable' ? (placed.item.name === 'Portable Spinner' ? 1 : rules.defaultPortableBeamLength) : 0,
       processingZoneAcross: renderType(placed.item) === 'furnace' ? (rules.furnaceOverrides[placed.item.name]?.across ?? 2) : 0,
       processingZoneDepth: renderType(placed.item) === 'furnace' ? (rules.furnaceOverrides[placed.item.name]?.depth ?? 2) : 0,

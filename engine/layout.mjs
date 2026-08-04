@@ -1,5 +1,6 @@
 import { diagnostic, normalize } from './utils.mjs';
 import { itemRequirements } from './models.mjs';
+import { internalTransportCrossOffset, internalTransportProfile, internalTransportRect } from './internal-transport.mjs';
 
 const DIRECTIONS = ['north', 'east', 'south', 'west'];
 const opposite = { north: 'south', south: 'north', east: 'west', west: 'east' };
@@ -18,10 +19,6 @@ function isPortable(item) {
   return /Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i.test(item.name);
 }
 
-function across(item) {
-  return item.size.width % 2 === 0 ? 2 : 1;
-}
-
 function rectCells(rect) {
   const cells = [];
   for (let y = rect.y; y < rect.y + rect.height; y += 1) for (let x = rect.x; x < rect.x + rect.width; x += 1) cells.push({ x, y });
@@ -30,29 +27,46 @@ function rectCells(rect) {
 
 function key(cell) { return `${cell.x},${cell.y}`; }
 
-function internalPorts(placed) {
-  const pathWidth = across(placed.item);
+function internalPorts(placed, rules) {
+  const path = internalTransportRect({ ...placed, type: placed.item.type }, rules);
+  if (!path) return { entry: [], exit: [] };
+  const pathWidth = internalTransportProfile(placed.item, rules).across;
   const horizontal = placed.direction === 'east' || placed.direction === 'west';
   if (horizontal) {
-    const y = placed.y + (placed.height - pathWidth) / 2;
-    const entryX = placed.direction === 'east' ? placed.x : placed.x + placed.width - 1;
-    const exitX = placed.direction === 'east' ? placed.x + placed.width - 1 : placed.x;
+    const y = path.y;
+    const entryX = placed.direction === 'east' ? path.x : path.x + path.width - 1;
+    const exitX = placed.direction === 'east' ? path.x + path.width - 1 : path.x;
     return {
       entry: Array.from({ length: pathWidth }, (_, offset) => ({ x: entryX, y: y + offset })),
       exit: Array.from({ length: pathWidth }, (_, offset) => ({ x: exitX, y: y + offset })),
     };
   }
-  const x = placed.x + (placed.width - pathWidth) / 2;
-  const entryY = placed.direction === 'south' ? placed.y : placed.y + placed.height - 1;
-  const exitY = placed.direction === 'south' ? placed.y + placed.height - 1 : placed.y;
+  const x = path.x;
+  const entryY = placed.direction === 'south' ? path.y : path.y + path.height - 1;
+  const exitY = placed.direction === 'south' ? path.y + path.height - 1 : path.y;
   return {
     entry: Array.from({ length: pathWidth }, (_, offset) => ({ x: x + offset, y: entryY })),
     exit: Array.from({ length: pathWidth }, (_, offset) => ({ x: x + offset, y: exitY })),
   };
 }
 
-function dropCells(placed) {
-  const ports = internalPorts(placed);
+function dropCells(placed, rules) {
+  const profile = internalTransportProfile(placed.item, rules);
+  const horizontal = placed.direction === 'east' || placed.direction === 'west';
+  const offset = internalTransportCrossOffset(placed.item, placed.direction, rules);
+  const ports = horizontal
+    ? {
+      exit: Array.from({ length: profile.across }, (_, index) => ({
+        x: placed.direction === 'east' ? placed.x + placed.width - 1 : placed.x,
+        y: placed.y + offset + index,
+      })),
+    }
+    : {
+      exit: Array.from({ length: profile.across }, (_, index) => ({
+        x: placed.x + offset + index,
+        y: placed.direction === 'south' ? placed.y + placed.height - 1 : placed.y,
+      })),
+    };
   return ports.exit.map((cell) => {
     if (placed.direction === 'east') return { x: cell.x + 1, y: cell.y };
     if (placed.direction === 'west') return { x: cell.x - 1, y: cell.y };
@@ -320,7 +334,7 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
     const row = rows[rowIndex];
     const travelDirection = rowIndex % 2 === 0 ? 'east' : 'west';
     const rowHeight = Math.max(...row.map((item) => item.size.width));
-    const laneOffset = Math.max(...row.map((item) => (item.size.width - across(item)) / 2));
+    const laneOffset = Math.max(...row.map((item) => internalTransportCrossOffset(item, travelDirection, rules)));
     const centerLine = rowTop + laneOffset;
     let cursor = travelDirection === 'east' ? 2 : plotSize - 1;
     for (const item of row) {
@@ -328,7 +342,7 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
       const direction = isFurnace ? opposite[travelDirection] : travelDirection;
       const size = gridSize(item, direction);
       const x = travelDirection === 'east' ? cursor : cursor - size.width + 1;
-      const y = centerLine - (item.size.width - across(item)) / 2;
+      const y = centerLine - internalTransportCrossOffset(item, direction, rules);
       placed.push({ id: `item-${placed.length + 1}`, item, x, y, ...size, direction, type: item.type });
       const mergeCorridor = item === primaryDropper ? 4 : 0;
       cursor += travelDirection === 'east' ? size.width + mergeCorridor : -(size.width + mergeCorridor);
@@ -357,8 +371,8 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
     const current = placed[index];
     const next = placed[index + 1];
     if (current.item.type !== 'dropper') route.push({ kind: 'item', id: current.id });
-    const starts = current.item.type === 'dropper' ? dropCells(current) : internalPorts(current).exit;
-    const target = next.item.type === 'furnace' ? rectCells(furnaceZone(next, rules)) : internalPorts(next).entry;
+    const starts = current.item.type === 'dropper' ? dropCells(current, rules) : internalPorts(current, rules).exit;
+    const target = next.item.type === 'furnace' ? rectCells(furnaceZone(next, rules)) : internalPorts(next, rules).entry;
     const blocked = new Set(occupancy.keys());
     starts.forEach((cell) => blocked.delete(key(cell)));
     target.forEach((cell) => blocked.delete(key(cell)));
@@ -451,7 +465,7 @@ export function autoLayout({ dropper, droppers = null, chain, furnace, plotSize,
     else diagnostics.push(diagnostic('PORTABLE_UNREACHABLE', `${item.name} has no legal footprint beside the route.`, { item: item.key }));
   }
   const compressed = compressQuarterConveyors(conveyors);
-  const firstUpgradeEntry = placed[1] ? internalPorts(placed[1]).entry : [];
+  const firstUpgradeEntry = placed[1] ? internalPorts(placed[1], rules).entry : [];
   const straightMergeCentering = compressed
     .filter((conveyor) => conveyor.conveyor === 'Supercharged Conveyor')
     .sort((left, right) => {

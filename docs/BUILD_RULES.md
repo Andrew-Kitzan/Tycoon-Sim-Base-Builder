@@ -134,10 +134,19 @@ Workbook sizes use `WIDTH × LENGTH`.
 - Rotating an item 90 degrees rotates its entire footprint, input, output, and
   internal conveyor while preserving its original width and length.
 - An upgrader's internal conveyor travels through the full item length and is
-  centered across the item width. Furnaces are excluded: they use only their
-  documented processing zone and never receive a full through-conveyor.
+  centered across the item width unless an offset is documented below.
+  Furnaces are excluded: they use only their documented processing zone and
+  never receive a full through-conveyor.
 - Even-width items use a centered two-tile-wide internal conveyor.
 - Odd-width items use a centered one-tile-wide internal conveyor.
+- Gumball Enhancer is a five-tile-wide exception with a two-tile conveyor. When
+  facing north its cross-section is one wall tile, two conveyor tiles, then two
+  wall tiles.
+- Tiki Evaluator is a five-tile-wide exception with a two-tile conveyor. When
+  facing north its cross-section is two wall tiles, two conveyor tiles, then one
+  wall tile.
+- Rotate each exception's entire wall/conveyor cross-section with the item; do
+  not recenter or mirror the conveyor independently.
 - The remainder of the full database footprint is wall or decoration and cannot
   overlap normal items or external conveyors.
 - External conveyors must connect to the internal conveyor rather than to an

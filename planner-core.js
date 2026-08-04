@@ -85,19 +85,33 @@
     return outside.every((cell) => blocked.has(`${cell.x},${cell.y}`));
   }
 
+  const internalTransportOverrides = {
+    'Gumball Enhancer': { across: 2, northOffset: 1 },
+    'Tiki Evaluator': { across: 2, northOffset: 2 },
+  };
+
+  function internalTransportProfile(item) {
+    const override = internalTransportOverrides[item.name];
+    const across = override?.across ?? (item.itemWidth % 2 === 0 ? 2 : 1);
+    return { across, northOffset: override?.northOffset ?? ((item.itemWidth - across) / 2) };
+  }
+
   function centeredTransportGeometry(item) {
     if (['dropper', 'portable', 'furnace'].includes(item.type)) return null;
     const horizontal = item.direction === 'east' || item.direction === 'west';
-    const across = item.itemWidth % 2 === 0 ? 2 : 1;
+    const { across, northOffset } = internalTransportProfile(item);
+    const offset = item.direction === 'south' || item.direction === 'west'
+      ? item.itemWidth - northOffset - across
+      : northOffset;
     return horizontal
       ? {
         x: item.x,
-        y: item.y + (item.height - across) / 2,
+        y: item.y + offset,
         width: item.width,
         height: across,
       }
       : {
-        x: item.x + (item.width - across) / 2,
+        x: item.x + offset,
         y: item.y,
         width: across,
         height: item.height,
@@ -172,9 +186,9 @@
         ?? (/Proficient Furnace|Toxic Wasteland/.test(item.name) ? 'front-corner' : 'front-center');
       item.processingZone = furnaceProcessingZone(item);
     }
-    item.conveyorWidth = item.internalTransport
-      ? (item.itemWidth % 2 === 0 ? 2 : 1)
-      : 0;
+    const transport = item.internalTransport ? internalTransportProfile(item) : null;
+    item.conveyorWidth = transport?.across ?? 0;
+    item.conveyorOffset = transport?.northOffset ?? 0;
     return item;
   }
 

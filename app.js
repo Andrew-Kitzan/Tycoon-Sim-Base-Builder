@@ -143,16 +143,29 @@ function applyBaseSize(value) {
 }
 
 // Coordinates are 1-based to match the labels shown to the player.
-// Database sizes are WIDTH x LENGTH. Even-width items have a centered
-// 2 x LENGTH conveyor; odd-width items have a centered 1 x LENGTH conveyor.
+// Database sizes are WIDTH x LENGTH. Internal conveyors use the default
+// centered width unless an item-specific mechanical override is documented.
 // East/west placements therefore use LENGTH on the grid's X axis, while
 // north/south placements use LENGTH on the grid's Y axis.
+const internalTransportOverrides = {
+  'Gumball Enhancer': { across: 2, northOffset: 1 },
+  'Tiki Evaluator': { across: 2, northOffset: 2 },
+};
+
+function internalTransportProfile(name, itemWidth, type) {
+  if (['dropper', 'portable', 'furnace'].includes(type)) return null;
+  const override = internalTransportOverrides[name];
+  const across = override?.across ?? (itemWidth % 2 === 0 ? 2 : 1);
+  return { across, northOffset: override?.northOffset ?? ((itemWidth - across) / 2) };
+}
+
 function placeItem(order, name, x, y, itemWidth, itemLength, direction, type = null, details = {}) {
   const horizontal = direction === 'east' || direction === 'west';
   const resolvedType = itemType(name, type);
   const dropper = resolvedType === 'dropper';
   const portable = resolvedType === 'portable';
   const furnace = resolvedType === 'furnace';
+  const transport = internalTransportProfile(name, itemWidth, resolvedType);
   return {
     id: details.id ?? `item-${order}`,
     order,
@@ -164,7 +177,8 @@ function placeItem(order, name, x, y, itemWidth, itemLength, direction, type = n
     y,
     itemWidth,
     itemLength,
-    conveyorWidth: dropper || portable || furnace ? 0 : (itemWidth % 2 === 0 ? 2 : 1),
+    conveyorWidth: transport?.across ?? 0,
+    conveyorOffset: transport?.northOffset ?? 0,
     width: portable
       ? (horizontal ? itemWidth : itemLength)
       : (horizontal ? itemLength : itemWidth),
@@ -805,6 +819,20 @@ function portableBeamGeometry(item) {
     return { x: item.x - item.beamLength, y: item.y, width: item.beamLength, height: item.height };
   }
   return { x: item.x + item.width, y: item.y, width: item.beamLength, height: item.height };
+}
+
+function itemTransportGeometry(item) {
+  const profile = internalTransportProfile(item.name, item.itemWidth, item.type);
+  const conveyorWidth = item.conveyorWidth ?? profile?.across ?? 0;
+  const conveyorOffset = item.conveyorOffset ?? profile?.northOffset ?? 0;
+  if (!conveyorWidth) return null;
+  const offset = item.direction === 'south' || item.direction === 'west'
+    ? item.itemWidth - conveyorOffset - conveyorWidth
+    : conveyorOffset;
+  const horizontal = item.direction === 'east' || item.direction === 'west';
+  return horizontal
+    ? { x: item.x, y: item.y + offset, width: item.width, height: conveyorWidth }
+    : { x: item.x + offset, y: item.y, width: conveyorWidth, height: item.height };
 }
 
 function furnaceProcessingZoneGeometry(item) {
@@ -2351,12 +2379,15 @@ function displayItemDescription(item) {
 function refreshPlacementMetadata(item) {
   const record = databaseRecordForItem(item);
   const stats = { ...(item?.stats ?? {}), ...(record ? recordStats(record) : {}) };
+  const transport = internalTransportProfile(item.name, item.itemWidth, item.type);
   delete stats.Effects;
   delete stats.Description;
   return {
     ...item,
     description: record ? recordDescription(record) : displayItemDescription(item),
     stats,
+    conveyorWidth: transport?.across ?? 0,
+    conveyorOffset: transport?.northOffset ?? 0,
   };
 }
 
@@ -2741,16 +2772,12 @@ function renderPlacementGhost() {
   } else if (!candidate.conveyor && candidate.type !== 'portable' && candidate.type !== 'dropper') {
     const belt = document.createElement('span');
     belt.className = 'item-belt placement-ghost-belt';
-    if (candidate.direction === 'east' || candidate.direction === 'west') {
-      belt.style.left = '0';
-      belt.style.top = `calc(${(candidate.height - candidate.conveyorWidth) / 2} * var(--tile))`;
-      belt.style.width = '100%';
-      belt.style.height = `calc(${candidate.conveyorWidth} * var(--tile))`;
-    } else {
-      belt.style.top = '0';
-      belt.style.left = `calc(${(candidate.width - candidate.conveyorWidth) / 2} * var(--tile))`;
-      belt.style.height = '100%';
-      belt.style.width = `calc(${candidate.conveyorWidth} * var(--tile))`;
+    const transport = itemTransportGeometry(candidate);
+    if (transport) {
+      belt.style.left = `calc(${transport.x - candidate.x} * var(--tile))`;
+      belt.style.top = `calc(${transport.y - candidate.y} * var(--tile))`;
+      belt.style.width = `calc(${transport.width} * var(--tile))`;
+      belt.style.height = `calc(${transport.height} * var(--tile))`;
     }
     element.append(belt);
   }
@@ -2944,7 +2971,9 @@ function validateCoordinateMap(items, size) {
     const expectedHeight = portable
       ? (horizontal ? item.itemLength : item.itemWidth)
       : (horizontal ? item.itemWidth : item.itemLength);
-    const expectedConveyorWidth = portable || furnace || item.type === 'dropper' ? 0 : (item.itemWidth % 2 === 0 ? 2 : 1);
+    const expectedTransport = internalTransportProfile(item.name, item.itemWidth, item.type);
+    const expectedConveyorWidth = expectedTransport?.across ?? 0;
+    const expectedConveyorOffset = expectedTransport?.northOffset ?? 0;
     if (item.width !== expectedWidth || item.height !== expectedHeight) {
       throw new Error(
         `${item.name} has an invalid rotated footprint: `
@@ -2955,6 +2984,12 @@ function validateCoordinateMap(items, size) {
       throw new Error(
         `${item.name} has an invalid conveyor width: `
         + `${item.conveyorWidth}; expected ${expectedConveyorWidth}.`,
+      );
+    }
+    if ((item.conveyorOffset ?? 0) !== expectedConveyorOffset) {
+      throw new Error(
+        `${item.name} has an invalid conveyor offset: `
+        + `${item.conveyorOffset}; expected ${expectedConveyorOffset}.`,
       );
     }
 
@@ -3289,16 +3324,12 @@ function renderPlan(size) {
     } else if (item.type !== 'portable' && item.type !== 'dropper') {
       const belt = document.createElement('span');
       belt.className = 'item-belt';
-      if (item.direction === 'east' || item.direction === 'west') {
-        belt.style.left = '0';
-        belt.style.top = `calc(${(item.height - item.conveyorWidth) / 2} * var(--tile))`;
-        belt.style.width = '100%';
-        belt.style.height = `calc(${item.conveyorWidth} * var(--tile))`;
-      } else {
-        belt.style.top = '0';
-        belt.style.left = `calc(${(item.width - item.conveyorWidth) / 2} * var(--tile))`;
-        belt.style.height = '100%';
-        belt.style.width = `calc(${item.conveyorWidth} * var(--tile))`;
+      const transport = itemTransportGeometry(item);
+      if (transport) {
+        belt.style.left = `calc(${transport.x - item.x} * var(--tile))`;
+        belt.style.top = `calc(${transport.y - item.y} * var(--tile))`;
+        belt.style.width = `calc(${transport.width} * var(--tile))`;
+        belt.style.height = `calc(${transport.height} * var(--tile))`;
       }
       element.append(belt);
     }

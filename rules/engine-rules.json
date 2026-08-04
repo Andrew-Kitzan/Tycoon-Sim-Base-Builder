@@ -26,6 +26,10 @@
   "defaultPortableBeamLength": 2,
   "portableSpinnerBeamRadius": 1,
   "portableRequirements": { "phase": "post-cap", "beamMustTouchRoute": true },
+  "internalTransportOverrides": {
+    "Gumball Enhancer": { "across": 2, "northOffset": 1 },
+    "Tiki Evaluator": { "across": 2, "northOffset": 2 }
+  },
   "itemRequirements": {
     "Acid Plant": { "requiresNoEffects": true, "appliesEffects": ["Toxic"] },
     "Oil Well": { "requiredLane": "top", "outputLane": "top" },

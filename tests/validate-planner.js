@@ -200,7 +200,7 @@ vm.createContext(appSandbox);
 vm.runInContext(`${appSource.slice(0, appEnd)}
 this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, conveyorCatalog,
   parseCoordinate, rotateDirection, updateConveyorGeometry, databaseRenderType, uniqueDatabaseRecords, mapPlacementCoordinates, placementFromRecord,
-  furnaceProcessingZoneGeometry, completedStageForPlan, categorizedManualSimulationHtml,
+  furnaceProcessingZoneGeometry, itemTransportGeometry, updateItemGeometry, completedStageForPlan, categorizedManualSimulationHtml,
   libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
   selectionRectangle, placementIntersectsRectangle, massSelectionBounds,
   automaticBaseMetadata, crateRequirementForPlacement, loadoutFilename, normalizeSavedLoadout, abbreviateDiagnosticMoney,
@@ -216,6 +216,24 @@ assert.equal(app.activePlan.lanes.length, 0);
 assert.equal(app.workflowStage, 2);
 assert.equal(app.workflowProgress, null);
 assert.equal(app.plannerMode, 'build');
+const uiGumball = app.placeItem(1, 'Gumball Enhancer', 10, 10, 5, 3, 'north', 'upgrader');
+assert.equal(uiGumball.conveyorWidth, 2);
+assert.equal(uiGumball.conveyorOffset, 1);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(app.itemTransportGeometry(uiGumball))),
+  { x: 11, y: 10, width: 2, height: 3 },
+);
+const uiTiki = app.placeItem(2, 'Tiki Evaluator', 10, 10, 5, 4, 'north', 'upgrader');
+const expectedUiTikiTransport = {
+  north: { x: 12, y: 10, width: 2, height: 4 },
+  east: { x: 10, y: 12, width: 4, height: 2 },
+  south: { x: 11, y: 10, width: 2, height: 4 },
+  west: { x: 10, y: 11, width: 4, height: 2 },
+};
+for (const [direction, expected] of Object.entries(expectedUiTikiTransport)) {
+  const rotated = app.updateItemGeometry(uiTiki, { direction });
+  assert.deepEqual(JSON.parse(JSON.stringify(app.itemTransportGeometry(rotated))), expected);
+}
 assert.deepEqual(
   JSON.parse(JSON.stringify(app.axisLockedLineCoordinates({ x: 2, y: 3 }, { x: 9, y: 5 }, { width: 2, height: 3 }))),
   { axis: 'horizontal', coordinates: [{ x: 2, y: 3 }, { x: 4, y: 3 }, { x: 6, y: 3 }, { x: 8, y: 3 }] },
@@ -578,12 +596,12 @@ const rngSimulation = planner.simulateManualBase({
     { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
   ] },
   items: [
-    { id: 'd1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
-    { id: 'u1', order: 2, name: 'Tiki Evaluator', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
-    { id: 'f1', order: 3, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+    { id: 'd1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 3, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'u1', order: 2, name: 'Tiki Evaluator', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 4, height: 5, itemWidth: 5, itemLength: 4, conveyorWidth: 2, conveyorOffset: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'f1', order: 3, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 9, y: 3, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
   ],
   conveyors: [
-    { id: 'c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+    { id: 'c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 3, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
   ],
 });
 assert.equal(rngSimulation.valid, true);
@@ -702,6 +720,21 @@ const odd = planner.createItem(
 );
 assert.equal(odd.conveyorWidth, 1);
 assert.equal(odd.internalTransport.height, 1);
+
+const gumball = planner.createItem(
+  { name: 'Gumball Enhancer', variant: 'Base', type: 'upgrader', size: { width: 5, length: 3 } },
+  { x: 10, y: 10, direction: 'north' },
+);
+assert.equal(gumball.conveyorWidth, 2);
+assert.equal(gumball.conveyorOffset, 1);
+assert.deepEqual(JSON.parse(JSON.stringify(gumball.internalTransport)), { x: 11, y: 10, width: 2, height: 3 });
+const tiki = planner.createItem(
+  { name: 'Tiki Evaluator', variant: 'Base', type: 'upgrader', size: { width: 5, length: 4 } },
+  { x: 10, y: 10, direction: 'north' },
+);
+assert.equal(tiki.conveyorWidth, 2);
+assert.equal(tiki.conveyorOffset, 2);
+assert.deepEqual(JSON.parse(JSON.stringify(tiki.internalTransport)), { x: 12, y: 10, width: 2, height: 4 });
 
 const quarterBlock = [[1, 1], [2, 1], [1, 2], [2, 2]]
   .map(([x, y]) => planner.createConveyor('Quarter Conveyor', x, y, 'east'));
