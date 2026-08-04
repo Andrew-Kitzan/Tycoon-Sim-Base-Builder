@@ -436,6 +436,13 @@ function simulationMoney(value) {
   return abbreviatedRate(Number(value ?? 0)).replace('/min', '');
 }
 
+function abbreviateDiagnosticMoney(message) {
+  return String(message ?? '').replace(/\$([0-9][0-9,]*(?:\.\d+)?)/g, (match, amount) => {
+    const value = Number(amount.replaceAll(',', ''));
+    return Number.isFinite(value) ? simulationMoney(value) : match;
+  });
+}
+
 function manualSimulationItemHtml(item) {
   if (validation?.kind !== 'manual-simulation') return '';
   const routeStages = validation.routes.flatMap((route) => (
@@ -487,7 +494,7 @@ function manualSimulationItemHtml(item) {
     <section class="item-stat-section ore-tracking simulation-item-tracking">
       <h3>Last base simulation</h3>
       ${rows}
-      ${relevantDiagnostics.length ? `<div class="simulation-item-errors">${relevantDiagnostics.map((entry) => `<p><strong>${escapeHtml(entry.code)}</strong> ${escapeHtml(entry.message)}</p>`).join('')}</div>` : ''}
+      ${relevantDiagnostics.length ? `<div class="simulation-item-errors">${relevantDiagnostics.map((entry) => `<p><strong>${escapeHtml(entry.code)}</strong> ${escapeHtml(abbreviateDiagnosticMoney(entry.message))}</p>`).join('')}</div>` : ''}
     </section>`;
 }
 
@@ -502,7 +509,7 @@ function categorizedManualSimulationHtml(item) {
   const diagnosticsHtml = relevantDiagnostics.length ? `
     <section class="item-stat-section simulation-diagnostic-tracking simulation-item-tracking">
       <h3>Simulation warnings</h3>
-      ${relevantDiagnostics.map((entry) => `<p><strong>${escapeHtml(entry.code)}</strong> ${escapeHtml(entry.message)}</p>`).join('')}
+      ${relevantDiagnostics.map((entry) => `<p><strong>${escapeHtml(entry.code)}</strong> ${escapeHtml(abbreviateDiagnosticMoney(entry.message))}</p>`).join('')}
     </section>` : '';
 
   if (item.type === 'dropper') {
@@ -1861,7 +1868,7 @@ function renderWorkflow() {
             <td>${route.cashPerOre == null ? 'N/A' : simulationMoney(route.cashPerOre)}</td>
           </tr>`).join('')}</tbody>
         </table>` : ''}
-        ${validation.diagnostics.length ? `<ul class="simulation-diagnostics">${validation.diagnostics.map((entry) => `<li><strong>${escapeHtml(entry.code)}:</strong> ${escapeHtml(entry.message)}</li>`).join('')}</ul>` : ''}
+        ${validation.diagnostics.length ? `<ul class="simulation-diagnostics">${validation.diagnostics.map((entry) => `<li><strong>${escapeHtml(entry.code)}:</strong> ${escapeHtml(abbreviateDiagnosticMoney(entry.message))}</li>`).join('')}</ul>` : ''}
         <p>This is a simulation of the current layout only; no replacement items or optimization suggestions were generated.</p>`;
       return;
     }
@@ -2134,7 +2141,10 @@ function placeTooltip(event, element) {
 }
 
 function showItemTooltip(item, event, element) {
-  if (buildInteraction) return;
+  if (buildInteraction || massMoveInteraction) {
+    hideItemTooltip();
+    return;
+  }
   if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
   itemTooltip.innerHTML = itemDetailsHtml(item);
   itemTooltip.hidden = false;
@@ -2465,6 +2475,7 @@ function startPlacingRecord(record, direction = 'east') {
 
 function startMovingPlacement(placement) {
   massPlacementDrag = null;
+  hideItemTooltip();
   buildInteraction = {
     mode: 'move',
     record: null,

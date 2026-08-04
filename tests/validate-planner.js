@@ -111,6 +111,8 @@ assert.match(appSource, /function loadWorkflowProgress/);
 assert.match(appSource, /function renderPlanningPreview/);
 assert.match(appSource, /function startPlacingRecord/);
 assert.match(appSource, /function startMovingPlacement/);
+assert.match(appSource, /function showItemTooltip[\s\S]+buildInteraction \|\| massMoveInteraction[\s\S]+hideItemTooltip\(\)/);
+assert.match(appSource, /function startMovingPlacement[\s\S]+hideItemTooltip\(\)/);
 assert.match(appSource, /function startMovingHoveredPlacement/);
 assert.match(appSource, /event\.key\.toLowerCase\(\) === 'm' && !event\.repeat && !isTypingTarget\(event\.target\)/);
 assert.match(appSource, /function startCopyingHoveredPlacement/);
@@ -195,7 +197,7 @@ this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, co
   furnaceProcessingZoneGeometry, completedStageForPlan, categorizedManualSimulationHtml,
   libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
   selectionRectangle, placementIntersectsRectangle, massSelectionBounds,
-  automaticBaseMetadata, crateRequirementForPlacement, loadoutFilename, normalizeSavedLoadout,
+  automaticBaseMetadata, crateRequirementForPlacement, loadoutFilename, normalizeSavedLoadout, abbreviateDiagnosticMoney,
   recordStats, recordDescription, displayItemDescription, statsSectionsHtml,
   setValidation: (next) => { validation = next; }, workflowStage, workflowProgress, plannerMode };`, appSandbox);
 const app = appSandbox.api;
@@ -270,6 +272,10 @@ assert.ok(savedMetadata.specialItems.secret.some((name) => name.includes('Godly 
 assert.ok(savedMetadata.specialItems.achievement.some((name) => name.includes('King Dropper')));
 assert.equal(app.crateRequirementForPlacement({ name: 'Iron Dropper', stats: { Variant: 'Base' } }).name, 'Advanced');
 assert.equal(app.loadoutFilename('  Azure / Scanner Base  '), 'azure-scanner-base.tycoon-loadout.json');
+assert.equal(
+  app.abbreviateDiagnosticMoney('enters with $330268.17, outside $1000000-$15000000.'),
+  'enters with $330.26K, outside $1.00M-$15.00M.',
+);
 const sortedLibrary = app.filteredAndSortedLibraryRecords([
   { name: 'Zulu', type: 'upgrader', variant: 'Base', rarity: 'Epic' },
   { name: 'Beta', type: 'upgrader', variant: 'Base', rarity: 'Common' },
