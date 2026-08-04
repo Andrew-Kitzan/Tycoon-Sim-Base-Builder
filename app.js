@@ -1337,7 +1337,7 @@ function preparedSavedBasePlan(record) {
   const items = record.plan.items.map((item) => mapPlacementCoordinates(refreshPlacementMetadata(item)));
   const lanes = record.plan.lanes.map((lane) => mapPlacementCoordinates(updateConveyorGeometry(lane)));
   validateCoordinateMap(items, size);
-  validateRouteSegments(lanes, items, size);
+  validateRouteSegments(lanes, items, size, { allowUncompressedQuarterConveyors: true });
   return { size, items, lanes };
 }
 
@@ -1511,7 +1511,7 @@ function loadSavedWorkspace() {
       mapPlacementCoordinates(updateConveyorGeometry(lane))
     )));
     validateCoordinateMap(coordinateMap, Number(sizeSlider.value));
-    validateRouteSegments(routeSegments, coordinateMap, Number(sizeSlider.value));
+    validateRouteSegments(routeSegments, coordinateMap, Number(sizeSlider.value), { allowUncompressedQuarterConveyors: true });
     activePlan = {
       title: saved.plan.title ?? 'Benchmark workspace',
       minimumSize: Number(saved.plan.minimumSize ?? sizeSlider.min),
@@ -2061,7 +2061,7 @@ function validateMassPlacementGroup(candidates) {
       .filter((lane) => !selectedIds.has(lane.id))
       .concat(candidates.filter(isConveyorPlacement));
     validateCoordinateMap(items, Number(sizeSlider.value));
-    validateRouteSegments(lanes, items, Number(sizeSlider.value));
+    validateRouteSegments(lanes, items, Number(sizeSlider.value), { allowUncompressedQuarterConveyors: true });
     return { valid: true, error: '' };
   } catch (error) {
     return { valid: false, error: error.message };
@@ -2218,7 +2218,7 @@ function validateItemEdit(updatedItem) {
       lane.id === updatedItem.id ? updatedItem : lane
     ));
     validateCoordinateMap(activePlan.items, Number(sizeSlider.value));
-    validateRouteSegments(candidates, activePlan.items, Number(sizeSlider.value));
+    validateRouteSegments(candidates, activePlan.items, Number(sizeSlider.value), { allowUncompressedQuarterConveyors: true });
     return;
   }
   const candidates = activePlan.items.map((item) => (
@@ -2226,7 +2226,7 @@ function validateItemEdit(updatedItem) {
   ));
   const size = Number(sizeSlider.value);
   validateCoordinateMap(candidates, size);
-  validateRouteSegments(activePlan.lanes ?? routeSegments, candidates, size);
+  validateRouteSegments(activePlan.lanes ?? routeSegments, candidates, size, { allowUncompressedQuarterConveyors: true });
 }
 
 function refreshAfterEdit(message) {
@@ -2535,13 +2535,13 @@ function validateBuildCandidate(candidate, stagedCandidates = []) {
       const lanes = activePlan.lanes
         .filter((lane) => lane.id !== buildInteraction.sourceId)
         .concat(stagedCandidates.filter(isConveyorPlacement), candidate);
-      validateRouteSegments(lanes, activePlan.items, Number(sizeSlider.value));
+      validateRouteSegments(lanes, activePlan.items, Number(sizeSlider.value), { allowUncompressedQuarterConveyors: true });
     } else {
       const items = activePlan.items
         .filter((item) => item.id !== buildInteraction.sourceId)
         .concat(stagedCandidates.filter((item) => !isConveyorPlacement(item)), candidate);
       validateCoordinateMap(items, Number(sizeSlider.value));
-      validateRouteSegments(activePlan.lanes, items, Number(sizeSlider.value));
+      validateRouteSegments(activePlan.lanes, items, Number(sizeSlider.value), { allowUncompressedQuarterConveyors: true });
     }
     return { valid: true, error: '' };
   } catch (error) {
@@ -2988,7 +2988,7 @@ function validateCoordinateMap(items, size) {
   return occupied.size;
 }
 
-function validateRouteSegments(segments, items, size) {
+function validateRouteSegments(segments, items, size, { allowUncompressedQuarterConveyors = false } = {}) {
   const itemTiles = new Set();
   const routeTiles = new Set();
   const conveyorSizes = {
@@ -3045,45 +3045,48 @@ function validateRouteSegments(segments, items, size) {
     }
   });
 
-  const quarterAt = new Map(
-    segments
-      .filter((segment) => segment.conveyor === 'Quarter Conveyor')
-      .map((segment) => [`${segment.x},${segment.y}`, segment]),
-  );
-  quarterAt.forEach((segment) => {
-    const matchingNeighbor = segment.direction === 'east' || segment.direction === 'west'
-      ? quarterAt.get(`${segment.x},${segment.y + 1}`)
-      : quarterAt.get(`${segment.x + 1},${segment.y}`);
-    const belongsToStraight2x2 = segment.direction === 'east' || segment.direction === 'west'
-      ? [-1, 1].some((offset) => (
-        quarterAt.get(`${segment.x + offset},${segment.y}`)?.direction === segment.direction
-        && quarterAt.get(`${segment.x + offset},${segment.y + 1}`)?.direction === segment.direction
-      ))
-      : [-1, 1].some((offset) => (
-        quarterAt.get(`${segment.x},${segment.y + offset}`)?.direction === segment.direction
-        && quarterAt.get(`${segment.x + 1},${segment.y + offset}`)?.direction === segment.direction
-      ));
-    if (matchingNeighbor?.direction === segment.direction && !belongsToStraight2x2) {
-      throw new Error(
-        `Quarter Conveyor pair at ${segment.x},${segment.y} has the footprint `
-        + 'of one Half Conveyor and must be replaced by it.',
-      );
-    }
-  });
-  quarterAt.forEach((segment) => {
-    const block = [
-      segment,
-      quarterAt.get(`${segment.x + 1},${segment.y}`),
-      quarterAt.get(`${segment.x},${segment.y + 1}`),
-      quarterAt.get(`${segment.x + 1},${segment.y + 1}`),
-    ];
-    if (block.every((tile) => tile?.direction === segment.direction)) {
-      throw new Error(
-        `Straight 2x2 Quarter Conveyor block at ${segment.x},${segment.y} `
-        + 'must be replaced by a Normal Conveyor or a faster full-size conveyor.',
-      );
-    }
-  });
+  if (!allowUncompressedQuarterConveyors) {
+    const quarterAt = new Map(
+      segments
+        .filter((segment) => segment.conveyor === 'Quarter Conveyor')
+        .map((segment) => [`${segment.x},${segment.y}`, segment]),
+    );
+    quarterAt.forEach((segment) => {
+      const matchingNeighbor = segment.direction === 'east' || segment.direction === 'west'
+        ? quarterAt.get(`${segment.x},${segment.y + 1}`)
+        : quarterAt.get(`${segment.x + 1},${segment.y}`);
+      const belongsToStraight2x2 = segment.direction === 'east' || segment.direction === 'west'
+        ? [-1, 1].some((offset) => (
+          quarterAt.get(`${segment.x + offset},${segment.y}`)?.direction === segment.direction
+          && quarterAt.get(`${segment.x + offset},${segment.y + 1}`)?.direction === segment.direction
+        ))
+        : [-1, 1].some((offset) => (
+          quarterAt.get(`${segment.x},${segment.y + offset}`)?.direction === segment.direction
+          && quarterAt.get(`${segment.x + 1},${segment.y + offset}`)?.direction === segment.direction
+        ));
+      if (matchingNeighbor?.direction === segment.direction && !belongsToStraight2x2) {
+        throw new Error(
+          `Quarter Conveyor pair at ${segment.x},${segment.y} has the footprint `
+          + 'of one Half Conveyor and must be replaced by it.',
+        );
+      }
+    });
+    quarterAt.forEach((segment) => {
+      const block = [
+        segment,
+        quarterAt.get(`${segment.x + 1},${segment.y}`),
+        quarterAt.get(`${segment.x},${segment.y + 1}`),
+        quarterAt.get(`${segment.x + 1},${segment.y + 1}`),
+      ];
+      if (block.every((tile) => tile?.direction === segment.direction)) {
+        throw new Error(
+          `Straight 2x2 Quarter Conveyor block at ${segment.x},${segment.y} `
+          + 'must be replaced by a Normal Conveyor or a faster full-size conveyor.',
+        );
+      }
+    });
+
+  }
 
   const halfAt = new Map(
     segments
@@ -3424,7 +3427,9 @@ function renderPlan(size) {
     : legendItems;
   legend.innerHTML = visibleLegendItems.map(([type, label]) => `<span class="legend-key"><span class="legend-swatch ${type}"></span>${label}</span>`).join('');
   const reservedTiles = validateCoordinateMap(activePlan.items, size)
-    + validateRouteSegments(activePlan.lanes ?? [], activePlan.items, size);
+    + validateRouteSegments(activePlan.lanes ?? [], activePlan.items, size, {
+      allowUncompressedQuarterConveyors: plannerMode === 'build',
+    });
   const remainingTiles = Math.max(0, size * size - reservedTiles);
   tileCount.textContent = remainingTiles.toLocaleString();
   if (editNotice) {
@@ -3641,7 +3646,9 @@ document.addEventListener('keydown', (event) => {
 if (coordinateMap.length > 0 || routeSegments.length > 0) {
   const startupSize = Number(sizeSlider.value);
   const itemTileCount = validateCoordinateMap(coordinateMap, startupSize);
-  const routeTileCount = validateRouteSegments(routeSegments, coordinateMap, startupSize);
+  const routeTileCount = validateRouteSegments(routeSegments, coordinateMap, startupSize, {
+    allowUncompressedQuarterConveyors: plannerMode === 'build',
+  });
   if (validation && itemTileCount + routeTileCount !== validation.reservedTiles) {
     throw new Error(`Reserved tile count is ${itemTileCount + routeTileCount}, expected ${validation.reservedTiles}.`);
   }
