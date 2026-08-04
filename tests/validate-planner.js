@@ -40,6 +40,8 @@ assert.match(indexSource, /id="stage-preview-summary"/);
 assert.match(indexSource, /id="item-library"/);
 assert.match(indexSource, /data-category="conveyor"/);
 assert.match(appSource, /button\.dataset\.category === libraryCategory[\s\S]+itemSearch\.value = '';/);
+assert.match(appSource, /libraryTabs\.addEventListener\('pointerdown'[\s\S]+document\.activeElement === itemSearch/);
+assert.match(appSource, /if \(shouldRestoreSearchFocus\) itemSearch\.focus\(\)/);
 assert.match(indexSource, /id="library-filter-toggle"/);
 assert.match(indexSource, /id="mass-selection-dialog"/);
 assert.match(indexSource, /data-mass-action="rotate"/);
@@ -202,7 +204,7 @@ this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, co
   parseCoordinate, rotateDirection, updateConveyorGeometry, databaseRenderType, uniqueDatabaseRecords, mapPlacementCoordinates, placementFromRecord,
   furnaceProcessingZoneGeometry, itemTransportGeometry, updateItemGeometry, completedStageForPlan, categorizedManualSimulationHtml,
   libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
-  selectionRectangle, placementIntersectsRectangle, massSelectionBounds,
+  selectionRectangle, placementIntersectsRectangle, placementContainsCoordinate, massSelectionBounds,
   automaticBaseMetadata, crateRequirementForPlacement, loadoutFilename, normalizeSavedLoadout, abbreviateDiagnosticMoney,
   recordStats, recordDescription, displayItemDescription, statsSectionsHtml,
   setValidation: (next) => { validation = next; }, workflowStage, workflowProgress, plannerMode };`, appSandbox);
@@ -238,6 +240,11 @@ assert.deepEqual(
   JSON.parse(JSON.stringify(app.axisLockedLineCoordinates({ x: 2, y: 3 }, { x: 9, y: 5 }, { width: 2, height: 3 }))),
   { axis: 'horizontal', coordinates: [{ x: 2, y: 3 }, { x: 4, y: 3 }, { x: 6, y: 3 }, { x: 8, y: 3 }] },
 );
+assert.equal(app.placementContainsCoordinate({ x: 5, y: 6, width: 4, height: 3 }, { x: 5, y: 6 }), true);
+assert.equal(app.placementContainsCoordinate({ x: 5, y: 6, width: 4, height: 3 }, { x: 8, y: 8 }), true);
+assert.equal(app.placementContainsCoordinate({ x: 5, y: 6, width: 4, height: 3 }, { x: 9, y: 8 }), false);
+assert.match(appSource, /candidateAt\(placement\.x, placement\.y\);/);
+assert.match(appSource, /keepCurrentMovePreview[\s\S]+placementContainsCoordinate\(buildInteraction\.candidate, clickCoordinate\)[\s\S]+if \(!keepCurrentMovePreview\) updateBuildPreview\(event\)/);
 assert.deepEqual(
   JSON.parse(JSON.stringify(app.axisLockedLineCoordinates({ x: 5, y: 8 }, { x: 4, y: 1 }, { width: 2, height: 3 }, 'vertical'))),
   { axis: 'vertical', coordinates: [{ x: 5, y: 8 }, { x: 5, y: 5 }, { x: 5, y: 2 }] },

@@ -93,6 +93,7 @@ const conveyorCatalog = [
   { key: 'teleporter::blue-receiver', name: 'Blue Teleporter Receiver', type: 'conveyor', size: { width: 4, length: 2 }, speed: 12, description: 'Teleporter receiver · Speed 12 · Rebirth 5', teleporterColor: 'blue', teleporterRole: 'receiver' },
 ];
 let libraryCategory = 'dropper';
+let restoreLibrarySearchFocus = false;
 let buildInteraction = null;
 let placementGhost = null;
 let massPlacementDrag = null;
@@ -2516,6 +2517,7 @@ function startMovingPlacement(placement) {
     valid: false,
     error: 'Move over the grid to choose a location.',
   };
+  candidateAt(placement.x, placement.y);
   buildModeMessage(`Moving ${placement.name ?? placement.conveyor}. Click a green preview to place; R rotates clockwise; Esc cancels.`);
   renderGrid(Number(sizeSlider.value));
 }
@@ -2603,6 +2605,13 @@ function gridCoordinateFromPointer(event) {
     x: Math.floor((event.clientX - rectangle.left) / tileSize) + 1,
     y: Math.floor((event.clientY - rectangle.top) / tileSize) + 1,
   };
+}
+
+function placementContainsCoordinate(placement, coordinate) {
+  return coordinate.x >= placement.x
+    && coordinate.y >= placement.y
+    && coordinate.x < placement.x + placement.width
+    && coordinate.y < placement.y + placement.height;
 }
 
 function clampedGridCoordinateFromPointer(event) {
@@ -2923,7 +2932,10 @@ function commitBuildInteraction(event) {
     suppressGridClick = false;
     return;
   }
-  updateBuildPreview(event);
+  const clickCoordinate = gridCoordinateFromPointer(event);
+  const keepCurrentMovePreview = buildInteraction.mode === 'move'
+    && placementContainsCoordinate(buildInteraction.candidate, clickCoordinate);
+  if (!keepCurrentMovePreview) updateBuildPreview(event);
   if (!buildInteraction.valid) {
     buildModeMessage(buildInteraction.error || 'That position is not valid.');
     return;
@@ -3537,10 +3549,19 @@ libraryFilterReset.addEventListener('click', () => {
   libraryVariantFilter.value = 'all';
   renderItemLibrary();
 });
+libraryTabs.addEventListener('pointerdown', (event) => {
+  if (!event.target.closest('[data-category]')) return;
+  restoreLibrarySearchFocus = document.activeElement === itemSearch;
+});
 libraryTabs.addEventListener('click', (event) => {
   const button = event.target.closest('[data-category]');
   if (!button) return;
-  if (button.dataset.category === libraryCategory) return;
+  if (button.dataset.category === libraryCategory) {
+    restoreLibrarySearchFocus = false;
+    return;
+  }
+  const shouldRestoreSearchFocus = restoreLibrarySearchFocus || document.activeElement === itemSearch;
+  restoreLibrarySearchFocus = false;
   libraryCategory = button.dataset.category;
   itemSearch.value = '';
   libraryTierFilter.value = 'all';
@@ -3549,6 +3570,7 @@ libraryTabs.addEventListener('click', (event) => {
     tab.setAttribute('aria-selected', String(tab === button));
   });
   renderItemLibrary();
+  if (shouldRestoreSearchFocus) itemSearch.focus();
 });
 plannerModeToggle.addEventListener('click', (event) => {
   const button = event.target.closest('[data-planner-mode]');
