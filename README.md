@@ -137,7 +137,9 @@ To share a setup, send its `.tycoon-loadout.json` file to another player. They c
 4. Choose one of the available actions:
    - **Preview:** Displays the saved layout without changing the current grid.
    - **Load Base:** Opens a final warning before replacing the current grid.
-   - **Delete:** Removes the loadout from the browser library and list.
+   - **Delete:** Removes the loadout from the browser library and also deletes
+     its matching `.tycoon-loadout.json` file from the imported folder. If the
+     browser requests folder access again, select that same folder.
 5. To replace the current grid, select **Load anyway**. Select **Never mind** to keep the current layout unchanged.
 
 Always save the current base first if you may want to return to it.

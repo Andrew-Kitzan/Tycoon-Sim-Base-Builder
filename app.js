@@ -1310,14 +1310,49 @@ function downloadLoadoutFile(record) {
   URL.revokeObjectURL(url);
 }
 
+async function chooseSavedLoadoutDirectory() {
+  if (savedLoadoutDirectoryHandle) return savedLoadoutDirectoryHandle;
+  if (typeof globalThis.showDirectoryPicker !== 'function') return null;
+  savedLoadoutDirectoryHandle = await globalThis.showDirectoryPicker({
+    id: 'tycoon-sim-2-saved-loadouts',
+    mode: 'readwrite',
+    startIn: 'documents',
+  });
+  return savedLoadoutDirectoryHandle;
+}
+
+async function importSavedLoadoutFolder() {
+  const directory = await chooseSavedLoadoutDirectory();
+  if (!directory?.values) {
+    savedLoadoutFolderInput.click();
+    return 'file-input';
+  }
+  const files = [];
+  for await (const entry of directory.values()) {
+    if (entry.kind !== 'file' || !entry.name.toLowerCase().endsWith('.json')) continue;
+    files.push(await entry.getFile());
+  }
+  await importSavedLoadoutFiles(files);
+  return 'folder';
+}
+
+async function deleteLoadoutFile(record) {
+  const directory = await chooseSavedLoadoutDirectory();
+  const filename = loadoutFilename(record.name);
+  if (!directory?.removeEntry) return { status: 'unsupported', filename };
+  try {
+    await directory.removeEntry(filename);
+    return { status: 'deleted', filename };
+  } catch (error) {
+    if (error?.name === 'NotFoundError') return { status: 'missing', filename };
+    throw error;
+  }
+}
+
 async function writeLoadoutFile(record) {
   if (typeof globalThis.showDirectoryPicker === 'function') {
     try {
-      savedLoadoutDirectoryHandle ??= await globalThis.showDirectoryPicker({
-        id: 'tycoon-sim-2-saved-loadouts',
-        mode: 'readwrite',
-        startIn: 'documents',
-      });
+      savedLoadoutDirectoryHandle = await chooseSavedLoadoutDirectory();
       const file = await savedLoadoutDirectoryHandle.getFileHandle(loadoutFilename(record.name), { create: true });
       const writable = await file.createWritable();
       await writable.write(JSON.stringify(record, null, 2));
@@ -3769,7 +3804,7 @@ saveBaseDialog.addEventListener('close', () => {
   pendingSaveSnapshot = null;
   saveBaseStatus.hidden = true;
 });
-loadBaseDialog.addEventListener('click', (event) => {
+loadBaseDialog.addEventListener('click', async (event) => {
   const savedBaseButtonTarget = event.target.closest('[data-saved-base-id]');
   if (savedBaseButtonTarget) {
     selectedSavedBaseId = savedBaseButtonTarget.dataset.savedBaseId;
@@ -3779,17 +3814,37 @@ loadBaseDialog.addEventListener('click', (event) => {
   const action = event.target.closest('[data-load-base-action]')?.dataset.loadBaseAction;
   if (!action) return;
   if (action === 'close') loadBaseDialog.close();
-  if (action === 'import-folder') savedLoadoutFolderInput.click();
+  if (action === 'import-folder') {
+    try {
+      await importSavedLoadoutFolder();
+    } catch (error) {
+      if (error?.name !== 'AbortError') loadBaseStatus.textContent = `Could not open the saved-loadouts folder: ${error.message}`;
+    }
+  }
   if (action === 'import-files') savedLoadoutFileInput.click();
   if (action === 'preview') renderSavedLoadoutPreview(selectedSavedLoadout());
   if (action === 'load') requestSavedBaseLoad(selectedSavedLoadout());
   if (action === 'delete') {
     const record = selectedSavedLoadout();
     if (!record) return;
-    removeSavedLoadout(record.id);
-    selectedSavedBaseId = null;
-    loadBaseStatus.textContent = `Deleted “${record.name}” from the saved-base library.`;
-    renderSavedBaseList();
+    const deleteButton = loadBaseDialog.querySelector('[data-load-base-action="delete"]');
+    deleteButton.disabled = true;
+    try {
+      const fileResult = await deleteLoadoutFile(record);
+      removeSavedLoadout(record.id);
+      selectedSavedBaseId = null;
+      loadBaseStatus.textContent = fileResult.status === 'deleted'
+        ? `Deleted “${record.name}” from the saved-base library and removed “${fileResult.filename}” from the folder.`
+        : fileResult.status === 'missing'
+          ? `Deleted “${record.name}” from the saved-base library. Its JSON file was already missing from the folder.`
+          : `Deleted “${record.name}” from the saved-base library. This browser did not provide writable folder access, so its JSON file could not be removed.`;
+      renderSavedBaseList();
+    } catch (error) {
+      loadBaseStatus.textContent = error?.name === 'AbortError'
+        ? 'Delete cancelled. Choose the imported saved-loadouts folder to remove both the layout and its JSON file.'
+        : `Delete failed: ${error.message}. The layout was kept in the saved-base library.`;
+      deleteButton.disabled = false;
+    }
   }
 });
 savedLoadoutFolderInput.addEventListener('change', async () => {

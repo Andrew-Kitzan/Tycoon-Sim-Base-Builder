@@ -114,6 +114,10 @@ assert.match(appSource, /savedLoadoutsStorageKey = 'tycoon-sim-2:saved-loadouts:
 assert.match(appSource, /loadoutFileType = 'tycoon-sim-2-loadout'/);
 assert.match(appSource, /showDirectoryPicker/);
 assert.match(appSource, /function writeLoadoutFile/);
+assert.match(appSource, /async function importSavedLoadoutFolder/);
+assert.match(appSource, /async function deleteLoadoutFile/);
+assert.match(appSource, /directory\.removeEntry\(filename\)/);
+assert.match(appSource, /The layout was kept in the saved-base library/);
 assert.match(appSource, /function importSavedLoadoutFiles/);
 assert.match(appSource, /function renderSavedLoadoutPreview/);
 assert.match(appSource, /function loadSavedBaseIntoGrid/);
