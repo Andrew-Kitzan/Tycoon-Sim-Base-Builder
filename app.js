@@ -56,6 +56,9 @@ const loadBaseStatus = document.querySelector('#load-base-status');
 const savedLoadoutFolderInput = document.querySelector('#saved-loadout-folder-input');
 const savedLoadoutFileInput = document.querySelector('#saved-loadout-file-input');
 const confirmLoadBaseDialog = document.querySelector('#confirm-load-base-dialog');
+const liveOreTracker = document.querySelector('#live-ore-tracker');
+const liveDropperSelect = document.querySelector('#live-dropper-select');
+const liveOreContent = document.querySelector('#live-ore-content');
 
 const workflow = [
   '1. Legal item list',
@@ -107,6 +110,7 @@ let selectedSavedBaseId = null;
 let pendingLoadBaseId = null;
 let savedLoadoutDirectoryHandle = null;
 let pendingSaveSnapshot = null;
+let selectedLiveDropperId = null;
 const libraryTierOrder = ['Standard', 'Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Secret', 'Unknown'];
 const libraryVariantOrder = ['Base', 'Shiny', 'Mythic', 'Shiny Mythic', 'Standard'];
 
@@ -451,6 +455,150 @@ function simulationMoney(value) {
   return abbreviatedRate(Number(value ?? 0)).replace('/min', '');
 }
 
+function liveTrackerDroppers() {
+  const droppers = (activePlan?.items ?? [])
+    .filter((item) => item.type === 'dropper')
+    .sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
+  const used = new Set();
+  let nextNumber = Math.max(0, ...droppers.map((dropper) => Number(dropper.liveDropperNumber) || 0)) + 1;
+  droppers.forEach((dropper) => {
+    const current = Number(dropper.liveDropperNumber);
+    if (Number.isInteger(current) && current > 0 && !used.has(current)) {
+      used.add(current);
+      return;
+    }
+    while (used.has(nextNumber)) nextNumber += 1;
+    dropper.liveDropperNumber = nextNumber;
+    used.add(nextNumber);
+    nextNumber += 1;
+  });
+  return droppers;
+}
+
+function reconcileLiveDropperSelection({ persist = false } = {}) {
+  const droppers = liveTrackerDroppers();
+  const selectedExists = droppers.some((dropper) => dropper.id === selectedLiveDropperId);
+  const nextId = selectedExists ? selectedLiveDropperId : (droppers[0]?.id ?? null);
+  const changed = nextId !== selectedLiveDropperId;
+  selectedLiveDropperId = nextId;
+  if (changed && persist) saveWorkspace();
+  return droppers;
+}
+
+function liveRangePresentation(stage) {
+  if (!stage.range) return { className: '', text: '' };
+  const input = Number(stage.beforeValue);
+  if (input < stage.range.minimum) {
+    return { className: 'is-error', text: `Below range ${simulationMoney(stage.range.minimum)}–${simulationMoney(stage.range.maximum)}` };
+  }
+  if (input > stage.range.maximum) {
+    return { className: 'is-error', text: `Above range ${simulationMoney(stage.range.minimum)}–${simulationMoney(stage.range.maximum)}` };
+  }
+  const usefulRatio = stage.range.maximum > 0 ? input / stage.range.maximum : 1;
+  return usefulRatio < .8
+    ? { className: 'is-warning', text: `Valid · ${(usefulRatio * 100).toFixed(1)}% of maximum input` }
+    : { className: 'is-valid', text: `Valid · ${(usefulRatio * 100).toFixed(1)}% of maximum input` };
+}
+
+function liveRouteStatus(route) {
+  if (!route) return { className: 'is-error', text: 'The selected dropper is not connected to a route yet.' };
+  if (route.routeStatus === 'furnace') return { className: 'is-complete', text: 'Route reaches the furnace.' };
+  if (route.routeStatus === 'ambiguous') return { className: 'is-error', text: 'The connected route branches. Showing the longest reachable branch.' };
+  if (route.routeStatus === 'disconnected') return { className: 'is-error', text: 'No conveyor or upgrader is connected to this dropper output.' };
+  const last = route.stages?.at(-1)?.item;
+  return { className: '', text: `Route is unfinished${last ? ` after ${last}` : ''}. Values are calculated through the last connected component.` };
+}
+
+function shouldShowLiveOreTracker(mode, currentValidation) {
+  return mode === 'build' && currentValidation?.kind !== 'manual-simulation';
+}
+
+function liveStageHtml(stage, routeDiagnostics) {
+  const range = liveRangePresentation(stage);
+  const diagnostic = routeDiagnostics.find((entry) => entry.itemId === stage.itemId
+    && ['CAP_RANGE', 'USE_LIMIT', 'ORE_SIZE', 'EFFECT_TIMER'].includes(entry.code));
+  const rowClass = diagnostic ? 'is-error' : range.className;
+  const outcomes = stage.outcomeModel?.outcomes ?? [];
+  const outcomesHtml = outcomes.length ? `<div class="live-outcomes"><strong>Expected-value outcomes</strong><br>${outcomes.map((outcome) => (
+    `${escapeHtml(outcome.label)} ${(Number(outcome.probability) * 100).toFixed(1)}%${outcome.destroyed ? ' · destroyed' : ''}`
+  )).join('<br>')}</div>` : '';
+  const details = [
+    stage.appliedMultiplier != null ? `Use ${stage.useNumber} of ${stage.useLimit} · ${Number(stage.appliedMultiplier).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}× multiplier` : '',
+    range.text,
+    stage.beforeOreSize !== stage.afterOreSize ? `Ore size ${stage.beforeOreSize.toFixed(3)} → ${stage.afterOreSize.toFixed(3)}` : '',
+    stage.survivalAfter < 1 ? `Cumulative survival ${(stage.survivalAfter * 100).toFixed(2)}%` : '',
+    (stage.effectsAfter ?? []).length ? `Effects: ${stage.effectsAfter.join(', ')}` : '',
+  ].filter(Boolean).join(' · ');
+  return `<article class="live-chain-row ${rowClass}">
+    <div class="live-chain-title"><span>${stage.itemOrder ?? '–'}. ${escapeHtml(stage.item)}</span><span>${stage.outcomeModel ? 'Expected' : 'Exact'}</span></div>
+    <div class="live-chain-values"><span>${simulationMoney(stage.beforeValue)}</span><span>→</span><strong>${simulationMoney(stage.afterValue)}</strong></div>
+    ${details ? `<p class="live-chain-note">${escapeHtml(details)}</p>` : ''}
+    ${diagnostic ? `<p class="live-chain-note is-error">${escapeHtml(abbreviateDiagnosticMoney(diagnostic.message))}</p>` : ''}
+    ${outcomesHtml}
+  </article>`;
+}
+
+function renderLiveOreTracker() {
+  if (!liveOreTracker || !liveDropperSelect || !liveOreContent) return;
+  const visible = shouldShowLiveOreTracker(plannerMode, validation);
+  liveOreTracker.hidden = !visible;
+  if (!visible) return;
+  const droppers = reconcileLiveDropperSelection({ persist: true });
+  liveDropperSelect.replaceChildren();
+  if (!droppers.length) {
+    liveDropperSelect.disabled = true;
+    const option = document.createElement('option');
+    option.textContent = 'No droppers placed';
+    liveDropperSelect.append(option);
+    liveOreContent.innerHTML = '<p class="live-empty">Place a dropper to begin tracking its ore value while you build.</p>';
+    return;
+  }
+  liveDropperSelect.disabled = false;
+  droppers.forEach((dropper) => {
+    const option = document.createElement('option');
+    option.value = dropper.id;
+    option.textContent = `${dropper.name} #${dropper.liveDropperNumber} — ${columnName(dropper.x)}${dropper.y}`;
+    option.selected = dropper.id === selectedLiveDropperId;
+    liveDropperSelect.append(option);
+  });
+  const selected = droppers.find((dropper) => dropper.id === selectedLiveDropperId);
+  let trace;
+  try {
+    trace = globalThis.TycoonPlanner.traceManualDropper({
+      dropperId: selected.id,
+      items: activePlan.items,
+      conveyors: activePlan.lanes,
+      database: globalThis.TycoonDatabase,
+      plotSize: Number(sizeSlider.value),
+      oreCap: 100,
+    });
+  } catch (error) {
+    liveOreContent.innerHTML = `<p class="live-empty">Live tracking could not update: ${escapeHtml(error.message)}</p>`;
+    return;
+  }
+  const route = trace.route;
+  const statusPresentation = liveRouteStatus(route);
+  const currentValue = route?.currentValue ?? route?.startingValue ?? 0;
+  const stages = route?.stages ?? [];
+  const routeDiagnostics = (trace.diagnostics ?? []).filter((entry) => entry.dropperId === selected.id);
+  const finalEffects = stages.at(-1)?.effectsAfter ?? [];
+  const lastReached = route?.reachedFurnace ? 'Furnace' : (stages.at(-1)?.item ?? 'Route start');
+  liveOreContent.innerHTML = `
+    <div class="live-summary-grid">
+      <div class="live-summary-card"><span>Starting value</span><strong>${simulationMoney(route?.startingValue ?? 0)}</strong></div>
+      <div class="live-summary-card"><span>Current expected value</span><strong>${simulationMoney(currentValue)}</strong></div>
+      <div class="live-summary-card"><span>Ore size</span><strong>${Number(route?.oreSize ?? selected.definition?.oreSize ?? 1).toFixed(3)}</strong></div>
+      <div class="live-summary-card"><span>Survival</span><strong>${((route?.survival ?? 1) * 100).toFixed(2)}%</strong></div>
+      <div class="live-summary-card"><span>Last reached</span><strong>${escapeHtml(lastReached)}</strong></div>
+      ${route?.replication !== 1 ? `<div class="live-summary-card"><span>Replication</span><strong>${Number(route?.replication ?? 1).toFixed(2)}×</strong></div>` : ''}
+      ${finalEffects.length ? `<div class="live-summary-card"><span>Effects</span><strong>${escapeHtml(finalEffects.join(', '))}</strong></div>` : ''}
+    </div>
+    <p class="live-route-status ${statusPresentation.className}">${escapeHtml(statusPresentation.text)}</p>
+    <div class="live-chain-heading"><h3>Connected value chain</h3><span>${stages.length} item${stages.length === 1 ? '' : 's'}</span></div>
+    ${stages.length ? `<div class="live-chain">${stages.map((stage) => liveStageHtml(stage, routeDiagnostics)).join('')}</div>`
+    : '<p class="live-empty">Connect this dropper to an upgrader to see before-and-after ore values.</p>'}`;
+}
+
 function abbreviateDiagnosticMoney(message) {
   return String(message ?? '').replace(/\$([0-9][0-9,]*(?:\.\d+)?)/g, (match, amount) => {
     const value = Number(amount.replaceAll(',', ''));
@@ -589,6 +737,7 @@ function categorizedManualSimulationHtml(item) {
   }
 
   const hasRng = routeStages.some(({ stage }) => stage.outcomeModel?.outcomes?.length);
+  const isIncremental = item.name === 'Incremental Upgrader';
   const changesValue = routeStages.some(({ stage }) => Math.abs(stage.afterValue - stage.beforeValue) > .000001);
   const changesSize = routeStages.some(({ stage }) => Math.abs(stage.afterOreSize - stage.beforeOreSize) > .000001);
   const changesReplication = routeStages.some(({ stage }) => Math.abs(stage.replicationAfter - stage.replicationBefore) > .000001);
@@ -623,9 +772,9 @@ function categorizedManualSimulationHtml(item) {
     <section class="item-stat-section value-tracking simulation-item-tracking">
       <h3>${hasRng ? 'Expected value & RNG' : 'Ore value'}</h3>
       <table class="simulation-hover-table">
-        <thead><tr><th>Dropper</th><th>Before</th><th>${hasRng ? 'Expected after (survivors)' : 'After'}</th>${hasRng ? '<th>Expected per input</th>' : ''}</tr></thead>
+        <thead><tr><th>Dropper</th>${isIncremental ? '<th>Use</th><th>Multiplier</th>' : ''}<th>Before</th><th>${hasRng ? 'Expected after (survivors)' : 'After'}</th>${hasRng ? '<th>Expected per input</th>' : ''}</tr></thead>
         <tbody>${routeStages.map(({ route, stage }) => `<tr>
-          <td>#${route.dropperOrder}</td><td>${simulationMoney(stage.beforeValue)}</td><td>${simulationMoney(stage.afterValue)}</td>${hasRng ? `<td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>` : ''}
+          <td>#${route.dropperOrder}</td>${isIncremental ? `<td>${stage.useNumber} of ${stage.useLimit}</td><td>${Number(stage.appliedMultiplier ?? 1).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}&times;</td>` : ''}<td>${simulationMoney(stage.beforeValue)}</td><td>${simulationMoney(stage.afterValue)}</td>${hasRng ? `<td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>` : ''}
         </tr>`).join('')}</tbody>
       </table>
       ${survivingOutcomes.length ? `<div class="simulation-outcome-list"><h4>Surviving outcomes</h4>${survivingOutcomes.map((outcome) => `<div><span>${escapeHtml(outcome.label)}</span><strong>${(outcome.probability * 100).toFixed(2)}%</strong></div>`).join('')}</div>` : ''}
@@ -1384,6 +1533,7 @@ function loadSavedBaseIntoGrid(record) {
   if (itemEditor.open) itemEditor.close();
   if (massSelectionDialog.open) massSelectionDialog.close();
   clearPlanner();
+  selectedLiveDropperId = null;
   plannerMode = 'build';
   sizeSlider.value = prepared.size;
   coordinateMap.push(...prepared.items);
@@ -1510,6 +1660,7 @@ function saveWorkspace() {
       mode: plannerMode,
       databaseHash: globalThis.TycoonDatabase?.sourceHash ?? null,
       baseSize: Number(sizeSlider.value),
+      liveDropperId: selectedLiveDropperId,
       plan: {
         title: activePlan.title,
         minimumSize: activePlan.minimumSize,
@@ -1534,6 +1685,7 @@ function loadSavedWorkspace() {
     if (saved.databaseHash && currentDatabaseHash && saved.databaseHash !== currentDatabaseHash) return false;
     const savedSize = Number(saved.baseSize);
     if (savedSize >= Number(sizeSlider.min) && savedSize <= Number(sizeSlider.max)) sizeSlider.value = savedSize;
+    selectedLiveDropperId = saved.liveDropperId ?? null;
     coordinateMap.push(...(saved.plan.items ?? [])
       .map((item) => mapPlacementCoordinates(refreshPlacementMetadata(item))));
     routeSegments.push(...(saved.plan.lanes ?? []).map((lane) => (
@@ -1566,6 +1718,7 @@ function resetWorkspaceForMode({ render = true } = {}) {
   massSelectedIds.clear();
   buildInteraction = null;
   placementGhost = null;
+  selectedLiveDropperId = null;
   clearPlanner();
   const storage = browserStorage();
   try {
@@ -3308,6 +3461,7 @@ function renderPlan(size) {
   } else stagePreviewSummary.hidden = true;
 
   if (size < activePlan.minimumSize) {
+    renderLiveOreTracker();
     legend.textContent = `${activePlan.title} needs at least ${activePlan.minimumSize} × ${activePlan.minimumSize}.`;
     return;
   }
@@ -3482,6 +3636,7 @@ function renderPlan(size) {
   } else {
     status.textContent = `${activePlan.title} · ${remainingTiles} tiles remaining`;
   }
+  renderLiveOreTracker();
 }
 
 clearPlanner();
@@ -3548,6 +3703,11 @@ libraryFilterReset.addEventListener('click', () => {
   libraryTierFilter.value = 'all';
   libraryVariantFilter.value = 'all';
   renderItemLibrary();
+});
+liveDropperSelect.addEventListener('change', () => {
+  selectedLiveDropperId = liveDropperSelect.value || null;
+  saveWorkspace();
+  renderLiveOreTracker();
 });
 libraryTabs.addEventListener('pointerdown', (event) => {
   if (!event.target.closest('[data-category]')) return;

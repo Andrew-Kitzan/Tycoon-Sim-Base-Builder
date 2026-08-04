@@ -49,6 +49,16 @@ export function canActivateItem(item, state, rules = null) {
   return !requirements.requiresNoEffects || !(state.effects?.length);
 }
 
+export function incrementalMultiplier(item, useNumber, rules = null) {
+  if (item?.name !== 'Incremental Upgrader') return null;
+  const configured = rules?.incrementalMultipliers?.[item.variant];
+  const fallback = /shiny/i.test(item.variant ?? '')
+    ? [1.21, 1.375, 1.925]
+    : [1.1, 1.25, 1.75];
+  const multipliers = Array.isArray(configured) ? configured : fallback;
+  return Number(multipliers[Math.max(0, Number(useNumber) - 1)] ?? 1);
+}
+
 export function applyDeterministicItem(item, state, useNumber = 1, profile = {}, rules = null) {
   const type = normalize(item.mainStatType);
   const before = state.value;
@@ -57,6 +67,7 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
   let replication = state.replication ?? 1;
   let oreSize = state.oreSize ?? 1;
   let outcomeModel = null;
+  let appliedMultiplier = null;
   const model = (profile.complexItemModels ?? {})[item.name];
 
   const activates = canActivateItem(item, state, rules);
@@ -70,6 +81,9 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
     // Crimson marks ore here; only a later phantom zone supplies the multiplier.
     value = before;
     outcomeModel = { kind: 'crimson-mark', expectedSurvivorValue: before, outcomes: [] };
+  } else if (item.name === 'Incremental Upgrader') {
+    appliedMultiplier = incrementalMultiplier(item, useNumber, rules);
+    value = before * appliedMultiplier;
   } else if (item.name === 'Lambda Upgrader') {
     const shinyScale = /shiny/i.test(item.variant) ? 1.1 : 1;
     const intrinsic = useNumber <= 1 ? 1 : 1.5 / useNumber;
@@ -152,6 +166,7 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
     itemSurvival,
     destructionChance: 1 - itemSurvival,
     outcomeModel,
+    appliedMultiplier,
     effects: activates ? updateEffects(item, state.effects, rules) : [...(state.effects ?? [])],
     activated: activates,
     timeSeconds: (state.timeSeconds ?? 0) + crossingSeconds(item),

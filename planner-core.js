@@ -539,7 +539,10 @@
     return jumps;
   }
 
-  function simulateManualBase({ items = [], conveyors = [], database, plotSize, oreCap = 100 }) {
+  function simulateManualBase({
+    items = [], conveyors = [], database, plotSize, oreCap = 100,
+    selectedDropperId = null, allowPartialRoutes = false,
+  }) {
     const diagnostics = [];
     const records = database?.records ?? [];
     const recordFor = (item) => {
@@ -555,10 +558,16 @@
     for (const item of normalizedItems) {
       if (!item.definition) diagnostics.push({ code: 'DATABASE_MISSING', message: `${item.name} is missing from the normalized database.` });
     }
-    const droppers = normalizedItems.filter((item) => item.type === 'dropper');
+    const allDroppers = normalizedItems.filter((item) => item.type === 'dropper');
+    const droppers = selectedDropperId
+      ? allDroppers.filter((item) => item.id === selectedDropperId)
+      : allDroppers;
     const furnace = normalizedItems.find((item) => item.type === 'furnace');
     const portables = normalizedItems.filter((item) => item.type === 'portable');
-    if (!droppers.length) diagnostics.push({ code: 'NO_DROPPERS', message: 'The base has no droppers to simulate.' });
+    if (!droppers.length) diagnostics.push({
+      code: 'NO_DROPPERS',
+      message: selectedDropperId ? 'The selected dropper is no longer on the base.' : 'The base has no droppers to simulate.',
+    });
     if (!furnace) diagnostics.push({ code: 'FURNACE_MISSED', message: 'The base has no furnace.' });
     const physical = validatePlacements([...items, ...conveyors], Number(plotSize));
     diagnostics.push(...physical.errors.map((message) => ({ code: 'PHYSICAL', message })));
@@ -645,6 +654,18 @@
       }
       return null;
     };
+    const findLongestPath = (starts) => {
+      let longest = null;
+      const visit = (component, path, seen) => {
+        if (!longest || path.length > longest.length) longest = path;
+        for (const next of graph.get(component.id) ?? []) {
+          if (seen.has(next.id)) continue;
+          visit(next, [...path, next], new Set([...seen, next.id]));
+        }
+      };
+      starts.forEach((component) => visit(component, [component], new Set([component.id])));
+      return longest;
+    };
     const portableBeamCells = (item) => {
       const length = /Portable Spinner/i.test(item.name) ? 1 : Number(item.beamLength ?? 2);
       const output = [];
@@ -683,6 +704,7 @@
       let replication = state.replication;
       let oreSize = state.oreSize;
       let outcomeModel = null;
+      let appliedMultiplier = null;
       const effectsBefore = [...(state.effects ?? [])];
       const requiresNoEffects = definition.name === 'Acid Plant';
       const activated = !requiresNoEffects || effectsBefore.every((effect) => effect === 'Neon');
@@ -691,6 +713,12 @@
       } else if (definition.name === 'Crimson Pillars') {
         value = before;
         outcomeModel = { kind: 'crimson-mark', expectedSurvivorValue: before, outcomes: [] };
+      } else if (definition.name === 'Incremental Upgrader') {
+        const incrementalMultipliers = /shiny/i.test(definition.variant ?? '')
+          ? [1.21, 1.375, 1.925]
+          : [1.1, 1.25, 1.75];
+        appliedMultiplier = incrementalMultipliers[Math.max(0, useNumber - 1)] ?? 1;
+        value = before * appliedMultiplier;
       } else if (definition.name === 'Lambda Upgrader') {
         const shinyScale = /shiny/i.test(definition.variant) ? 1.1 : 1;
         const intrinsic = useNumber <= 1 ? 1 : 1.5 / useNumber;
@@ -773,6 +801,7 @@
         itemSurvival,
         destructionChance: 1 - itemSurvival,
         outcomeModel,
+        appliedMultiplier,
         effects: [...effects],
         effectsBefore,
         appliedEffects,
@@ -786,9 +815,13 @@
     const turnBlockers = [...conveyors.filter((entry) => entry.wall || entry.nonTransport), ...portables];
     for (const dropper of droppers) {
       const starts = [...new Set(frontCells(dropper, true).flatMap((cell) => byCell.get(key(cell)) ?? []))];
-      const path = furnaceZone ? findPath(starts) : null;
-      if (!path) {
+      const furnacePath = furnaceZone ? findPath(starts) : null;
+      const path = furnacePath ?? (allowPartialRoutes ? findLongestPath(starts) : null);
+      const reachedFurnace = Boolean(furnacePath);
+      if (!reachedFurnace) {
         diagnostics.push({ code: 'ROUTE_GAP', dropperId: dropper.id, message: `${dropper.name} #${dropper.order} at (${dropper.x}, ${dropper.y}) cannot reach the furnace.` });
+      }
+      if (!path) {
         routes.push({
           dropperId: dropper.id,
           dropperOrder: dropper.order,
@@ -801,6 +834,8 @@
           valueBeforeFurnace: null,
           cashPerOre: null,
           stages: [],
+          currentValue: Number(dropper.definition?.mainStat ?? 0),
+          routeStatus: 'disconnected',
         });
         continue;
       }
@@ -882,6 +917,7 @@
             itemSurvival: state.itemSurvival,
             destructionChance: state.destructionChance,
             outcomeModel: state.outcomeModel,
+            appliedMultiplier: state.appliedMultiplier,
             effectsBefore: state.effectsBefore,
             effectsAfter: state.effects,
             appliedEffects: state.appliedEffects,
@@ -936,6 +972,7 @@
             itemSurvival: state.itemSurvival,
             destructionChance: state.destructionChance,
             outcomeModel: state.outcomeModel,
+            appliedMultiplier: state.appliedMultiplier,
             effectsBefore: state.effectsBefore,
             effectsAfter: state.effects,
             appliedEffects: state.appliedEffects,
@@ -979,7 +1016,7 @@
           effect: source.effect,
           appliedBy: source.appliedBy,
           appliedAtSeconds: source.sourceTime,
-          removedBy: immune ? `${definition?.name} immunity` : (remover?.item ?? 'Furnace'),
+          removedBy: immune ? `${definition?.name} immunity` : (remover?.item ?? (reachedFurnace ? 'Furnace' : 'Route end')),
           removerItemId: remover?.itemId ?? furnace?.id ?? null,
           exposureSeconds,
           timerSeconds,
@@ -1034,19 +1071,24 @@
         dropperOrder: dropper.order,
         dropper: `${definition?.variant ?? 'Base'} ${dropper.name}`,
         startingValue: Number(definition?.mainStat ?? 0),
-        reachedFurnace: true,
+        reachedFurnace,
         seconds: state.timeSeconds,
-        valueBeforeFurnace: state.value,
-        cashPerOre: state.value * furnaceMultiplier,
+        currentValue: state.value,
+        valueBeforeFurnace: reachedFurnace ? state.value : null,
+        cashPerOre: reachedFurnace ? state.value * furnaceMultiplier : null,
         oresPerSecond: Number(definition?.dropSpeed ?? 0),
         survival: state.survival,
         replication: state.replication,
         oreSize: state.oreSize,
+        effects: state.effects,
         componentCount: path.length,
         effectSafety,
         phantomZones,
         teleporterJumps: routeTeleporterJumps(path),
         stages,
+        routeStatus: reachedFurnace
+          ? 'furnace'
+          : (path.some((component) => (graph.get(component.id) ?? []).length > 1) ? 'ambiguous' : 'incomplete'),
       });
     }
     const successful = routes.filter((route) => route.reachedFurnace);
@@ -1117,6 +1159,15 @@
         remainingTiles: Math.max(0, Number(plotSize) ** 2 - reservedTiles),
       },
     };
+  }
+
+  function traceManualDropper(options) {
+    const result = simulateManualBase({
+      ...options,
+      selectedDropperId: options.dropperId,
+      allowPartialRoutes: true,
+    });
+    return { ...result, route: result.routes[0] ?? null };
   }
 
   function compareDatabaseRecords(records, fields = [
@@ -1211,6 +1262,7 @@
     crimsonPhantomZoneEstimate,
     isFastTurnBlocked,
     simulateManualBase,
+    traceManualDropper,
     createPlanner,
   });
 }(globalThis));

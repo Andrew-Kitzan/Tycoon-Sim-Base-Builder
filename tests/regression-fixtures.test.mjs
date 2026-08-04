@@ -55,6 +55,21 @@ for (const fixture of fixtures) {
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, []), fixture.assert.unblocked);
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, [fixture.input.wall]), fixture.assert.wallBlocked);
     assert.equal(isFastTurnBlocked(fixture.input.before, fixture.input.after, [fixture.input.portable]), fixture.assert.portableBlocked);
+  } else if (fixture.id === 'incremental-use-multipliers') {
+    for (const [variant, multipliers] of Object.entries(fixture.input.variants)) {
+      const item = findItem(database, fixture.input.item, variant);
+      assert(item, `${variant} ${fixture.input.item} must exist in the database`);
+      assert.equal(Number(item.limitedUses), fixture.assert.useLimit);
+      assert.deepEqual(rules.incrementalMultipliers[variant], multipliers);
+      for (const [index, multiplier] of multipliers.entries()) {
+        const before = { value: fixture.input.startingValue, survival: 1, replication: 1, oreSize: 1, effects: [], timeSeconds: 0, area: 0 };
+        const after = applyDeterministicItem(item, before, index + 1, {}, rules);
+        assert.equal(after.appliedMultiplier, multiplier);
+        assert.equal(after.value, before.value * multiplier);
+      }
+    }
+    const appSource = await fs.readFile(path.join(root, 'app.js'), 'utf8');
+    for (const column of fixture.assert.hoverColumns) assert(appSource.includes(column), `Incremental hover must include ${column}`);
   } else if (fixture.id === 'asymmetric-internal-conveyors') {
     for (const [name, expected] of Object.entries(fixture.input.items)) {
       const definition = findItem(database, name, 'Base');

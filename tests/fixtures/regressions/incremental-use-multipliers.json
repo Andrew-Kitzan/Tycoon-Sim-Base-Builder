@@ -1,0 +1,18 @@
+{
+  "id": "incremental-use-multipliers",
+  "kind": "engine-and-ui-regression",
+  "observed": "Incremental Upgrader had no simulated value increase and its hover result could not identify the use-specific multiplier.",
+  "expected": "Each ore route applies the Incremental Upgrader multiplier for that use and exposes the multiplier with before and after values.",
+  "input": {
+    "item": "Incremental Upgrader",
+    "startingValue": 100,
+    "variants": {
+      "Base": [1.1, 1.25, 1.75],
+      "Shiny": [1.21, 1.375, 1.925]
+    }
+  },
+  "assert": {
+    "useLimit": 3,
+    "hoverColumns": ["Use", "Multiplier", "Before", "After"]
+  }
+}

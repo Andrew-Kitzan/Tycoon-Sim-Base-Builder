@@ -333,6 +333,10 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   multiplier with no input range must come after the final selected capgrader;
   they may never be used to bridge Helio, Fusion, Martian, or other capgrader
   ranges.
+- Incremental Upgrader is counted separately along each ore route. Base applies
+  `1.1x`, `1.25x`, then `1.75x`; Shiny applies `1.21x`, `1.375x`, then
+  `1.925x`. Simulation stages retain the use number, applied multiplier, and
+  before/after ore values so the result can be inspected on the grid.
 - The only pre-capgrader exceptions are the documented dropper-start choices:
   one legal Lunar Landing per dropper or a stronger legal additive start. Those
   exceptions do not permit normal multipliers inside the ranged chain.

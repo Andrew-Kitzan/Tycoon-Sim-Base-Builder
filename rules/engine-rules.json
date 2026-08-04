@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "crateProgression": [
     "Basic", "Advanced", "Factory", "Quarry", "Futuristic", "Toxic",
     "Desert", "Fantasy", "Space", "Candy", "Periastron", "Ancient",
@@ -49,6 +49,10 @@
     "Star Scanner": 0.3,
     "Azure Scanner": 0.9,
     "Ancient Scanner": 0.5
+  },
+  "incrementalMultipliers": {
+    "Base": [1.1, 1.25, 1.75],
+    "Shiny": [1.21, 1.375, 1.925]
   },
   "crimsonPillars": {
     "minimumTriggerSeconds": 1,

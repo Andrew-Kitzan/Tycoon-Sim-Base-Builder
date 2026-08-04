@@ -27,7 +27,16 @@ assert.match(rulesSource, /Droppers have no built-in conveyor/);
 assert.match(rulesSource, /continuous\s+ore route/);
 assert.match(indexSource, /planner-core\.js/);
 assert.match(indexSource, /id="keybind-guide"/);
-assert.match(stylesSource, /\.keybind-guide \{[^}]*position: fixed;[^}]*right: 16px;[^}]*bottom: 16px;/s);
+assert.match(indexSource, /id="live-ore-tracker"/);
+assert.match(indexSource, /id="live-dropper-select"/);
+assert.match(indexSource, /id="live-ore-content"/);
+assert.match(stylesSource, /\.board-layout \{[^}]*grid-template-columns: minmax\(0, 1fr\) 330px;/s);
+assert.match(stylesSource, /\.board-layout:has\(\.live-ore-tracker\[hidden\]\) \{[^}]*grid-template-columns: minmax\(0, 1fr\);/s);
+assert.match(stylesSource, /\.live-ore-tracker/);
+assert.match(indexSource, /class="board-layout"[\s\S]+id="keybind-guide"[\s\S]+id="live-ore-tracker"/);
+assert.match(stylesSource, /\.keybind-guide \{[^}]*position: absolute;[^}]*right: 346px;[^}]*bottom: 16px;[^}]*width: 214px;/s);
+assert.match(stylesSource, /\.live-ore-tracker \{[^}]*grid-template-rows: auto auto minmax\(0, 1fr\);[^}]*height: calc\(100vh - 190px\);/s);
+assert.match(stylesSource, /\.live-ore-content \{[^}]*overflow-y: auto;[^}]*scrollbar-gutter: stable;/s);
 assert.match(appSource, /function renderKeybindGuide/);
 assert.match(appSource, /<kbd>Backspace \/ Del<\/kbd><span>Delete<\/span>/);
 assert.match(appSource, /<kbd>R<\/kbd><span>Rotate 90°<\/span>/);
@@ -138,6 +147,12 @@ assert.match(appSource, /function loadSavedWorkspace/);
 assert.match(appSource, /function setPlannerMode/);
 assert.match(appSource, /function resetWorkspaceForMode/);
 assert.match(appSource, /function runManualSimulation/);
+assert.match(appSource, /function renderLiveOreTracker/);
+assert.match(appSource, /liveOreTracker\.hidden = !visible/);
+assert.match(appSource, /TycoonPlanner\.traceManualDropper/);
+assert.match(appSource, /liveDropperId: selectedLiveDropperId/);
+assert.match(appSource, /selectedLiveDropperId = saved\.liveDropperId \?\? null/);
+assert.match(appSource, /liveDropperSelect\.addEventListener\('change'/);
 assert.match(appSource, /function manualSimulationItemHtml/);
 assert.match(appSource, /Last base simulation/);
 assert.match(appSource, /Value after furnace/);
@@ -203,6 +218,7 @@ vm.runInContext(`${appSource.slice(0, appEnd)}
 this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, conveyorCatalog,
   parseCoordinate, rotateDirection, updateConveyorGeometry, databaseRenderType, uniqueDatabaseRecords, mapPlacementCoordinates, placementFromRecord,
   furnaceProcessingZoneGeometry, itemTransportGeometry, updateItemGeometry, completedStageForPlan, categorizedManualSimulationHtml,
+  shouldShowLiveOreTracker,
   libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
   selectionRectangle, placementIntersectsRectangle, placementContainsCoordinate, massSelectionBounds,
   automaticBaseMetadata, crateRequirementForPlacement, loadoutFilename, normalizeSavedLoadout, abbreviateDiagnosticMoney,
@@ -218,6 +234,9 @@ assert.equal(app.activePlan.lanes.length, 0);
 assert.equal(app.workflowStage, 2);
 assert.equal(app.workflowProgress, null);
 assert.equal(app.plannerMode, 'build');
+assert.equal(app.shouldShowLiveOreTracker('build', null), true);
+assert.equal(app.shouldShowLiveOreTracker('build', { kind: 'manual-simulation' }), false);
+assert.equal(app.shouldShowLiveOreTracker('generation', null), false);
 const uiGumball = app.placeItem(1, 'Gumball Enhancer', 10, 10, 5, 3, 'north', 'upgrader');
 assert.equal(uiGumball.conveyorWidth, 2);
 assert.equal(uiGumball.conveyorOffset, 1);
@@ -492,6 +511,60 @@ assert.equal(manualSimulation.routes[0].stages[0].afterValue, 19);
 assert.equal(manualSimulation.routes[0].stages[0].outcomeModel.kind, 'scanner');
 assert.equal(manualSimulation.routes[0].stages[0].outcomeModel.outcomes.length, 2);
 assert.equal(manualSimulation.metrics.destroyedOresPerMinute, 0);
+
+const incrementalSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 100, dropSpeed: 1, oreSize: 1 },
+    { key: 'incremental upgrader::base', name: 'Incremental Upgrader', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: null, mainStatType: 'Multiplicative', conveyorSpeed: 12, limitedUses: '3' },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 1 },
+  ] },
+  items: [
+    { id: 'inc-d1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    ...[5, 7, 9].map((x, index) => ({ id: `inc-u${index + 1}`, order: index + 2, name: 'Incremental Upgrader', variant: 'Base', type: 'upgrader', x, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } })),
+    { id: 'inc-f1', order: 5, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 11, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'inc-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(incrementalSimulation.valid, true);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(incrementalSimulation.routes[0].stages.map((stage) => ({
+    useNumber: stage.useNumber,
+    useLimit: stage.useLimit,
+    multiplier: stage.appliedMultiplier,
+    before: stage.beforeValue,
+    after: stage.afterValue,
+  })))),
+  [
+    { useNumber: 1, useLimit: 3, multiplier: 1.1, before: 100, after: 110.00000000000001 },
+    { useNumber: 2, useLimit: 3, multiplier: 1.25, before: 110.00000000000001, after: 137.50000000000003 },
+    { useNumber: 3, useLimit: 3, multiplier: 1.75, before: 137.50000000000003, after: 240.62500000000006 },
+  ],
+);
+
+const liveTrace = planner.traceManualDropper({
+  dropperId: 'live-d1',
+  plotSize: 20,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 10, dropSpeed: 1, oreSize: 1 },
+    { key: 'azure scanner::base', name: 'Azure Scanner', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 2, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+  ] },
+  items: [
+    { id: 'live-d1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'live-u1', order: 2, name: 'Azure Scanner', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, conveyorOffset: 0, direction: 'east', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'live-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(liveTrace.route.reachedFurnace, false);
+assert.equal(liveTrace.route.routeStatus, 'incomplete');
+assert.equal(liveTrace.route.stages.length, 1);
+assert.equal(liveTrace.route.currentValue, 19);
+assert.equal(liveTrace.route.stages[0].outcomeModel.kind, 'scanner');
 
 const teleporterSimulation = planner.simulateManualBase({
   plotSize: 14,

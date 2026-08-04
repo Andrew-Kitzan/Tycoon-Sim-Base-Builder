@@ -115,19 +115,35 @@
             <span id="status">Planning canvas · 1225 tiles available</span>
           </div>
           <div id="stage-preview-summary" class="stage-preview-summary" hidden></div>
-          <div class="board-viewport">
-            <div class="grid-frame">
-              <div id="column-labels" class="column-labels" aria-hidden="true"></div>
-              <div id="row-labels" class="row-labels" aria-hidden="true"></div>
-              <div id="game-grid" class="game-grid" role="grid" aria-label="35 by 35 build grid"></div>
+          <div class="board-layout">
+            <div class="board-viewport">
+              <div class="grid-frame">
+                <div id="column-labels" class="column-labels" aria-hidden="true"></div>
+                <div id="row-labels" class="row-labels" aria-hidden="true"></div>
+                <div id="game-grid" class="game-grid" role="grid" aria-label="35 by 35 build grid"></div>
+              </div>
             </div>
+            <aside id="keybind-guide" class="keybind-guide" aria-live="polite" aria-label="Build keyboard shortcuts" hidden></aside>
+            <aside id="live-ore-tracker" class="live-ore-tracker" aria-labelledby="live-ore-tracker-title">
+              <div class="live-tracker-heading">
+                <div>
+                  <p class="panel-label">Build preview</p>
+                  <h2 id="live-ore-tracker-title">Live ore tracker</h2>
+                </div>
+                <span class="live-badge">Live</span>
+              </div>
+              <label class="live-dropper-control" for="live-dropper-select">
+                <span>Track one dropper</span>
+                <select id="live-dropper-select" aria-label="Dropper to track"></select>
+              </label>
+              <div id="live-ore-content" class="live-ore-content" aria-live="polite"></div>
+            </aside>
           </div>
           <div id="plan-legend" class="plan-legend" aria-label="Current plan legend"></div>
         </section>
       </section>
     </main>
 
-    <aside id="keybind-guide" class="keybind-guide" aria-live="polite" aria-label="Build keyboard shortcuts" hidden></aside>
     <div id="item-tooltip" class="item-tooltip" role="tooltip" hidden></div>
 
     <dialog id="item-editor" class="item-editor" aria-labelledby="item-editor-title">
