@@ -48,7 +48,7 @@ const pool = buildLegalPool(database, profile, rules);
 assert.equal(pool.diagnostics.length, 0);
 assert(!pool.legal.some((item) => item.name === 'Star Scanner'), 'unowned Merchant items must be rejected');
 assert(!pool.legal.some((item) => item.name === 'King Dropper'), 'unowned Achievement items must be rejected');
-assert(!pool.legal.some((item) => /teleport/i.test(item.name)), 'teleporters remain disabled until their rules are supplied');
+assert.equal(rules.teleportersEnabled, true, 'teleporter routing rules must be enabled');
 assert(!pool.legal.some((item) => item.name === 'Ore Wash'), 'all Ore Wash variants must inherit the Base item Rebirth 4 requirement');
 assert(!pool.legal.some((item) => item.name === 'Electric Overdrive'), 'misspelled Rebrith 6 source must still lock the whole Electric Overdrive family');
 assert(!pool.legal.some((item) => item.name === 'Intern Dropper'), 'code items require explicit ownership');

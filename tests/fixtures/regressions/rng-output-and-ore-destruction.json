@@ -1,0 +1,26 @@
+{
+  "id": "rng-output-and-ore-destruction",
+  "kind": "expected-value-and-survival",
+  "observed": "Probabilistic upgraders only exposed a single after-value, and ore losses were not reported as destruction.",
+  "expected": "Each modeled RNG upgrader exposes its outcome distribution, expected surviving output, and destruction probability so base simulation can aggregate destroyed ore.",
+  "input": {
+    "startingValue": 100,
+    "lambdaUse": 2,
+    "laterLambdaUse": 4,
+    "tikiVariant": "Base"
+  },
+  "assert": {
+    "lambdaModel": "lambda",
+    "lambdaItemSurvival": 0.6710526315789473,
+    "lambdaDestructionChance": 0.32894736842105265,
+    "lambdaOutcomeCount": 8,
+    "laterLambdaIntrinsicSurvival": 0.375,
+    "laterLambdaItemSurvival": 0.3355263157894737,
+    "laterLambdaDestructionChance": 0.6644736842105263,
+    "tikiModel": "tiki-phase",
+    "tikiItemSurvival": 0.6666666666666666,
+    "tikiDestructionChance": 0.33333333333333337,
+    "tikiExpectedSurvivorValue": 15200,
+    "tikiOutcomeCount": 3
+  }
+}

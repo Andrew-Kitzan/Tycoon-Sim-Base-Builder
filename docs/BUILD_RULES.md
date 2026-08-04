@@ -108,7 +108,10 @@ Only use the stated crate and earlier crates:
 - `Life = Rebirth + 1`.
 - A player at Rebirth 5 may use items through Rebirth 5.
 - A player on Life 6 is equivalent to Rebirth 5.
-- Teleporters require Rebirth 5 or later.
+- Teleporters require Rebirth 5 or later. An ore entering a red or blue sender
+  instantly continues from the receiver of the same color, then follows the
+  receiver's facing and downstream conveyor route. The warp itself adds no
+  travel time; movement across the receiver uses its conveyor speed.
 
 ## Plot sizes
 
@@ -151,6 +154,7 @@ Workbook sizes use `WIDTH × LENGTH`.
 - Its right table lists only items with a current ore-size restriction. A blank entry or an item absent from that table has no known size restriction.
 - Slash-separated accepted or rejected sizes describe conditional limits. Read the row's Notes field to determine which threshold applies.
 - A route must reject an ore that exceeds the applicable accepted threshold before entering the restricted item.
+- Base simulation must report `ORE_SIZE` with the dropper, item instance, incoming size, and confirmed acceptable threshold whenever that check fails.
 
 ## Ore movement and removal
 
@@ -372,19 +376,22 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 - Avoid capgraders that add a destructive effect unless a legal remover can
   remove it before the ore is destroyed. Ore Washer handles washable effects;
   Oasis also removes Fire specifically.
-- Overcharged cannot be washed away.
+- Overcharged cannot be washed away, but a later Chartreuse Collider clears it
+  before applying a fresh Overcharged effect and restarting the timer.
 - A dropper that naturally produces a destructive effect is allowed to give its
   ore that same effect without destroying it when the database documents that
   protection.
 - When keeping a timed destructive effect, calculate travel from the point the
-  effect is applied to the furnace processing zone. Ore Flamethrower Fire must
+  effect is applied to the next compatible remover, effect-clearing collider,
+  or furnace processing zone. Ore Flamethrower Fire must
   be processed in under 2 seconds; Dragon's Breath Fire, Nuclear, and
   Overcharged in under 3 seconds; and Toxic in under 5 seconds. Otherwise move
   the effect source later or remove the effect with a legal washer. A route
   equal to or longer than the timer is unsafe.
 - Acid Plant applies Toxic. Nuclear Upgrader applies Nuclear. Chartreuse
-  Collider applies Overcharged. Overcharged cannot be safely washed: Ore Wash
-  makes that ore explode.
+  Collider clears every current effect (including Overcharged), then applies a
+  fresh Overcharged effect. Overcharged cannot be safely washed: Ore Wash makes
+  that ore explode.
 - Acid Plant only triggers when the ore has no effects at all. Rainbow from
   Prismatic, a possible Sparkles result from Lambda, and every other existing
   effect block it. A successful Acid Plant applies Toxic, so a second Acid
@@ -431,11 +438,23 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   variants and copies. Once an ore receives one successful Star Scanner beam hit,
   later Star Scanner beams cannot upgrade it again. A missed earlier beam does
   not consume the use, so a later scanner may still successfully hit that ore.
+- Expected-value simulation uses each scanner's measured hit chance: Star
+  Scanner 30%, Azure Scanner 90%, and Ancient Scanner 50%. A scanner miss leaves
+  the ore value unchanged; scanner upgrades are never treated as guaranteed.
 - When space is constrained, remove optional scanners before stronger
   expected-value items unless the scanner has better MPU or expected cash/min.
 
 ## Normal upgraders and furnaces
 
+- Crimson Pillars marks ore rather than applying its multiplier immediately.
+  Each marked ore triggers at a uniformly random time from 1–15 seconds after
+  leaving the Pillars, provided it has not already reached the furnace. The
+  destroyed ore leaves a phantom zone at that route position for 30 seconds.
+  Base zones multiply later ore by 1.5× and Shiny zones by 1.65×, with at most
+  three phantom boosts per ore.
+- Estimate spawn probability per route section from its share of the 1–15
+  second window, expected spawns from the drop rate, and simultaneous zones
+  from the 30-second lifetime.
 - After capgraders, use legal normal upgraders while space and use limits allow.
 - Apply every multiplier in route order.
 - Validate limited uses across Base, Shiny, Mythic, and Shiny Mythic variants.
@@ -444,6 +463,8 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   per-ore limit.
 - Additional copies may improve coverage for random or position-dependent
   upgraders, but they cannot exceed the shared per-ore successful-use limit.
+- Base simulation must report `USE_LIMIT` on the first item instance that takes
+  an ore beyond its shared per-ore limit.
 - Place the furnace last.
 - Furnaces must face back toward the incoming conveyor line; do not point them
   in the same direction that ore was traveling before entry.

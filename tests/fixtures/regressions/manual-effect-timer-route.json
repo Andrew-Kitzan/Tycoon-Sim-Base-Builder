@@ -1,0 +1,20 @@
+{
+  "id": "manual-effect-timer-route",
+  "kind": "route-effect-safety",
+  "observed": "Manual base simulation displayed an applied destructive effect without checking its travel time to an effect remover or furnace.",
+  "expected": "The effect timer starts at its source, stops at a compatible remover or the furnace, and destroys the ore when exposure reaches the timer.",
+  "input": {
+    "effectSource": "Acid Plant",
+    "effect": "Toxic",
+    "remover": "Ore Wash",
+    "safeExposureSeconds": 4.999,
+    "unsafeExposureSeconds": 5
+  },
+  "assert": {
+    "timerSeconds": 5,
+    "safeBeforeTimer": true,
+    "safeDestination": "Ore Wash",
+    "destroyedAtTimer": true,
+    "unsafeDestination": "Furnace"
+  }
+}

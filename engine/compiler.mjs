@@ -249,7 +249,7 @@ export async function compilePlan(profile, options = {}) {
   const diagnostics = [...layout.diagnostics];
   const finalCapRatio = capState.finalCap ? capState.finalInput / capState.finalCap : null;
   if (finalCapRatio != null && finalCapRatio < 1 - rules.finalCapTolerance) diagnostics.push(diagnostic('CAP_RANGE', `Best final capgrader input is ${(finalCapRatio * 100).toFixed(2)}% of its cap; below the preferred band.`, { ratio: finalCapRatio }));
-  const hardErrors = diagnostics.filter((entry) => ['OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'WRONG_LANE', 'ITEM_ILLEGAL'].includes(entry.code));
+  const hardErrors = diagnostics.filter((entry) => ['OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'WRONG_LANE', 'ITEM_ILLEGAL', 'USE_LIMIT', 'ORE_SIZE'].includes(entry.code));
   const orderedItems = [...layout.items].sort((a, b) => a.sequenceIndex - b.sequenceIndex);
   return {
     version: 1,

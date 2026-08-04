@@ -1,0 +1,16 @@
+{
+  "id": "ore-size-restriction-warning",
+  "kind": "route-ore-size-restriction",
+  "observed": "Oversized ore could enter a physically restricted upgrader without a simulation warning.",
+  "expected": "The simulation uses the Ore SizeHeight workbook threshold and produces an ORE_SIZE diagnostic when incoming ore exceeds the largest confirmed acceptable size.",
+  "input": {
+    "item": "Lambda Upgrader",
+    "variant": "Base",
+    "incomingOreSize": 1.84
+  },
+  "assert": {
+    "diagnostic": "ORE_SIZE",
+    "maximumAccepted": 1.83,
+    "violates": true
+  }
+}

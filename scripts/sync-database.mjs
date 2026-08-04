@@ -10,7 +10,7 @@ const generatedPath = path.join(root, 'data', 'items.generated.js');
 const conflictPath = path.join(root, 'data', 'database-conflicts.json');
 const indexPath = path.join(root, 'data', 'items.index.json');
 const oreSizeIndexPath = path.join(root, 'data', 'ore-size-height.index.json');
-const IMPORTER_VERSION = 4;
+const IMPORTER_VERSION = 5;
 
 const workbookBytes = await fs.readFile(workbookPath);
 const sourceHash = crypto.createHash('sha256').update(workbookBytes).digest('hex');
@@ -181,17 +181,37 @@ function parseOreSizeHeight(values) {
 
 function parseStatsForNerds(values) {
   const overrides = new Map();
+  const put = (name, variant, description, row, extra = {}) => {
+    const normalizedVariant = /^n\/?a$/i.test(variant) ? 'Base' : variant;
+    const key = `${name}::${normalizedVariant}`.toLowerCase();
+    overrides.set(key, {
+      ...(overrides.get(key) ?? {}),
+      ...extra,
+      description,
+      statsForNerdsRow: row,
+    });
+  };
   for (const [index, row] of values.entries()) {
     const name = normalizeName(row[1]);
     const variant = normalizeName(row[3]);
     const description = clean(row[4]);
     if (!name || !variant || !description) continue;
     const dropSpeedMatch = description.match(/(?:constant\s+)?(\d+(?:\.\d+)?)\s+drop speed/i);
-    if (!dropSpeedMatch) continue;
-    overrides.set(`${name}::${variant}`.toLowerCase(), {
-      dropSpeed: Number(dropSpeedMatch[1]),
-      statsForNerdsRow: index + 1,
-    });
+    put(name, variant, description, index + 1, dropSpeedMatch ? { dropSpeed: Number(dropSpeedMatch[1]) } : {});
+  }
+  const sectionVariants = new Map([
+    ['Crimson Pillars', ['Base', 'Shiny']],
+    ['Lambda Upgrader', ['Base', 'Shiny']],
+    ["Periastron's Throne", ['Base', 'Shiny', 'Mythic', 'Shiny Mythic']],
+  ]);
+  for (const [name, variants] of sectionVariants) {
+    const headerIndex = values.findIndex((row) => normalizeName(row[0]).toLowerCase() === name.toLowerCase());
+    if (headerIndex < 0) continue;
+    const descriptions = values.slice(headerIndex + 1)
+      .map((row, offset) => ({ description: clean(row[1]), row: headerIndex + offset + 2 }))
+      .filter((entry) => entry.description.length >= 30)
+      .slice(0, variants.length);
+    descriptions.forEach((entry, index) => put(name, variants[index], entry.description, entry.row));
   }
   return overrides;
 }
@@ -241,9 +261,14 @@ const complexStatOverrides = workbook.sheetNames.includes('Stats for Nerds')
   : new Map();
 for (const record of records) {
   const override = complexStatOverrides.get(record.key);
-  if (!override) continue;
-  if (Number.isFinite(override.dropSpeed)) record.dropSpeed = override.dropSpeed;
-  record.statsForNerdsRow = override.statsForNerdsRow;
+  if (override) {
+    if (Number.isFinite(override.dropSpeed)) record.dropSpeed = override.dropSpeed;
+    record.description = override.description;
+    record.statsForNerdsRow = override.statsForNerdsRow;
+  }
+  const placeholder = /refer to (?:the )?["“]?stats for nerds/i.test(record.effects ?? '');
+  if (placeholder && record.description) record.effects = record.description;
+  else if (!record.description && record.effects && record.effects !== 'N/A') record.description = record.effects;
 }
 const oreSizeHeight = workbook.sheetNames.includes('Ore SizeHeight')
   ? parseOreSizeHeight(workbook.readSheet('Ore SizeHeight', { maxRows: 2_000 }))

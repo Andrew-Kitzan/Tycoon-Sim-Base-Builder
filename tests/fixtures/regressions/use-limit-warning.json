@@ -1,0 +1,16 @@
+{
+  "id": "use-limit-warning",
+  "kind": "route-item-use-limit",
+  "observed": "A route could pass through more copies of an upgrader than its per-ore use limit without a simulation warning.",
+  "expected": "The first use beyond the database limit produces a USE_LIMIT diagnostic identifying the item, actual use number, and allowed uses.",
+  "input": {
+    "item": "Castle Fortress",
+    "variant": "Base",
+    "uses": 2
+  },
+  "assert": {
+    "diagnostic": "USE_LIMIT",
+    "limit": 1,
+    "violates": true
+  }
+}

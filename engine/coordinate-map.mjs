@@ -3,6 +3,10 @@ import { appliedEffectsForItem, applyDeterministicItem, itemRequirements } from 
 import { buildLegalPool } from './profile.mjs';
 import { itemKey, normalize, parseRange } from './utils.mjs';
 import { validatePlan } from './validate.mjs';
+import { isFastTurnBlocked } from './routing.mjs';
+import { exceedsItemUseLimit, exceedsOreSizeLimit, itemUseLimit, maximumAcceptedOreSize } from './item-constraints.mjs';
+import { crimsonPhantomZoneEstimate, isCrimsonPillars } from './crimson.mjs';
+import { connectTeleporterPairs, teleporterJumps } from './teleporters.mjs';
 
 const conveyorDefinitions = {
   'Quarter Conveyor': { width: 1, length: 1, speed: 12 },
@@ -11,6 +15,11 @@ const conveyorDefinitions = {
   'Supercharged Conveyor': { width: 2, length: 2, speed: 18 },
   'Centering Conveyor': { width: 2, length: 2, speed: 12, centers: true },
   'Ultracharged Conveyor': { width: 4, length: 2, speed: 24 },
+  'Conveyor Wall': { width: 1, length: 2, speed: null, wall: true },
+  'Red Teleporter Sender': { width: 2, length: 2, speed: null, teleporterColor: 'red', teleporterRole: 'sender' },
+  'Red Teleporter Receiver': { width: 4, length: 2, speed: 12, teleporterColor: 'red', teleporterRole: 'receiver' },
+  'Blue Teleporter Sender': { width: 2, length: 2, speed: null, teleporterColor: 'blue', teleporterRole: 'sender' },
+  'Blue Teleporter Receiver': { width: 4, length: 2, speed: 12, teleporterColor: 'blue', teleporterRole: 'receiver' },
 };
 
 const portablePattern = /Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i;
@@ -190,6 +199,8 @@ function normalizeConveyors(map) {
         speed: definition.speed,
         travelLength: 1,
         lane: run.lane,
+        teleporterColor: definition.teleporterColor,
+        teleporterRole: definition.teleporterRole,
       });
       continue;
     }
@@ -209,6 +220,11 @@ function normalizeConveyors(map) {
         speed: definition.speed,
         travelLength: definition.length,
         centers: definition.centers ?? false,
+        wall: definition.wall ?? false,
+        nonTransport: definition.wall ?? false,
+        lane: run.lane,
+        teleporterColor: definition.teleporterColor,
+        teleporterRole: definition.teleporterRole,
       });
     }
   }
@@ -234,15 +250,17 @@ function exitTargets(component) {
 }
 
 function routeComponents(items, conveyors) {
-  const result = conveyors.map((conveyor) => ({
+  const result = conveyors.filter((conveyor) => !conveyor.wall && !conveyor.nonTransport).map((conveyor) => ({
     id: conveyor.id,
     kind: 'conveyor',
     name: conveyor.conveyor,
     direction: conveyor.direction,
     speed: conveyor.speed,
-    seconds: conveyor.travelLength * 3 / conveyor.speed,
+    seconds: conveyor.speed > 0 ? conveyor.travelLength * 3 / conveyor.speed : 0,
     centers: conveyor.centers,
     lane: conveyor.lane,
+    teleporterColor: conveyor.teleporterColor,
+    teleporterRole: conveyor.teleporterRole,
     path: { x: conveyor.x, y: conveyor.y, width: conveyor.width, height: conveyor.height },
   }));
   for (const item of items) {
@@ -273,12 +291,13 @@ function componentGraph(components) {
       byCell.set(key(cell), entries);
     }
   }
-  const graph = new Map();
+  const physicalGraph = new Map();
   for (const component of components) {
     const next = new Set(exitTargets(component).flatMap((target) => byCell.get(key(target)) ?? []).filter((entry) => entry.id !== component.id));
-    graph.set(component.id, [...next]);
+    physicalGraph.set(component.id, [...next]);
   }
-  return { graph, byCell };
+  const linked = connectTeleporterPairs(components, physicalGraph);
+  return { graph: linked.graph, byCell, teleporterDiagnostics: linked.diagnostics };
 }
 
 function findDirectedPath(starts, graph, zone) {
@@ -331,6 +350,13 @@ function movePortableForward(item) {
 function routeValue(path, portables, dropper, profile, rules) {
   let state = { value: dropper.definition.mainStat, survival: 1, replication: 1, oreSize: dropper.definition.oreSize ?? 1, effects: appliedEffectsForItem(dropper.definition, rules), timeSeconds: 0, area: 0 };
   const stages = [];
+  const useCounts = new Map();
+  const nextUseNumber = (item) => {
+    const useKey = normalize(item.name);
+    const useNumber = (useCounts.get(useKey) ?? 0) + 1;
+    useCounts.set(useKey, useNumber);
+    return useNumber;
+  };
   const finalCapIndex = path.reduce((last, component, index) => (
     component.kind === 'item' && (component.item.section === 'capgrader' || parseRange(component.item.definition.range)) ? index : last
   ), -1);
@@ -342,14 +368,19 @@ function routeValue(path, portables, dropper, profile, rules) {
     const component = path[index];
     if (component.kind === 'item') {
       const before = state.value;
+      const beforeOreSize = state.oreSize;
+      const beforeSurvival = state.survival;
       const range = parseRange(component.item.definition.range);
-      state = applyDeterministicItem(component.item.definition, state, 1, profile, rules);
-      stages.push({ item: component.item, before, after: state.value, range });
+      const useNumber = nextUseNumber(component.item.definition);
+      state = applyDeterministicItem(component.item.definition, state, useNumber, profile, rules);
+      stages.push({ item: component.item, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, survivalBefore: beforeSurvival, survivalAfter: state.survival, range, useNumber, useLimit: itemUseLimit(component.item.definition) });
     } else state.timeSeconds += component.seconds;
     for (const { portable } of portableHits.filter((entry) => entry.index === index)) {
       const before = state.value;
-      state = applyDeterministicItem(portable.definition, state, 1, profile, rules);
-      stages.push({ item: portable, before, after: state.value, range: null });
+      const beforeOreSize = state.oreSize;
+      const useNumber = nextUseNumber(portable.definition);
+      state = applyDeterministicItem(portable.definition, state, useNumber, profile, rules);
+      stages.push({ item: portable, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, range: null, useNumber, useLimit: itemUseLimit(portable.definition) });
     }
   }
   return { ...state, stages };
@@ -383,9 +414,11 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
   diagnostics.push(...physical.diagnostics);
 
   const components = routeComponents(items, conveyors);
-  const { graph, byCell } = componentGraph(components);
+  const { graph, byCell, teleporterDiagnostics } = componentGraph(components);
+  diagnostics.push(...teleporterDiagnostics);
   const droppers = items.filter((item) => item.type === 'dropper');
   const portables = items.filter((item) => item.type === 'portable');
+  const turnBlockers = [...conveyors.filter((entry) => entry.wall || entry.nonTransport), ...portables];
   const routes = [];
   const routePaths = [];
   for (const dropper of droppers) {
@@ -399,7 +432,11 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
     for (let index = 1; index < path.length; index += 1) {
       const before = path[index - 1];
       const after = path[index];
-      if (before.direction !== after.direction && before.speed > rules.safeTurnSpeed) unsafeTurns.push({ at: after.path, incomingSpeed: before.speed, from: before.name, to: after.name });
+      if (before.direction !== after.direction
+        && before.speed > rules.safeTurnSpeed
+        && !isFastTurnBlocked(before, after, turnBlockers)) {
+        unsafeTurns.push({ at: after.path, incomingSpeed: before.speed, from: before.name, to: after.name });
+      }
     }
     if (unsafeTurns.length) diagnostics.push({ code: 'TURN_SPEED', message: `${dropper.name} ${dropper.order} reaches a turn above ${rules.safeTurnSpeed} speed.`, context: unsafeTurns });
     const routeItems = path.filter((component) => component.kind === 'item').map((component) => component.item);
@@ -418,8 +455,41 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
         code: 'CAP_RANGE',
         message: `${dropper.name} ${dropper.order} enters ${stage.item.name} at $${stage.before.toFixed(2)}, outside $${stage.range.minimum}-$${stage.range.maximum}.`,
       });
+      if (exceedsItemUseLimit(stage.item.definition, stage.useNumber) && stage.useNumber === stage.useLimit + 1) diagnostics.push({
+        code: 'USE_LIMIT',
+        message: `${dropper.name} ${dropper.order} reaches ${stage.item.variant} ${stage.item.name} ${stage.item.order} for use ${stage.useNumber}, exceeding its limit of ${stage.useLimit} use${stage.useLimit === 1 ? '' : 's'} per ore.`,
+      });
+      if (exceedsOreSizeLimit(stage.item.definition, stage.beforeOreSize)) {
+        const maximum = maximumAcceptedOreSize(stage.item.definition);
+        diagnostics.push({
+          code: 'ORE_SIZE',
+          message: `${dropper.name} ${dropper.order} enters ${stage.item.variant} ${stage.item.name} ${stage.item.order} at ore size ${stage.beforeOreSize.toFixed(3)}, above its maximum confirmed acceptable size ${maximum}.`,
+        });
+      }
     }
     const finalCapStage = simulated.stages.filter((stage) => stage.range).at(-1);
+    const dropRate = Number(dropper.definition.dropSpeed ?? 0);
+    const phantomZones = simulated.stages.filter((stage) => isCrimsonPillars(stage.item.definition)).map((stage) => {
+      const estimate = crimsonPhantomZoneEstimate(
+        path,
+        stage.componentIndex,
+        {
+          dropRate: dropRate * Number(stage.survivalAfter ?? 1),
+          minimumDelaySeconds: Number(rules.crimsonPillars?.minimumTriggerSeconds ?? 1),
+          windowSeconds: Number(rules.crimsonPillars?.markWindowSeconds ?? 15),
+          zoneLifetimeSeconds: Number(rules.crimsonPillars?.phantomZoneLifetimeSeconds ?? 30),
+        },
+      );
+      return {
+        sourceItemId: stage.item.id,
+        sourceItemOrder: stage.item.order,
+        variant: stage.item.variant,
+        multiplier: Number(stage.item.definition.mainStat ?? 1),
+        sourceDropRate: dropRate,
+        dropIntervalSeconds: dropRate > 0 ? 1 / dropRate : null,
+        ...estimate,
+      };
+    });
     routes.push({
       dropperOrder: dropper.order,
       dropper: `${dropper.variant} ${dropper.name}`,
@@ -427,6 +497,8 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       componentIds: path.map((component) => component.id),
       items: routeItems.map((item) => `${item.variant} ${item.name}`),
       unsafeTurns,
+      teleporterJumps: teleporterJumps(path),
+      phantomZones,
       valueBeforeFurnace: simulated.value,
       finalCapgrader: finalCapStage ? {
         name: finalCapStage.item.name,
@@ -464,14 +536,6 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       if (canMoveCloser) diagnostics.push({ code: 'PORTABLE_SPACING', message: `${portable.variant} ${portable.name} ${portable.order} is one tile farther from the route than necessary.` });
     }
   }
-  const portableGroups = new Map();
-  for (const portable of portables) portableGroups.set(normalize(portable.name), (portableGroups.get(normalize(portable.name)) ?? 0) + 1);
-  for (const [name, count] of portableGroups) {
-    const definition = portables.find((item) => normalize(item.name) === name)?.definition;
-    const limit = Number(definition?.limitedUses);
-    if (Number.isFinite(limit) && count > limit) diagnostics.push({ code: 'USE_LIMIT', message: `${definition.name} is used ${count} times per ore but is limited to ${limit}.` });
-  }
-
   const uniqueDiagnostics = [...new Map(diagnostics.map((entry) => [`${entry.code}|${entry.message}`, entry])).values()];
   const routeTimes = routes.map((route) => route.seconds);
   const oresPerSecond = droppers.reduce((total, dropper) => total + Number(dropper.definition.dropSpeed ?? 0), 0);
@@ -480,6 +544,19 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
     return total + route.seconds * Number(dropper?.definition.dropSpeed ?? 0);
   }, 0);
   const throughputScale = Math.min(1, rules.oreCap / Math.max(1, projectedActiveOres));
+  for (const route of routes) {
+    for (const zone of route.phantomZones ?? []) {
+      zone.throughputScale = throughputScale;
+      zone.dropRate *= throughputScale;
+      zone.dropIntervalSeconds = zone.dropRate > 0 ? 1 / zone.dropRate : null;
+      zone.expectedSpawnsPerMinute = zone.dropRate * zone.spawnBeforeFurnaceProbability * 60;
+      zone.expectedActiveZones = zone.dropRate * zone.spawnBeforeFurnaceProbability * zone.zoneLifetimeSeconds;
+      zone.candidates.forEach((candidate) => {
+        candidate.expectedSpawnsPerMinute = zone.dropRate * candidate.spawnProbability * 60;
+        candidate.expectedActiveZones = zone.dropRate * candidate.spawnProbability * zone.zoneLifetimeSeconds;
+      });
+    }
+  }
   const furnaceEntriesPerMinute = oresPerSecond * throughputScale * 60;
   const furnaceMultiplier = Number(furnace?.definition.mainStat ?? 0);
   const expectedCashPerMinute = routes.reduce((total, route) => {
@@ -488,7 +565,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
   }, 0);
   const reservedTiles = items.reduce((total, item) => total + item.width * item.height, 0)
     + conveyors.reduce((total, conveyor) => total + conveyor.width * conveyor.height, 0);
-  const blockingCodes = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'PORTABLE_SPACING', 'USE_LIMIT', 'WRONG_LANE', 'TURN_SPEED', 'CAP_RANGE']);
+  const blockingCodes = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'TELEPORTER_PAIR', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'PORTABLE_SPACING', 'USE_LIMIT', 'ORE_SIZE', 'WRONG_LANE', 'TURN_SPEED', 'CAP_RANGE']);
   return {
     valid: routes.length === droppers.length && !uniqueDiagnostics.some((entry) => blockingCodes.has(entry.code)),
     diagnostics: uniqueDiagnostics,

@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const appSource = read('app.js');
+const stylesSource = read('styles.css');
 const coreSource = read('planner-core.js');
 const indexSource = read('index.html');
 const rulesSource = read('docs/BUILD_RULES.md');
@@ -25,13 +26,99 @@ assert.match(appSource, /item\.type !== 'portable' && item\.type !== 'dropper'/)
 assert.match(rulesSource, /Droppers have no built-in conveyor/);
 assert.match(rulesSource, /continuous\s+ore route/);
 assert.match(indexSource, /planner-core\.js/);
+assert.match(indexSource, /id="keybind-guide"/);
+assert.match(stylesSource, /\.keybind-guide \{[^}]*position: fixed;[^}]*right: 16px;[^}]*bottom: 16px;/s);
+assert.match(appSource, /function renderKeybindGuide/);
+assert.match(appSource, /<kbd>Backspace \/ Del<\/kbd><span>Delete<\/span>/);
+assert.match(appSource, /<kbd>R<\/kbd><span>Rotate 90°<\/span>/);
+assert.match(appSource, /<kbd>Esc<\/kbd><span>Cancel<\/span>/);
 assert.match(indexSource, /data\/workflow-state\.js/);
 assert.match(indexSource, /data\/coordinate-preview\.js/);
 assert.match(indexSource, /data\/optimization-baseline\.js/);
 assert.match(indexSource, /data\/optimization-progress\.js/);
 assert.match(indexSource, /id="stage-preview-summary"/);
+assert.match(indexSource, /id="item-library"/);
+assert.match(indexSource, /data-category="conveyor"/);
+assert.match(appSource, /button\.dataset\.category === libraryCategory[\s\S]+itemSearch\.value = '';/);
+assert.match(indexSource, /id="library-filter-toggle"/);
+assert.match(indexSource, /id="mass-selection-dialog"/);
+assert.match(indexSource, /data-mass-action="rotate"/);
+assert.match(indexSource, /data-mass-action="move"/);
+assert.match(indexSource, /data-mass-action="delete"/);
+assert.match(indexSource, /value="tier-name"/);
+assert.match(stylesSource, /\.library-filter-panel/);
+assert.match(stylesSource, /\.box-selection-overlay/);
+assert.match(stylesSource, /\.mass-selection-bounds/);
+assert.match(stylesSource, /\.mass-selection-number/);
+assert.match(stylesSource, /\.mass-selection-facing/);
+assert.match(stylesSource, /\.has-mass-selection/);
+assert.match(stylesSource, /\.game-grid\.has-mass-selection \.portable-beam:not\(\.is-box-selected\)/);
+assert.match(appSource, /portable-beam\$\{massSelectedIds\.has\(item\.id\) \? ' is-box-selected' : ''\}/);
+assert.doesNotMatch(stylesSource, /mass-selection-dialog \[data-mass-action="rotate"\]/);
+assert.match(stylesSource, /\.mass-selection-dialog \{[^}]*position: fixed;/s);
+assert.match(stylesSource, /\.mass-selection-dialog::backdrop \{[^}]*background: transparent;/s);
+assert.match(appSource, /massSelectionDialog\.show\(\)/);
+assert.doesNotMatch(appSource, /massSelectionDialog\.showModal\(\)/);
+assert.match(appSource, /massSelectionDialog\.style\.top = '16px'/);
+assert.match(appSource, /<h2>Group selection<\/h2>/);
+assert.match(appSource, /massSelectionDialog\.open && massSelectedIds\.size[\s\S]+key === 'r'[\s\S]+rotateMassSelection\(\)[\s\S]+key === 'm'[\s\S]+startMassMove\(\)[\s\S]+event\.key === 'Escape'[\s\S]+clearMassSelection\(\)/);
+assert.match(indexSource, /data-planner-mode="build"/);
+assert.match(indexSource, /data-planner-mode="generation"/);
+assert.match(indexSource, /id="clear-workspace"/);
+assert.match(indexSource, /id="simulate-base"/);
+assert.match(indexSource, /id="size-out"/);
+assert.match(indexSource, /id="size-in"/);
+assert.match(appSource, /function applyBaseSize/);
+assert.match(appSource, /viewPreferencesStorageKey/);
+assert.match(appSource, /function saveViewPreferences/);
+assert.match(appSource, /function loadViewPreferences/);
+assert.match(appSource, /baseSize: Number\(sizeSlider\.value\)/);
+assert.match(appSource, /gridZoom: Number\(zoomSlider\.value\)/);
+assert.match(appSource, /loadViewPreferences\(\);\s*sizeSlider\.addEventListener/);
+assert.match(appSource, /sizeOut\.addEventListener\('click'/);
+assert.match(appSource, /sizeIn\.addEventListener\('click'/);
+assert.match(stylesSource, /::-webkit-slider-thumb/);
+assert.match(stylesSource, /::-moz-range-thumb/);
+assert.match(appSource, /Red Teleporter Sender/);
+assert.match(appSource, /Red Teleporter Receiver/);
+assert.match(appSource, /Blue Teleporter Sender/);
+assert.match(appSource, /Blue Teleporter Receiver/);
 assert.match(appSource, /function loadWorkflowProgress/);
 assert.match(appSource, /function renderPlanningPreview/);
+assert.match(appSource, /function startPlacingRecord/);
+assert.match(appSource, /function startMovingPlacement/);
+assert.match(appSource, /function startMovingHoveredPlacement/);
+assert.match(appSource, /event\.key\.toLowerCase\(\) === 'm' && !event\.repeat && !isTypingTarget\(event\.target\)/);
+assert.match(appSource, /function startCopyingHoveredPlacement/);
+assert.match(appSource, /startPlacingRecord\(record, placement\.direction\)/);
+assert.match(appSource, /event\.key\.toLowerCase\(\) === 'c' && !event\.repeat && !isTypingTarget\(event\.target\)/);
+assert.match(appSource, /function removeHoveredPlacement/);
+assert.match(appSource, /\(event\.key === 'Backspace' \|\| event\.key === 'Delete'\) && !event\.repeat && !isTypingTarget\(event\.target\)/);
+assert.match(appSource, /function rotateActivePlacementClockwise/);
+assert.match(appSource, /event\.key\.toLowerCase\(\) === 'r' && !event\.repeat && buildInteraction/);
+assert.match(appSource, /function commitBuildInteraction/);
+assert.match(appSource, /function placeOnGrid/);
+assert.match(appSource, /function mapPlacementCoordinates/);
+assert.match(appSource, /function saveWorkspace/);
+assert.match(appSource, /function loadSavedWorkspace/);
+assert.match(appSource, /function setPlannerMode/);
+assert.match(appSource, /function resetWorkspaceForMode/);
+assert.match(appSource, /function runManualSimulation/);
+assert.match(appSource, /function manualSimulationItemHtml/);
+assert.match(appSource, /Last base simulation/);
+assert.match(appSource, /Value after furnace/);
+assert.match(appSource, /simulationMoney\(route\.valueBeforeFurnace\)/);
+assert.match(appSource, /simulationMoney\(route\.cashPerOre\)/);
+assert.match(stylesSource, /\.simulation-hover-table/);
+assert.match(stylesSource, /overflow-y: auto/);
+assert.match(appSource, /scheduleItemTooltipHide/);
+assert.match(appSource, /buildSimulationVisible/);
+assert.match(appSource, /No optimizer or item suggestions were run/);
+assert.match(appSource, /Generation mode · Stage 1/);
+assert.match(appSource, /Build mode · Stage 3/);
+assert.match(appSource, /candidate\.direction,/);
+assert.match(appSource, /placement-ghost-direction/);
+assert.match(appSource, /Facing \$\{candidate\.direction\}/);
 assert.match(cliSource, /plans', 'coordinate-map\.json'\), \{ force: true \}/);
 assert.match(cliSource, /plans', 'route-validation\.json'\), \{ force: true \}/);
 assert.match(cliSource, /plans', 'optimization-baseline\.json'\), \{ force: true \}/);
@@ -72,22 +159,207 @@ assert.ok(kingDropperRecords.every((record) => record.maxCopies === 1));
 const appEnd = appSource.indexOf('sizeSlider.addEventListener');
 assert.ok(appEnd > 0);
 const restoredWorkflowState = { completedStage: 2, status: 'mapped-complete' };
-const appSandbox = { document: { querySelector: () => ({}) }, TycoonWorkflowState: restoredWorkflowState };
+const appSandbox = {
+  document: { querySelector: () => ({ addEventListener: () => {} }) },
+  TycoonWorkflowState: restoredWorkflowState,
+  TycoonDatabase: generatedDatabase,
+};
 vm.createContext(appSandbox);
 vm.runInContext(`${appSource.slice(0, appEnd)}
-this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem,
-  parseCoordinate, rotateDirection, furnaceProcessingZoneGeometry, completedStageForPlan, workflowStage, workflowProgress };`, appSandbox);
+this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, conveyorCatalog,
+  parseCoordinate, rotateDirection, updateConveyorGeometry, databaseRenderType, uniqueDatabaseRecords, mapPlacementCoordinates, placementFromRecord,
+  furnaceProcessingZoneGeometry, completedStageForPlan, categorizedManualSimulationHtml,
+  libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
+  selectionRectangle, placementIntersectsRectangle, massSelectionBounds,
+  recordStats, recordDescription, displayItemDescription, statsSectionsHtml,
+  setValidation: (next) => { validation = next; }, workflowStage, workflowProgress, plannerMode };`, appSandbox);
 const app = appSandbox.api;
 assert.equal(app.coordinateMap.length, 0);
 assert.equal(app.routeSegments.length, 0);
 assert.equal(app.validation, null);
-assert.equal(app.activePlan, null);
+assert.equal(app.activePlan.title, 'Manual build workspace');
+assert.equal(app.activePlan.items.length, 0);
+assert.equal(app.activePlan.lanes.length, 0);
 assert.equal(app.workflowStage, 2);
-assert.equal(app.workflowProgress.status, 'mapped-complete');
+assert.equal(app.workflowProgress, null);
+assert.equal(app.plannerMode, 'build');
+assert.deepEqual(
+  JSON.parse(JSON.stringify(app.axisLockedLineCoordinates({ x: 2, y: 3 }, { x: 9, y: 5 }, { width: 2, height: 3 }))),
+  { axis: 'horizontal', coordinates: [{ x: 2, y: 3 }, { x: 4, y: 3 }, { x: 6, y: 3 }, { x: 8, y: 3 }] },
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(app.axisLockedLineCoordinates({ x: 5, y: 8 }, { x: 4, y: 1 }, { width: 2, height: 3 }, 'vertical'))),
+  { axis: 'vertical', coordinates: [{ x: 5, y: 8 }, { x: 5, y: 5 }, { x: 5, y: 2 }] },
+);
+assert.match(appSource, /pointerdown', startMassPlacementDrag/);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(app.selectionRectangle({ x: 8, y: 7 }, { x: 3, y: 2 }))),
+  { x: 3, y: 2, width: 6, height: 6 },
+);
+assert.equal(app.placementIntersectsRectangle(
+  { x: 8, y: 8, width: 3, height: 2 },
+  { x: 2, y: 2, width: 7, height: 7 },
+), true);
+assert.equal(app.placementIntersectsRectangle(
+  { x: 10, y: 10, width: 2, height: 2 },
+  { x: 2, y: 2, width: 7, height: 7 },
+), false);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(app.massSelectionBounds([
+    { x: 3, y: 5, width: 2, height: 4 },
+    { x: 8, y: 2, width: 3, height: 2 },
+  ]))),
+  { x: 3, y: 2, width: 8, height: 7 },
+);
+assert.match(appSource, /ROTATES TOGETHER/);
+assert.match(appSource, /pointerdown', startBoxSelectionDrag/);
+const sortedLibrary = app.filteredAndSortedLibraryRecords([
+  { name: 'Zulu', type: 'upgrader', variant: 'Base', rarity: 'Epic' },
+  { name: 'Beta', type: 'upgrader', variant: 'Base', rarity: 'Common' },
+  { name: 'Alpha', type: 'upgrader', variant: 'Shiny', rarity: 'Common' },
+  { name: 'Alpha', type: 'upgrader', variant: 'Base', rarity: 'Common' },
+], { tier: 'all', variant: 'all', sortMode: 'tier-name' });
+assert.deepEqual(
+  JSON.parse(JSON.stringify(sortedLibrary.map((record) => `${record.rarity}:${record.name}:${record.variant}`))),
+  ['Common:Alpha:Base', 'Common:Alpha:Shiny', 'Common:Beta:Base', 'Epic:Zulu:Base'],
+);
+const rareOnly = app.filteredAndSortedLibraryRecords([
+  { name: 'Common Item', type: 'dropper', variant: 'Base', rarity: 'Common' },
+  { name: 'Rare Item', type: 'dropper', variant: 'Base', rarity: 'Rare' },
+], { tier: 'Rare', variant: 'all', sortMode: 'tier-name' });
+assert.deepEqual(JSON.parse(JSON.stringify(rareOnly.map((record) => record.name))), ['Rare Item']);
+app.setValidation({
+  kind: 'manual-simulation',
+  diagnostics: [],
+  routes: [{
+    dropperOrder: 1,
+    stages: [{
+      itemId: 'lambda-ui', beforeValue: 100, afterValue: 250, beforeOreSize: 1, afterOreSize: 1,
+      survivalBefore: 1, survivalAfter: .75, itemSurvival: .75, destructionChance: .25, destroyedOresPerMinute: 15,
+      replicationBefore: 1, replicationAfter: 1, arrivalSeconds: 3, crossingSeconds: .5,
+      outcomeModel: { expectedValuePerInput: 187.5, outcomes: [
+        { label: '2.2x', probability: .75, value: 220 },
+        { label: 'Destroyed', probability: .25, destroyed: true },
+      ] },
+    }],
+  }],
+});
+const categorizedLambdaHtml = app.categorizedManualSimulationHtml({ id: 'lambda-ui', type: 'upgrader' });
+assert.match(categorizedLambdaHtml, /Route timing/);
+assert.match(categorizedLambdaHtml, /Expected value & RNG/);
+assert.match(categorizedLambdaHtml, /Ore destruction/);
+assert.match(categorizedLambdaHtml, /Reaches item/);
+assert.match(categorizedLambdaHtml, /Still alive after/);
+assert.match(categorizedLambdaHtml, /Destroyed here/);
+assert.match(categorizedLambdaHtml, /Survives this item/);
+assert.match(categorizedLambdaHtml, /dropper's original ore output/);
+assert.doesNotMatch(categorizedLambdaHtml, /Original entering|Survive this use|Original after|Original lost here/);
+assert.doesNotMatch(categorizedLambdaHtml, /<h3>Ore size<\/h3>/);
+assert.doesNotMatch(categorizedLambdaHtml, /<h3>Ore replication<\/h3>/);
+app.setValidation({
+  kind: 'manual-simulation',
+  diagnostics: [],
+  routes: [{
+    dropperOrder: 1,
+    stages: [{
+      itemId: 'scanner-ui', beforeValue: 100, afterValue: 190, beforeOreSize: 1, afterOreSize: 1,
+      survivalBefore: 1, survivalAfter: 1, destructionChance: 0, destroyedOresPerMinute: 0,
+      replicationBefore: 1, replicationAfter: 1, arrivalSeconds: 3, crossingSeconds: .5,
+      outcomeModel: { expectedValuePerInput: 190, outcomes: [
+        { label: 'Hit: 2x', probability: .9, value: 200 },
+        { label: 'Miss: unchanged', probability: .1, value: 100 },
+      ] },
+    }],
+  }],
+});
+const categorizedScannerHtml = app.categorizedManualSimulationHtml({ id: 'scanner-ui', type: 'upgrader' });
+assert.match(categorizedScannerHtml, /Expected value & RNG/);
+assert.doesNotMatch(categorizedScannerHtml, /Ore destruction/);
+assert.doesNotMatch(categorizedScannerHtml, /<h3>Ore size<\/h3>/);
 const uiDropper = app.placeItem(1, 'Iron Dropper', 1, 1, 2, 3, 'east', 'dropper');
 assert.equal(uiDropper.conveyorWidth, 0);
 assert.deepEqual({ ...app.parseCoordinate('AA35') }, { x: 27, y: 35 });
 assert.equal(app.rotateDirection('north', 'right'), 'east');
+assert.equal(app.databaseRenderType({ name: 'Portable Spinner', type: 'upgrader' }), 'portable');
+assert.equal(app.databaseRenderType({ name: 'Fusion Upgrader', type: 'upgrader', sourceSheets: [{ sheet: 'Capgrader' }] }), 'capgrader');
+const solarRecords = app.uniqueDatabaseRecords(generatedDatabase.records.filter((record) => record.name === 'Solar Upgrader'));
+assert.deepEqual(JSON.parse(JSON.stringify(solarRecords.map((record) => record.variant))), ['Base', 'Shiny']);
+assert.ok(solarRecords.every((record) => record.sheet === 'Upgraders'));
+const lambdaRecord = app.uniqueDatabaseRecords(generatedDatabase.records.filter(
+  (record) => record.key === 'lambda upgrader::base',
+))[0];
+assert.ok(lambdaRecord);
+assert.doesNotMatch(lambdaRecord.description, /refer to (?:the )?["“]?stats for nerds/i);
+assert.match(lambdaRecord.description, /1\/19|upgrade count/i);
+assert.equal(Object.hasOwn(app.recordStats(lambdaRecord), 'Effects'), false);
+const legacyEffectHtml = app.statsSectionsHtml({
+  Effects: 'Refer to the "Stats for Nerds" Page',
+  Variant: 'Base',
+});
+assert.doesNotMatch(legacyEffectHtml, /Effect & safety/i);
+assert.doesNotMatch(legacyEffectHtml, /Stats for Nerds/i);
+const refreshedLambdaDescription = app.displayItemDescription({
+  name: 'Lambda Upgrader',
+  variant: 'Base',
+  description: 'Refer to the "Stats for Nerds" Page',
+  stats: { Variant: 'Base' },
+});
+assert.doesNotMatch(refreshedLambdaDescription, /Stats for Nerds/i);
+assert.match(refreshedLambdaDescription, /1\/19|upgrade count/i);
+const rotatedConveyor = app.updateConveyorGeometry({
+  x: 2, y: 3, direction: 'east', itemWidth: 4, itemLength: 2, width: 2, height: 4,
+}, { direction: 'north' });
+assert.deepEqual(
+  { x: rotatedConveyor.x, y: rotatedConveyor.y, width: rotatedConveyor.width, height: rotatedConveyor.height, direction: rotatedConveyor.direction },
+  { x: 2, y: 3, width: 4, height: 2, direction: 'north' },
+);
+const mappedPlacement = app.mapPlacementCoordinates({ x: 2, y: 3, width: 2, height: 3, direction: 'south' });
+assert.equal(mappedPlacement.topLeft, 'B3');
+assert.equal(mappedPlacement.bottomRight, 'C5');
+assert.equal(mappedPlacement.coordinateRange, 'B3:C5');
+assert.equal(mappedPlacement.facing, 'south');
+assert.deepEqual({ ...mappedPlacement.footprint }, { width: 2, height: 3 });
+assert.equal(mappedPlacement.occupiedCells.length, 6);
+assert.deepEqual({ ...mappedPlacement.occupiedCells[5] }, { x: 3, y: 5, coordinate: 'C5' });
+const repeatedConveyor = app.placementFromRecord(
+  { key: 'conveyor::ultracharged', name: 'Ultracharged Conveyor', type: 'conveyor', size: { width: 4, length: 2 }, speed: 24 },
+  6,
+  7,
+  'south',
+);
+assert.equal(repeatedConveyor.direction, 'south');
+assert.deepEqual(
+  { x: repeatedConveyor.x, y: repeatedConveyor.y, width: repeatedConveyor.width, height: repeatedConveyor.height },
+  { x: 6, y: 7, width: 4, height: 2 },
+);
+const teleporters = app.conveyorCatalog.filter((entry) => entry.key.startsWith('teleporter::'));
+assert.equal(teleporters.length, 4);
+const conveyorWall = app.conveyorCatalog.find((entry) => entry.key === 'conveyor::wall');
+assert.deepEqual(JSON.parse(JSON.stringify(conveyorWall.size)), { width: 1, length: 2 });
+assert.equal(conveyorWall.wall, true);
+assert.equal(conveyorWall.nonTransport, true);
+assert.match(stylesSource, /\.plan-lane\.conveyor-wall/);
+const placedWall = app.placementFromRecord(conveyorWall, 3, 4, 'east');
+assert.deepEqual(
+  JSON.parse(JSON.stringify({ width: placedWall.width, height: placedWall.height, wall: placedWall.wall, nonTransport: placedWall.nonTransport })),
+  { width: 2, height: 1, wall: true, nonTransport: true },
+);
+assert.match(stylesSource, /red-teleporter-receiver[^}]+--receiver-surface/);
+assert.match(stylesSource, /direction-east, \.direction-west[^}]+#fff/);
+assert.match(appSource, /placement-ghost\$\{conveyorClass\} direction-\$\{candidate\.direction\}/);
+assert.match(appSource, /furnace-processing-zone placement-ghost-zone/);
+assert.match(appSource, /item-belt placement-ghost-belt/);
+assert.match(stylesSource, /\.placement-ghost-belt/);
+assert.match(stylesSource, /\.placement-ghost-zone/);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(teleporters.map((entry) => [entry.name, entry.size.width, entry.size.length, entry.speed]))),
+  [
+    ['Red Teleporter Sender', 2, 2, null],
+    ['Red Teleporter Receiver', 4, 2, 12],
+    ['Blue Teleporter Sender', 2, 2, null],
+    ['Blue Teleporter Receiver', 4, 2, 12],
+  ],
+);
 assert.equal(app.completedStageForPlan({ valid: true }), 3);
 assert.equal(app.completedStageForPlan({ valid: true, optimization: { complete: true } }), 4);
 assert.equal(app.completedStageForPlan({ valid: true, optimization: { complete: true }, finalVerification: { complete: true } }), 5);
@@ -97,6 +369,252 @@ vm.createContext(coreSandbox);
 vm.runInContext(coreSource, coreSandbox);
 const planner = coreSandbox.TycoonPlanner;
 assert.ok(planner);
+
+const manualSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 10, dropSpeed: 1, oreSize: 1 },
+    { key: 'azure scanner::base', name: 'Azure Scanner', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 2, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+  ] },
+  items: [
+    { id: 'd1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'u1', order: 2, name: 'Azure Scanner', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'f1', order: 3, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(manualSimulation.valid, true);
+assert.equal(manualSimulation.routes[0].reachedFurnace, true);
+assert.equal(manualSimulation.metrics.routeTimeSeconds, 1);
+assert.equal(manualSimulation.metrics.projectedActiveOres, 1);
+assert.equal(manualSimulation.metrics.expectedCashPerMinute, 2280);
+assert.equal(manualSimulation.routes[0].stages[0].itemId, 'u1');
+assert.equal(manualSimulation.routes[0].stages[0].beforeValue, 10);
+assert.equal(manualSimulation.routes[0].stages[0].afterValue, 19);
+assert.equal(manualSimulation.routes[0].stages[0].outcomeModel.kind, 'scanner');
+assert.equal(manualSimulation.routes[0].stages[0].outcomeModel.outcomes.length, 2);
+assert.equal(manualSimulation.metrics.destroyedOresPerMinute, 0);
+
+const teleporterSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 10, dropSpeed: 1, oreSize: 1 },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+  ] },
+  items: [
+    { id: 'tele-d1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'tele-f1', order: 2, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 12, y: 2, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'red-send', name: 'Red Teleporter Sender', conveyor: 'Red Teleporter Sender', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: null, teleporterColor: 'red', teleporterRole: 'sender' },
+    { id: 'red-receive', name: 'Red Teleporter Receiver', conveyor: 'Red Teleporter Receiver', x: 8, y: 1, width: 2, height: 4, itemWidth: 4, itemLength: 2, direction: 'east', speed: 12, teleporterColor: 'red', teleporterRole: 'receiver' },
+    { id: 'tele-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 10, y: 2, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(teleporterSimulation.valid, true, JSON.stringify(teleporterSimulation.diagnostics));
+assert.equal(teleporterSimulation.routes[0].reachedFurnace, true);
+assert.equal(teleporterSimulation.routes[0].seconds, 1);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(teleporterSimulation.routes[0].teleporterJumps)),
+  [{ color: 'red', senderId: 'red-send', receiverId: 'red-receive' }],
+);
+app.setValidation({ ...teleporterSimulation, kind: 'manual-simulation' });
+const teleporterTooltipHtml = app.categorizedManualSimulationHtml({ id: 'tele-d1', type: 'dropper' });
+assert.match(teleporterTooltipHtml, /red sender.*receiver/i);
+const receiverTooltipHtml = app.categorizedManualSimulationHtml({ id: 'red-receive', type: 'conveyor', teleporterColor: 'red', teleporterRole: 'receiver' });
+assert.match(receiverTooltipHtml, /#1.*furnace/i);
+
+const crimsonSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 10, dropSpeed: 2, oreSize: 1 },
+    { key: 'crimson pillars::base', name: 'Crimson Pillars', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 1.5, mainStatType: 'Multiplicative', conveyorSpeed: 12, limitedUses: '1' },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+  ] },
+  items: [
+    { id: 'crimson-d1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'crimson-u1', order: 2, name: 'Crimson Pillars', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'crimson-f1', order: 3, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 9, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'crimson-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+    { id: 'crimson-c2', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 3 },
+  ],
+});
+assert.equal(crimsonSimulation.valid, true, JSON.stringify(crimsonSimulation.diagnostics));
+assert.equal(crimsonSimulation.routes[0].valueBeforeFurnace, 10, 'Crimson must not apply its phantom multiplier immediately');
+assert.equal(crimsonSimulation.routes[0].phantomZones.length, 1);
+assert.equal(crimsonSimulation.routes[0].phantomZones[0].windowSeconds, 15);
+assert.equal(crimsonSimulation.routes[0].phantomZones[0].minimumDelaySeconds, 1);
+assert.equal(crimsonSimulation.routes[0].phantomZones[0].zoneLifetimeSeconds, 30);
+assert.equal(crimsonSimulation.routes[0].phantomZones[0].dropIntervalSeconds, .5);
+assert(Math.abs(crimsonSimulation.routes[0].phantomZones[0].spawnBeforeFurnaceProbability - 1 / 14) < 1e-12);
+assert(Math.abs(crimsonSimulation.routes[0].phantomZones[0].expectedActiveZones - 30 / 7) < 1e-12);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(crimsonSimulation.routes[0].phantomZones[0].candidates.map((candidate) => candidate.componentId))),
+  ['crimson-c2'],
+);
+assert.match(appSource, /function renderPhantomZoneOverlays/);
+assert.match(stylesSource, /\.phantom-zone-overlay/);
+app.setValidation({ ...crimsonSimulation, kind: 'manual-simulation' });
+const crimsonTooltipHtml = app.categorizedManualSimulationHtml({ id: 'crimson-u1', type: 'upgrader' });
+assert.match(crimsonTooltipHtml, /Phantom-zone estimate/);
+assert.match(crimsonTooltipHtml, /0\.500s/);
+assert.match(crimsonTooltipHtml, /30 seconds/i);
+assert.match(crimsonTooltipHtml, /Active zones/);
+
+const constraintSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: { records: [
+    { key: 'large test dropper::base', name: 'Large Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 10, dropSpeed: 1, oreSize: 1.84 },
+    { key: 'limited test upgrader::base', name: 'Limited Test Upgrader', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 2, mainStatType: 'Multiplicative', conveyorSpeed: 12, limitedUses: '1', oreSizeRestriction: { acceptable: [1.83], rejected: [1.84] } },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+  ] },
+  items: [
+    { id: 'large-d1', order: 1, name: 'Large Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'limited-u1', order: 2, name: 'Limited Test Upgrader', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'limited-u2', order: 3, name: 'Limited Test Upgrader', variant: 'Base', type: 'upgrader', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'constraint-f1', order: 4, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 9, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'constraint-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(constraintSimulation.valid, false);
+const useLimitDiagnostic = constraintSimulation.diagnostics.find((entry) => entry.code === 'USE_LIMIT');
+assert.ok(useLimitDiagnostic);
+assert.equal(useLimitDiagnostic.itemId, 'limited-u2');
+assert.match(useLimitDiagnostic.message, /use 2, exceeding its limit of 1 use per ore/);
+const oreSizeDiagnostics = constraintSimulation.diagnostics.filter((entry) => entry.code === 'ORE_SIZE');
+assert.equal(oreSizeDiagnostics.length, 2);
+assert(oreSizeDiagnostics.every((entry) => /ore size 1\.840.*acceptable size 1\.83/.test(entry.message)));
+assert.equal(planner.itemUseLimit({ limitedUses: 'Unlimited' }), Infinity);
+assert.equal(planner.exceedsItemUseLimit({ name: 'Star Scanner', limitedUses: '1' }, 2), false);
+assert.equal(planner.maximumAcceptedOreSize({ oreSizeRestriction: { acceptable: [2.01, 1.83] } }), 2.01);
+
+const rngSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 100, dropSpeed: 1, oreSize: 1 },
+    { key: 'tiki evaluator::base', name: 'Tiki Evaluator', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 3, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+  ] },
+  items: [
+    { id: 'd1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'u1', order: 2, name: 'Tiki Evaluator', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'f1', order: 3, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    { id: 'c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(rngSimulation.valid, true);
+assert.equal(rngSimulation.routes[0].stages[0].outcomeModel.kind, 'tiki-phase');
+assert.equal(rngSimulation.routes[0].stages[0].afterValue, 15200);
+assert(Math.abs(rngSimulation.routes[0].stages[0].destructionChance - 1 / 3) < 1e-12);
+assert(Math.abs(rngSimulation.metrics.destroyedOresPerMinute - 20) < 1e-12);
+assert.equal(rngSimulation.metrics.survivalToFurnace, 2 / 3);
+
+const effectDatabase = { records: [
+  { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 100, dropSpeed: 1, oreSize: 1 },
+  { key: 'acid plant::base', name: 'Acid Plant', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 2, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+  { key: 'ore wash::base', name: 'Ore Wash', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 1, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+  { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+] };
+const effectDropper = { id: 'd1', order: 1, name: 'Test Dropper', variant: 'Base', type: 'dropper', x: 1, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', stats: { Variant: 'Base' } };
+const effectSource = { id: 'acid1', order: 2, name: 'Acid Plant', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } };
+const effectEntryConveyor = { id: 'c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 };
+const safeEffectSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: effectDatabase,
+  items: [
+    effectDropper,
+    effectSource,
+    { id: 'wash1', order: 3, name: 'Ore Wash', variant: 'Base', type: 'upgrader', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'f1', order: 4, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 9, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [effectEntryConveyor],
+});
+const safeToxic = safeEffectSimulation.routes[0].stages.find((stage) => stage.itemId === 'acid1').effectSafety[0];
+assert.equal(safeEffectSimulation.valid, true);
+assert.equal(safeToxic.effect, 'Toxic');
+assert.equal(safeToxic.removedBy, 'Ore Wash');
+assert.equal(safeToxic.safe, true);
+assert(safeToxic.exposureSeconds < safeToxic.timerSeconds);
+
+const unsafeEffectSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: effectDatabase,
+  items: [
+    effectDropper,
+    effectSource,
+    { id: 'f1', order: 3, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 9, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    effectEntryConveyor,
+    { id: 'c2', name: 'Slow Conveyor', conveyor: 'Normal Conveyor', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 1 },
+  ],
+});
+const unsafeToxic = unsafeEffectSimulation.routes[0].stages.find((stage) => stage.itemId === 'acid1').effectSafety[0];
+assert.equal(unsafeEffectSimulation.valid, false);
+assert.equal(unsafeToxic.removedBy, 'Furnace');
+assert.equal(unsafeToxic.safe, false);
+assert.equal(unsafeToxic.exposureSeconds, 6);
+assert.equal(unsafeEffectSimulation.routes[0].survival, 0);
+assert.equal(unsafeEffectSimulation.metrics.destroyedOresPerMinute, 60);
+assert(unsafeEffectSimulation.diagnostics.some((entry) => entry.code === 'EFFECT_TIMER'));
+app.setValidation({ ...safeEffectSimulation, kind: 'manual-simulation' });
+const safeEffectHtml = app.categorizedManualSimulationHtml({ id: 'acid1', type: 'upgrader' });
+assert.match(safeEffectHtml, /Effect & safety/);
+assert.match(safeEffectHtml, /Ore Wash/);
+assert.match(safeEffectHtml, />Safe</);
+assert.doesNotMatch(safeEffectHtml, /Destroyed when timer ends/);
+app.setValidation({ ...unsafeEffectSimulation, kind: 'manual-simulation' });
+const unsafeEffectHtml = app.categorizedManualSimulationHtml({ id: 'acid1', type: 'upgrader' });
+assert.match(unsafeEffectHtml, /Effect & safety/);
+assert.match(unsafeEffectHtml, /Furnace/);
+assert.match(unsafeEffectHtml, />Destroyed</);
+assert.match(unsafeEffectHtml, /Destroyed when timer ends/);
+const colliderSimulation = planner.simulateManualBase({
+  plotSize: 14,
+  oreCap: 100,
+  database: { records: [
+    { key: 'test dropper::base', name: 'Test Dropper', variant: 'Base', type: 'dropper', sheet: 'Droppers', mainStat: 100, dropSpeed: 1, oreSize: 1 },
+    { key: 'chartreuse collider::base', name: 'Chartreuse Collider', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 1.6, mainStatType: 'Multiplicative', conveyorSpeed: 12 },
+    { key: 'test furnace::base', name: 'Test Furnace', variant: 'Base', type: 'furnace', sheet: 'Furnaces', mainStat: 2 },
+  ] },
+  items: [
+    effectDropper,
+    { id: 'collider1', order: 2, name: 'Chartreuse Collider', variant: 'Base', type: 'upgrader', x: 5, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'collider2', order: 3, name: 'Chartreuse Collider', variant: 'Base', type: 'upgrader', x: 9, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } },
+    { id: 'f1', order: 4, name: 'Test Furnace', variant: 'Base', type: 'furnace', x: 13, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', processingZoneAcross: 2, processingZoneDepth: 2, processingZonePlacement: 'front-center', stats: { Variant: 'Base' } },
+  ],
+  conveyors: [
+    effectEntryConveyor,
+    { id: 'c2', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+    { id: 'c3', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 11, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
+  ],
+});
+assert.equal(colliderSimulation.valid, true);
+assert.equal(colliderSimulation.routes[0].effectSafety.length, 2);
+assert.equal(colliderSimulation.routes[0].effectSafety[0].removedBy, 'Chartreuse Collider');
+assert.equal(colliderSimulation.routes[0].effectSafety[1].removedBy, 'Furnace');
+assert(colliderSimulation.routes[0].effectSafety.every((effect) => effect.safe));
+const fastTurnBefore = { direction: 'east', path: { x: 1, y: 2, width: 2, height: 2 } };
+const fastTurnAfter = { direction: 'south', path: { x: 3, y: 2, width: 1, height: 1 } };
+assert.equal(planner.isFastTurnBlocked(fastTurnBefore, fastTurnAfter, []), false);
+assert.equal(planner.isFastTurnBlocked(fastTurnBefore, fastTurnAfter, [{ x: 4, y: 2, width: 1, height: 2 }]), true);
+assert.equal(planner.isFastTurnBlocked(fastTurnBefore, fastTurnAfter, [{ x: 4, y: 1, width: 2, height: 2 }]), true);
 
 const dropperDef = { name: 'Iron Dropper', variant: 'Base', type: 'dropper', size: { width: 2, length: 3 }, stats: { dropSpeed: 2 } };
 const upgraderDef = { name: 'Test Upgrader', variant: 'Base', type: 'upgrader', size: { width: 2, length: 2 }, stats: { 'Conveyor speed': 12 } };

@@ -1,0 +1,15 @@
+{
+  "id": "scanner-hit-chances",
+  "observed": "Every scanner was treated as a guaranteed upgrade in the manual base simulation.",
+  "expected": "Each scanner uses its own expected hit chance: Star 0.3, Azure 0.9, and Ancient 0.5.",
+  "kind": "item-transition",
+  "input": {
+    "startingValue": 100,
+    "scanners": {
+      "Star Scanner": 0.3,
+      "Azure Scanner": 0.9,
+      "Ancient Scanner": 0.5
+    }
+  },
+  "assert": { "usesExpectedValue": true }
+}

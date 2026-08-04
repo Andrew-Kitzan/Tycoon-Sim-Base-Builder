@@ -13,13 +13,77 @@
           <p class="eyebrow">TYCOON SIM 2</p>
           <h1>Base Planner</h1>
         </div>
-        <div class="grid-readout" aria-live="polite">
-          <span>Available tiles</span>
-          <strong id="tile-count">1225</strong>
+        <div class="topbar-actions">
+          <div id="planner-mode-toggle" class="planner-mode-toggle" role="group" aria-label="Planner mode">
+            <button type="button" data-planner-mode="build" aria-pressed="true">Build mode</button>
+            <button type="button" data-planner-mode="generation" aria-pressed="false">Generation mode</button>
+          </div>
+          <button id="simulate-base" class="simulate-base" type="button">Simulate base</button>
+          <button id="clear-workspace" class="clear-workspace" type="button">Clear grid</button>
+          <div class="grid-readout" aria-live="polite">
+            <span>Available tiles</span>
+            <strong id="tile-count">1225</strong>
+          </div>
         </div>
       </header>
 
       <section class="workspace" aria-label="Base planning workspace">
+        <aside class="builder-panel" aria-label="Item library">
+          <div class="builder-heading">
+            <div>
+              <p class="panel-label">Build tools</p>
+              <h2>Item library</h2>
+            </div>
+            <span id="library-count" class="library-count"></span>
+          </div>
+          <label class="library-search" for="item-search">
+            <span class="visually-hidden">Search items</span>
+            <input id="item-search" type="search" placeholder="Search name or variant" autocomplete="off" />
+          </label>
+          <div id="library-tabs" class="library-tabs" role="tablist" aria-label="Item categories">
+            <button type="button" role="tab" aria-selected="true" data-category="dropper">Droppers</button>
+            <button type="button" role="tab" aria-selected="false" data-category="upgrader">Upgraders</button>
+            <button type="button" role="tab" aria-selected="false" data-category="furnace">Furnaces</button>
+            <button type="button" role="tab" aria-selected="false" data-category="conveyor">Conveyors</button>
+          </div>
+          <div class="library-filter-toolbar">
+            <button id="library-filter-toggle" type="button" aria-expanded="false" aria-controls="library-filter-panel">Filter &amp; sort</button>
+          </div>
+          <div id="library-filter-panel" class="library-filter-panel" hidden>
+            <label>Sort by
+              <select id="library-sort">
+                <option value="tier-name">Tier, then name</option>
+                <option value="tier-desc">Tier high to low</option>
+                <option value="name-asc">Name A to Z</option>
+                <option value="name-desc">Name Z to A</option>
+              </select>
+            </label>
+            <label>Tier
+              <select id="library-tier-filter">
+                <option value="all">All tiers</option>
+                <option value="Standard">Standard</option>
+                <option value="Common">Common</option>
+                <option value="Uncommon">Uncommon</option>
+                <option value="Rare">Rare</option>
+                <option value="Epic">Epic</option>
+                <option value="Legendary">Legendary</option>
+                <option value="Secret">Secret</option>
+              </select>
+            </label>
+            <label>Variant
+              <select id="library-variant-filter">
+                <option value="all">All variants</option>
+                <option value="Base">Base</option>
+                <option value="Shiny">Shiny</option>
+                <option value="Mythic">Mythic</option>
+                <option value="Shiny Mythic">Shiny Mythic</option>
+              </select>
+            </label>
+            <button id="library-filter-reset" type="button">Reset</button>
+          </div>
+          <p id="build-mode-hint" class="build-mode-hint">Choose an item, move over the grid, then click to place it.</p>
+          <div id="item-library" class="item-library" role="list"></div>
+        </aside>
         <section class="board-area">
           <section class="workflow" aria-label="Build workflow">
             <p class="panel-label">Build workflow</p>
@@ -29,13 +93,15 @@
           </section>
           <div class="board-toolbar">
             <div class="board-controls">
-              <label class="size-control" for="base-size">
-                <span>Base size</span>
+              <div class="size-control range-control" role="group" aria-label="Base size controls">
+                <label for="base-size">Base size</label>
+                <button id="size-out" type="button" aria-label="Decrease base size">&minus;</button>
                 <input id="base-size" type="range" min="14" max="35" value="35" />
+                <button id="size-in" type="button" aria-label="Increase base size">+</button>
                 <strong id="size-label">35 × 35</strong>
-              </label>
-              <div class="zoom-control" role="group" aria-label="Grid zoom controls">
-                <span>Grid zoom</span>
+              </div>
+              <div class="zoom-control range-control" role="group" aria-label="Grid zoom controls">
+                <label for="grid-zoom">Grid zoom</label>
                 <button id="zoom-out" type="button" aria-label="Zoom grid out">−</button>
                 <input id="grid-zoom" type="range" min="100" max="225" step="25" value="150" aria-label="Grid zoom percentage" />
                 <button id="zoom-in" type="button" aria-label="Zoom grid in">+</button>
@@ -57,6 +123,7 @@
       </section>
     </main>
 
+    <aside id="keybind-guide" class="keybind-guide" aria-live="polite" aria-label="Build keyboard shortcuts" hidden></aside>
     <div id="item-tooltip" class="item-tooltip" role="tooltip" hidden></div>
 
     <dialog id="item-editor" class="item-editor" aria-labelledby="item-editor-title">
@@ -70,17 +137,36 @@
         </div>
         <div id="item-editor-details" class="item-editor-details"></div>
         <label class="coordinate-control" for="move-coordinate">
-          <span>New top-left coordinate</span>
+          <span>Or type a top-left coordinate</span>
           <input id="move-coordinate" name="coordinate" type="text" inputmode="text" placeholder="A1 or 1,1" autocomplete="off" />
         </label>
         <p id="item-editor-error" class="item-editor-error" role="alert" hidden></p>
         <div class="item-editor-actions">
-          <button type="button" data-action="move-item">Move</button>
+          <button type="button" data-action="move-item">Move on grid</button>
           <button type="button" data-action="rotate-left">↶ Rotate left</button>
           <button type="button" data-action="rotate-right">Rotate right ↷</button>
           <button class="danger-button" type="button" data-action="remove-item">Remove</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="mass-selection-dialog" class="item-editor mass-selection-dialog" aria-labelledby="mass-selection-title">
+      <div class="item-editor-card">
+        <div class="item-editor-heading">
+          <div>
+            <p class="panel-label">Box selection</p>
+            <h2 id="mass-selection-title">Selected items</h2>
+          </div>
+          <button class="icon-button" type="button" data-mass-action="close" aria-label="Close mass selection">×</button>
+        </div>
+        <div id="mass-selection-details" class="item-editor-details"></div>
+        <p id="mass-selection-error" class="item-editor-error" role="alert" hidden></p>
+        <div class="item-editor-actions">
+          <button type="button" data-mass-action="rotate">Rotate all 90°</button>
+          <button type="button" data-mass-action="move">Move selection</button>
+          <button class="danger-button" type="button" data-mass-action="delete">Delete selection</button>
+        </div>
+      </div>
     </dialog>
 
     <script src="data/items.generated.js"></script>

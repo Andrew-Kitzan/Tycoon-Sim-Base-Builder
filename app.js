@@ -3,6 +3,8 @@ const columnLabels = document.querySelector('#column-labels');
 const rowLabels = document.querySelector('#row-labels');
 const sizeSlider = document.querySelector('#base-size');
 const sizeLabel = document.querySelector('#size-label');
+const sizeOut = document.querySelector('#size-out');
+const sizeIn = document.querySelector('#size-in');
 const zoomSlider = document.querySelector('#grid-zoom');
 const zoomLabel = document.querySelector('#zoom-label');
 const zoomOut = document.querySelector('#zoom-out');
@@ -19,7 +21,26 @@ const itemEditor = document.querySelector('#item-editor');
 const itemEditorTitle = document.querySelector('#item-editor-title');
 const itemEditorDetails = document.querySelector('#item-editor-details');
 const itemEditorError = document.querySelector('#item-editor-error');
+const massSelectionDialog = document.querySelector('#mass-selection-dialog');
+const massSelectionTitle = document.querySelector('#mass-selection-title');
+const massSelectionDetails = document.querySelector('#mass-selection-details');
+const massSelectionError = document.querySelector('#mass-selection-error');
 const moveCoordinate = document.querySelector('#move-coordinate');
+const itemSearch = document.querySelector('#item-search');
+const libraryTabs = document.querySelector('#library-tabs');
+const itemLibrary = document.querySelector('#item-library');
+const libraryCount = document.querySelector('#library-count');
+const libraryFilterToggle = document.querySelector('#library-filter-toggle');
+const libraryFilterPanel = document.querySelector('#library-filter-panel');
+const librarySort = document.querySelector('#library-sort');
+const libraryTierFilter = document.querySelector('#library-tier-filter');
+const libraryVariantFilter = document.querySelector('#library-variant-filter');
+const libraryFilterReset = document.querySelector('#library-filter-reset');
+const buildModeHint = document.querySelector('#build-mode-hint');
+const plannerModeToggle = document.querySelector('#planner-mode-toggle');
+const simulateBaseButton = document.querySelector('#simulate-base');
+const clearWorkspaceButton = document.querySelector('#clear-workspace');
+const keybindGuide = document.querySelector('#keybind-guide');
 
 const workflow = [
   '1. Legal item list',
@@ -34,6 +55,36 @@ const planningPreview = globalThis.TycoonCoordinateMapPreview ?? null;
 const optimizationBaseline = globalThis.TycoonOptimizationBaseline ?? null;
 const optimizationProgress = globalThis.TycoonOptimizationProgress ?? null;
 const baseTileSize = 24;
+const workspaceStorageKey = 'tycoon-sim-2:benchmark-workspace:v1';
+const plannerModeStorageKey = 'tycoon-sim-2:planner-mode:v1';
+const generationBaselineStorageKey = 'tycoon-sim-2:generation-baseline:v1';
+const viewPreferencesStorageKey = 'tycoon-sim-2:view-preferences:v1';
+const portableItemPattern = /Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i;
+const conveyorCatalog = [
+  { key: 'conveyor::quarter', name: 'Quarter Conveyor', type: 'conveyor', size: { width: 1, length: 1 }, speed: 12 },
+  { key: 'conveyor::half', name: 'Half Conveyor', type: 'conveyor', size: { width: 2, length: 1 }, speed: 12 },
+  { key: 'conveyor::normal', name: 'Normal Conveyor', type: 'conveyor', size: { width: 2, length: 2 }, speed: 12 },
+  { key: 'conveyor::supercharged', name: 'Supercharged Conveyor', type: 'conveyor', size: { width: 2, length: 2 }, speed: 18 },
+  { key: 'conveyor::centering', name: 'Centering Conveyor', type: 'conveyor', size: { width: 2, length: 2 }, speed: 12 },
+  { key: 'conveyor::ultracharged', name: 'Ultracharged Conveyor', type: 'conveyor', size: { width: 4, length: 2 }, speed: 24 },
+  { key: 'conveyor::wall', name: 'Conveyor Wall', type: 'conveyor', size: { width: 1, length: 2 }, speed: null, description: '1x2 barrier for keeping fast ore on safe turns', wall: true, nonTransport: true },
+  { key: 'teleporter::red-sender', name: 'Red Teleporter Sender', type: 'conveyor', size: { width: 2, length: 2 }, speed: null, description: 'Teleporter sender · Rebirth 5', teleporterColor: 'red', teleporterRole: 'sender' },
+  { key: 'teleporter::red-receiver', name: 'Red Teleporter Receiver', type: 'conveyor', size: { width: 4, length: 2 }, speed: 12, description: 'Teleporter receiver · Speed 12 · Rebirth 5', teleporterColor: 'red', teleporterRole: 'receiver' },
+  { key: 'teleporter::blue-sender', name: 'Blue Teleporter Sender', type: 'conveyor', size: { width: 2, length: 2 }, speed: null, description: 'Teleporter sender · Rebirth 5', teleporterColor: 'blue', teleporterRole: 'sender' },
+  { key: 'teleporter::blue-receiver', name: 'Blue Teleporter Receiver', type: 'conveyor', size: { width: 4, length: 2 }, speed: 12, description: 'Teleporter receiver · Speed 12 · Rebirth 5', teleporterColor: 'blue', teleporterRole: 'receiver' },
+];
+let libraryCategory = 'dropper';
+let buildInteraction = null;
+let placementGhost = null;
+let massPlacementDrag = null;
+let suppressGridClick = false;
+let boxSelectionDrag = null;
+let massMoveInteraction = null;
+const massSelectedIds = new Set();
+let plannerMode = 'build';
+let tooltipHideTimer = null;
+const libraryTierOrder = ['Standard', 'Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Secret', 'Unknown'];
+const libraryVariantOrder = ['Base', 'Shiny', 'Mythic', 'Shiny Mythic', 'Standard'];
 
 function loadWorkflowProgress(progress) {
   if (!progress || typeof progress !== 'object') return false;
@@ -52,6 +103,20 @@ function applyGridZoom(value) {
   zoomLabel.textContent = `${zoom}%`;
   document.documentElement.style.setProperty('--tile', `${baseTileSize * zoom / 100}px`);
   document.documentElement.style.setProperty('--grid-zoom', String(zoom / 100));
+  saveViewPreferences();
+}
+
+function applyBaseSize(value) {
+  const size = Math.min(Number(sizeSlider.max), Math.max(Number(sizeSlider.min), Math.round(Number(value))));
+  sizeSlider.value = size;
+  if (plannerMode === 'build' && validation?.kind === 'manual-simulation') {
+    validation = null;
+    workflowStage = Math.min(workflowStage, 2);
+    renderWorkflow();
+  }
+  renderGrid(size);
+  saveWorkspace();
+  saveViewPreferences();
 }
 
 // Coordinates are 1-based to match the labels shown to the player.
@@ -119,6 +184,124 @@ function itemType(name, declaredType = null) {
   return 'upgrader';
 }
 
+function databaseRenderType(record) {
+  if (record.type !== 'upgrader') return record.type;
+  if (portableItemPattern.test(record.name)) return 'portable';
+  if (record.sourceSheets?.some((source) => source.sheet === 'Capgrader')) return 'capgrader';
+  return 'upgrader';
+}
+
+function displayVariant(record) {
+  return record.variant && !/^base$/i.test(record.variant) ? record.variant : 'Base';
+}
+
+function uniqueDatabaseRecords(records) {
+  const primarySheets = { Droppers: 0, Upgraders: 0, Furnaces: 0, Capgrader: 1 };
+  const byKey = new Map();
+  for (const record of records) {
+    const existing = byKey.get(record.key);
+    const priority = primarySheets[record.sheet] ?? 2;
+    const existingPriority = existing ? (primarySheets[existing.sheet] ?? 2) : Infinity;
+    if (!existing || priority < existingPriority) byKey.set(record.key, record);
+  }
+  return [...byKey.values()];
+}
+
+function libraryRecords(category = libraryCategory) {
+  if (category === 'conveyor') return conveyorCatalog;
+  return uniqueDatabaseRecords((globalThis.TycoonDatabase?.records ?? []).filter((record) => (
+    record.type === category && record.size?.width > 0 && record.size?.length > 0
+  )));
+}
+
+function libraryTier(record) {
+  if (record.type === 'conveyor') return record.tier ?? 'Standard';
+  const tier = String(record.rarity ?? 'Unknown').trim();
+  return libraryTierOrder.find((candidate) => candidate.toLowerCase() === tier.toLowerCase()) ?? tier;
+}
+
+function libraryVariant(record) {
+  return record.type === 'conveyor' ? 'Standard' : displayVariant(record);
+}
+
+function compareLibraryRecords(left, right, sortMode = 'tier-name') {
+  const nameComparison = left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+  const variantIndex = (record) => {
+    const index = libraryVariantOrder.indexOf(libraryVariant(record));
+    return index < 0 ? libraryVariantOrder.length : index;
+  };
+  const variantComparison = variantIndex(left) - variantIndex(right);
+  if (sortMode === 'name-asc') return nameComparison || variantComparison;
+  if (sortMode === 'name-desc') return -nameComparison || variantComparison;
+  const leftTier = libraryTierOrder.indexOf(libraryTier(left));
+  const rightTier = libraryTierOrder.indexOf(libraryTier(right));
+  const safeLeftTier = leftTier < 0 ? libraryTierOrder.length : leftTier;
+  const safeRightTier = rightTier < 0 ? libraryTierOrder.length : rightTier;
+  const tierComparison = safeLeftTier - safeRightTier;
+  if (sortMode === 'tier-desc') {
+    const leftUnknown = libraryTier(left) === 'Unknown' || leftTier < 0;
+    const rightUnknown = libraryTier(right) === 'Unknown' || rightTier < 0;
+    if (leftUnknown !== rightUnknown) return leftUnknown ? 1 : -1;
+    return -tierComparison || nameComparison || variantComparison;
+  }
+  return tierComparison || nameComparison || variantComparison;
+}
+
+function filteredAndSortedLibraryRecords(records, options = {}) {
+  const query = String(options.query ?? '').trim().toLowerCase();
+  const tier = options.tier ?? 'all';
+  const variant = options.variant ?? 'all';
+  return records.filter((record) => (
+    (!query || `${record.name} ${libraryVariant(record)} ${libraryTier(record)}`.toLowerCase().includes(query))
+    && (tier === 'all' || libraryTier(record) === tier)
+    && (variant === 'all' || libraryVariant(record) === variant)
+  )).sort((left, right) => compareLibraryRecords(left, right, options.sortMode));
+}
+
+function updateLibraryFilterButton() {
+  const activeFilters = Number(libraryTierFilter.value !== 'all') + Number(libraryVariantFilter.value !== 'all');
+  libraryFilterToggle.textContent = activeFilters ? `Filter & sort (${activeFilters})` : 'Filter & sort';
+  libraryFilterToggle.classList.toggle('has-active-filters', activeFilters > 0);
+}
+
+function renderItemLibrary() {
+  const records = filteredAndSortedLibraryRecords(libraryRecords(), {
+    query: itemSearch.value,
+    tier: libraryTierFilter.value,
+    variant: libraryVariantFilter.value,
+    sortMode: librarySort.value,
+  });
+  updateLibraryFilterButton();
+  libraryCount.textContent = `${records.length} item${records.length === 1 ? '' : 's'}`;
+  itemLibrary.replaceChildren();
+  if (!records.length) {
+    const empty = document.createElement('p');
+    empty.className = 'library-empty';
+    empty.textContent = 'No database items match this search.';
+    itemLibrary.append(empty);
+    return;
+  }
+  records.forEach((record) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `library-item${buildInteraction?.record?.key === record.key ? ' is-selected' : ''}`;
+    button.dataset.itemKey = record.key;
+    button.setAttribute('role', 'listitem');
+    const name = document.createElement('strong');
+    name.textContent = record.name;
+    const meta = document.createElement('small');
+    meta.textContent = record.type === 'conveyor'
+      ? (record.description ?? `Speed ${record.speed}`)
+      : `${displayVariant(record)} · ${record.rarity ?? 'Unknown rarity'}`;
+    const size = document.createElement('span');
+    size.className = 'library-size';
+    size.textContent = `${record.size.width}x${record.size.length}`;
+    button.append(name, meta, size);
+    button.addEventListener('click', () => startPlacingRecord(record));
+    itemLibrary.append(button);
+  });
+}
+
 function shortLabel(name) {
   return name
     .replace('Shiny Mythic ', '')
@@ -145,7 +328,8 @@ function escapeHtml(value) {
 
 function formatStats(stats) {
   if (typeof stats === 'string') return stats;
-  const entries = Object.entries(stats ?? {});
+  const entries = Object.entries(stats ?? {})
+    .filter(([label]) => !/^(Effects|Description)$/i.test(label));
   if (entries.length === 0) return 'No stats loaded.';
   return entries.map(([label, value]) => `${label}: ${value}`).join(' · ');
 }
@@ -171,14 +355,15 @@ function statsSectionsHtml(stats) {
     return `<section class="item-stat-section"><h3>Item stats</h3><p>${escapeHtml(stats)}</p></section>`;
   }
 
-  const entries = Object.entries(stats ?? {});
+  const entries = Object.entries(stats ?? {})
+    .filter(([label]) => !/^(Effects|Description)$/i.test(label));
   if (entries.length === 0) {
     return '<section class="item-stat-section"><h3>Item stats</h3><p>No stats loaded.</p></section>';
   }
 
   const isOreTracking = ([label]) => /^Ore (value|size) (before|after)$/i.test(label);
   const isTiming = ([label]) => /^(Arrival time|Time across)/i.test(label);
-  const isEffectTracking = ([label]) => /^(Effect|Next remover|Route to safety|Destruction timer|Safety margin)/i.test(label);
+  const isEffectTracking = ([label]) => /^(Effect|Effect behavior|Possible effect|Next remover|Route to safety|Destruction timer|Safety margin)$/i.test(label);
   const isLambdaValueTracking = ([label]) => /^(Expected ore value before Lambda|Good outcome)/i.test(label);
   const isDestructionTracking = ([label]) => /^(Intrinsic survival|Survival including|Destruction at|(?:.+ )?Total ore destruction)/i.test(label);
   const oreTracking = entries.filter(isOreTracking);
@@ -224,20 +409,295 @@ function statsSectionsHtml(stats) {
       </section>` : ''}`;
 }
 
+function simulationMoney(value) {
+  return abbreviatedRate(Number(value ?? 0)).replace('/min', '');
+}
+
+function manualSimulationItemHtml(item) {
+  if (validation?.kind !== 'manual-simulation') return '';
+  const routeStages = validation.routes.flatMap((route) => (
+    (route.stages ?? []).filter((stage) => stage.itemId === item.id).map((stage) => ({ route, stage }))
+  ));
+  const relevantDiagnostics = validation.diagnostics.filter((entry) => (
+    entry.itemId === item.id || entry.dropperId === item.id
+  ));
+  const sampleOutcomeStage = routeStages.find(({ stage }) => stage.outcomeModel?.outcomes?.length)?.stage;
+  let rows = '';
+  if (item.type === 'dropper') {
+    const route = validation.routes.find((entry) => entry.dropperId === item.id);
+    rows = route ? `
+      <div class="item-stat-row"><span class="item-stat-label">Route</span><span class="item-stat-value">Dropper #${route.dropperOrder}</span></div>
+      <div class="item-stat-row"><span class="item-stat-label">Starting ore value</span><span class="item-stat-value">${route.startingValue == null ? 'N/A' : simulationMoney(route.startingValue)}</span></div>
+      <div class="item-stat-row"><span class="item-stat-label">Reaches furnace</span><span class="item-stat-value">${route.reachedFurnace ? 'Yes' : 'No'}</span></div>
+      <div class="item-stat-row"><span class="item-stat-label">Route time</span><span class="item-stat-value">${route.seconds == null ? 'N/A' : `${route.seconds.toFixed(3)}s`}</span></div>
+      <div class="item-stat-row"><span class="item-stat-label">Value before furnace</span><span class="item-stat-value">${route.valueBeforeFurnace == null ? 'N/A' : simulationMoney(route.valueBeforeFurnace)}</span></div>
+      <div class="item-stat-row"><span class="item-stat-label">Survival to furnace</span><span class="item-stat-value">${((route.survival ?? 0) * 100).toFixed(2)}%</span></div>
+      <div class="item-stat-row"><span class="item-stat-label">Destroyed ore</span><span class="item-stat-value">${(route.destroyedOresPerMinute ?? 0).toFixed(2)}/min</span></div>` : '<p>This dropper was not included in the last simulation.</p>';
+  } else if (item.type === 'furnace') {
+    const successful = validation.routes.filter((route) => route.reachedFurnace);
+    rows = successful.length ? `<table class="simulation-hover-table">
+      <thead><tr><th>Dropper</th><th>Before furnace</th><th>After furnace</th><th>Survival</th></tr></thead>
+      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${simulationMoney(route.cashPerOre)}</td><td>${((route.survival ?? 0) * 100).toFixed(2)}%</td></tr>`).join('')}</tbody>
+    </table>` : '<p>No simulated ore reaches this furnace.</p>';
+  } else if (routeStages.length) {
+    rows = `<table class="simulation-hover-table">
+      <thead><tr><th>Dropper</th><th>Before</th><th>Expected after (survivors)</th><th>Expected per input</th><th>Destroyed here</th><th>Ore size</th><th>Time after</th></tr></thead>
+      <tbody>${routeStages.map(({ route, stage }) => `<tr>
+        <td>#${route.dropperOrder}</td>
+        <td>${simulationMoney(stage.beforeValue)}</td>
+        <td>${simulationMoney(stage.afterValue)}</td>
+        <td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>
+        <td>${((stage.destructionChance ?? 0) * 100).toFixed(2)}%</td>
+        <td>${stage.beforeOreSize.toFixed(3)} &rarr; ${stage.afterOreSize.toFixed(3)}</td>
+        <td>${stage.arrivalSeconds.toFixed(3)}s</td>
+      </tr>`).join('')}</tbody>
+    </table>
+    <div class="simulation-secondary-stats">${routeStages.map(({ route, stage }) => (
+      `<span>#${route.dropperOrder}: cumulative survival ${(stage.survivalBefore * 100).toFixed(2)}% &rarr; ${(stage.survivalAfter * 100).toFixed(2)}% &middot; ${(stage.destroyedOresPerMinute ?? 0).toFixed(2)} ore destroyed/min &middot; replication ${stage.replicationBefore.toFixed(2)}&times; &rarr; ${stage.replicationAfter.toFixed(2)}&times;</span>`
+    )).join('')}</div>
+    ${sampleOutcomeStage ? `<div class="simulation-outcome-summary">
+      <strong>RNG outcomes</strong>
+      <p>${sampleOutcomeStage.outcomeModel.outcomes.map((outcome) => `${escapeHtml(outcome.label)} ${(outcome.probability * 100).toFixed(2)}%${outcome.destroyed ? ' (destroyed)' : ''}`).join(' &middot; ')}</p>
+    </div>` : ''}`;
+  } else rows = '<p>No simulated ore passes through this item.</p>';
+  return `
+    <section class="item-stat-section ore-tracking simulation-item-tracking">
+      <h3>Last base simulation</h3>
+      ${rows}
+      ${relevantDiagnostics.length ? `<div class="simulation-item-errors">${relevantDiagnostics.map((entry) => `<p><strong>${escapeHtml(entry.code)}</strong> ${escapeHtml(entry.message)}</p>`).join('')}</div>` : ''}
+    </section>`;
+}
+
+function categorizedManualSimulationHtml(item) {
+  if (validation?.kind !== 'manual-simulation') return '';
+  const routeStages = validation.routes.flatMap((route) => (
+    (route.stages ?? []).filter((stage) => stage.itemId === item.id).map((stage) => ({ route, stage }))
+  ));
+  const relevantDiagnostics = validation.diagnostics.filter((entry) => (
+    entry.itemId === item.id || entry.dropperId === item.id
+  ));
+  const diagnosticsHtml = relevantDiagnostics.length ? `
+    <section class="item-stat-section simulation-diagnostic-tracking simulation-item-tracking">
+      <h3>Simulation warnings</h3>
+      ${relevantDiagnostics.map((entry) => `<p><strong>${escapeHtml(entry.code)}</strong> ${escapeHtml(entry.message)}</p>`).join('')}
+    </section>` : '';
+
+  if (item.type === 'dropper') {
+    const route = validation.routes.find((entry) => entry.dropperId === item.id);
+    if (!route) return `<section class="item-stat-section timing-tracking simulation-item-tracking"><h3>Route result</h3><p>This dropper was not included in the last simulation.</p></section>${diagnosticsHtml}`;
+    const destructionHtml = (route.destroyedOresPerMinute ?? 0) > .000001 ? `
+      <section class="item-stat-section destruction-tracking simulation-item-tracking">
+        <h3>Ore destruction</h3>
+        <div class="item-stat-grid">${statRowsHtml([
+          ['Survival to furnace', `${((route.survival ?? 0) * 100).toFixed(2)}%`],
+          ['Destroyed ore', `${route.destroyedOresPerMinute.toFixed(2)}/min`],
+        ])}</div>
+      </section>` : '';
+    return `
+      <section class="item-stat-section timing-tracking simulation-item-tracking">
+        <h3>Route result</h3>
+        <div class="item-stat-grid">${statRowsHtml([
+          ['Route', `Dropper #${route.dropperOrder}`],
+          ['Reaches furnace', route.reachedFurnace ? 'Yes' : 'No'],
+          ['Route time', route.seconds == null ? 'N/A' : `${route.seconds.toFixed(3)}s`],
+          ...((route.teleporterJumps ?? []).length ? [['Teleporter', route.teleporterJumps.map((jump) => `${jump.color} sender → receiver`).join(', ')]] : []),
+        ])}</div>
+      </section>
+      <section class="item-stat-section value-tracking simulation-item-tracking">
+        <h3>Ore value</h3>
+        <div class="item-stat-grid">${statRowsHtml([
+          ['Starting value', route.startingValue == null ? 'N/A' : simulationMoney(route.startingValue)],
+          ['Before furnace', route.valueBeforeFurnace == null ? 'N/A' : simulationMoney(route.valueBeforeFurnace)],
+        ])}</div>
+      </section>
+      ${destructionHtml}${diagnosticsHtml}`;
+  }
+
+  if (item.type === 'furnace') {
+    const successful = validation.routes.filter((route) => route.reachedFurnace);
+    const rows = successful.length ? `<table class="simulation-hover-table">
+      <thead><tr><th>Dropper</th><th>Before furnace</th><th>Cash per ore</th></tr></thead>
+      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${simulationMoney(route.cashPerOre)}</td></tr>`).join('')}</tbody>
+    </table>` : '<p>No simulated ore reaches this furnace.</p>';
+    return `<section class="item-stat-section value-tracking simulation-item-tracking"><h3>Furnace payout</h3>${rows}</section>${diagnosticsHtml}`;
+  }
+
+  if (item.teleporterRole) {
+    const matchingRoutes = validation.routes.filter((route) => (route.teleporterJumps ?? []).some((jump) => (
+      item.teleporterRole === 'sender' ? jump.senderId === item.id : jump.receiverId === item.id
+    )));
+    const routeText = matchingRoutes.length
+      ? matchingRoutes.map((route) => `#${route.dropperOrder} → furnace`).join(', ')
+      : 'No simulated dropper route uses this teleporter.';
+    return `<section class="item-stat-section timing-tracking simulation-item-tracking">
+      <h3>Teleporter route</h3>
+      <div class="item-stat-grid">${statRowsHtml([
+        ['Pair', `${item.teleporterColor} sender → receiver`],
+        ['This part', item.teleporterRole],
+        ['Routes using warp', routeText],
+      ])}</div>
+    </section>${diagnosticsHtml}`;
+  }
+
+  if (!routeStages.length) {
+    return `<section class="item-stat-section timing-tracking simulation-item-tracking"><h3>Route result</h3><p>No simulated ore passes through this item.</p></section>${diagnosticsHtml}`;
+  }
+
+  const hasRng = routeStages.some(({ stage }) => stage.outcomeModel?.outcomes?.length);
+  const changesValue = routeStages.some(({ stage }) => Math.abs(stage.afterValue - stage.beforeValue) > .000001);
+  const changesSize = routeStages.some(({ stage }) => Math.abs(stage.afterOreSize - stage.beforeOreSize) > .000001);
+  const changesReplication = routeStages.some(({ stage }) => Math.abs(stage.replicationAfter - stage.replicationBefore) > .000001);
+  const hasImmediateDestruction = routeStages.some(({ stage }) => (stage.destructionChance ?? 0) > .000001);
+  const effectSafetyEntries = routeStages.flatMap(({ route, stage }) => (
+    (stage.effectSafety ?? []).map((effect) => ({ route, stage, effect }))
+  ));
+  const unsafeEffectEntries = effectSafetyEntries.filter(({ effect }) => !effect.safe);
+  const destroysOre = hasImmediateDestruction || unsafeEffectEntries.length > 0;
+  const sampleModel = routeStages.find(({ stage }) => stage.outcomeModel?.outcomes?.length)?.stage.outcomeModel;
+  const survivingOutcomes = sampleModel?.outcomes?.filter((outcome) => !outcome.destroyed) ?? [];
+  const destructiveOutcomes = sampleModel?.outcomes?.filter((outcome) => outcome.destroyed) ?? [];
+  const itemSurvivalChance = survivingOutcomes.reduce((total, outcome) => total + outcome.probability, 0);
+  const sparkleOutcome = sampleModel?.outcomes?.find((outcome) => /sparkle/i.test(outcome.label));
+  const crossingSeconds = Math.max(...routeStages.map(({ stage }) => Number(stage.crossingSeconds ?? 0)));
+  const phantomZones = validation.routes.flatMap((route) => (
+    (route.phantomZones ?? [])
+      .filter((zone) => zone.sourceItemId === item.id)
+      .map((zone) => ({ route, zone }))
+  ));
+
+  const timingHtml = `
+    <section class="item-stat-section timing-tracking simulation-item-tracking">
+      <h3>Route timing</h3>
+      <div class="item-stat-grid">${statRowsHtml([
+        ['Arrival time from droppers', routeStages.map(({ route, stage }) => `#${route.dropperOrder} ${(stage.arrivalSeconds - (stage.crossingSeconds ?? 0)).toFixed(3)}s`).join(' Â· ')],
+        ['Time across item', `${crossingSeconds.toFixed(3)}s`],
+      ])}</div>
+    </section>`;
+
+  const valueHtml = (changesValue || hasRng) ? `
+    <section class="item-stat-section value-tracking simulation-item-tracking">
+      <h3>${hasRng ? 'Expected value & RNG' : 'Ore value'}</h3>
+      <table class="simulation-hover-table">
+        <thead><tr><th>Dropper</th><th>Before</th><th>${hasRng ? 'Expected after (survivors)' : 'After'}</th>${hasRng ? '<th>Expected per input</th>' : ''}</tr></thead>
+        <tbody>${routeStages.map(({ route, stage }) => `<tr>
+          <td>#${route.dropperOrder}</td><td>${simulationMoney(stage.beforeValue)}</td><td>${simulationMoney(stage.afterValue)}</td>${hasRng ? `<td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>` : ''}
+        </tr>`).join('')}</tbody>
+      </table>
+      ${survivingOutcomes.length ? `<div class="simulation-outcome-list"><h4>Surviving outcomes</h4>${survivingOutcomes.map((outcome) => `<div><span>${escapeHtml(outcome.label)}</span><strong>${(outcome.probability * 100).toFixed(2)}%</strong></div>`).join('')}</div>` : ''}
+    </section>` : '';
+
+  const destructionHtml = destroysOre ? `
+    <section class="item-stat-section destruction-tracking simulation-item-tracking">
+      <h3>Ore destruction</h3>
+      ${hasImmediateDestruction ? `<table class="simulation-hover-table">
+        <thead><tr><th>Dropper</th><th>Reaches item</th><th>Still alive after</th><th>Destroyed here</th><th>Destroyed/min</th></tr></thead>
+        <tbody>${routeStages.map(({ route, stage }) => `<tr>
+          <td>#${route.dropperOrder}</td><td>${(stage.survivalBefore * 100).toFixed(2)}%</td><td>${(stage.survivalAfter * 100).toFixed(2)}%</td><td>${((stage.survivalBefore - stage.survivalAfter) * 100).toFixed(2)}%</td><td>${(stage.destroyedOresPerMinute ?? 0).toFixed(2)}</td>
+        </tr>`).join('')}</tbody>
+      </table><p class="simulation-card-note">Percentages compare against the dropper's original ore output.</p>` : ''}
+      ${unsafeEffectEntries.length ? `<table class="simulation-hover-table effect-destruction-table">
+        <thead><tr><th>Dropper</th><th>Effect</th><th>Destroyed when timer ends</th><th>Destroyed/min</th></tr></thead>
+        <tbody>${unsafeEffectEntries.map(({ route, effect }) => `<tr><td>#${route.dropperOrder}</td><td>${escapeHtml(effect.effect)}</td><td>${(effect.destroyedOriginalFraction * 100).toFixed(2)}%</td><td>${effect.destroyedOresPerMinute.toFixed(2)}</td></tr>`).join('')}</tbody>
+      </table>` : ''}
+      ${destructiveOutcomes.length ? `<div class="simulation-outcome-list destructive-outcomes"><h4>What happens at this item</h4><p class="simulation-card-note">These chances apply to each ore that reaches the item.</p><div><span>Survives this item</span><strong>${(itemSurvivalChance * 100).toFixed(2)}%</strong></div>${destructiveOutcomes.map((outcome) => `<div><span>${escapeHtml(outcome.label)}</span><strong>${(outcome.probability * 100).toFixed(2)}%</strong></div>`).join('')}</div>` : ''}
+    </section>` : '';
+
+  const sizeHtml = changesSize ? `
+    <section class="item-stat-section size-tracking simulation-item-tracking">
+      <h3>Ore size</h3>
+      <div class="item-stat-grid">${statRowsHtml(routeStages.map(({ route, stage }) => [
+        `Dropper #${route.dropperOrder}`,
+        `${stage.beforeOreSize.toFixed(3)} -> ${stage.afterOreSize.toFixed(3)}`,
+      ]))}</div>
+    </section>` : '';
+
+  const replicationHtml = changesReplication ? `
+    <section class="item-stat-section replication-tracking simulation-item-tracking">
+      <h3>Ore replication</h3>
+      <div class="item-stat-grid">${statRowsHtml(routeStages.map(({ route, stage }) => [
+        `Dropper #${route.dropperOrder}`,
+        `${stage.replicationBefore.toFixed(2)}x -> ${stage.replicationAfter.toFixed(2)}x`,
+      ]))}</div>
+    </section>` : '';
+
+  const effectHtml = (effectSafetyEntries.length || sparkleOutcome) ? `
+    <section class="item-stat-section effect-tracking simulation-item-tracking">
+      <h3>Effect & safety</h3>
+      ${effectSafetyEntries.length ? `<table class="simulation-hover-table effect-safety-table">
+        <thead><tr><th>Dropper</th><th>Effect</th><th>Safety point</th><th>Exposure</th><th>Timer</th><th>Margin</th><th>Result</th></tr></thead>
+        <tbody>${effectSafetyEntries.map(({ route, effect }) => `<tr><td>#${route.dropperOrder}</td><td>${escapeHtml(effect.effect)}</td><td>${escapeHtml(effect.removedBy)}</td><td>${effect.exposureSeconds.toFixed(3)}s</td><td>${effect.timerSeconds.toFixed(3)}s</td><td>${effect.marginSeconds >= 0 ? '+' : ''}${effect.marginSeconds.toFixed(3)}s</td><td class="${effect.safe ? 'effect-safe' : 'effect-unsafe'}">${effect.immune ? 'Immune' : (effect.safe ? 'Safe' : 'Destroyed')}</td></tr>`).join('')}</tbody>
+      </table>` : ''}
+      ${sparkleOutcome ? `<div class="item-stat-grid">${statRowsHtml([
+        ['Possible effect', 'Sparkles'],
+        ['Outcome chance', `${(sparkleOutcome.probability * 100).toFixed(2)}%`],
+        ['Effect behavior', 'Cosmetic; it does not destroy or otherwise change the ore by itself.'],
+      ])}</div>` : ''}
+    </section>` : '';
+
+  const phantomZoneHtml = phantomZones.length ? `
+    <section class="item-stat-section phantom-zone-tracking simulation-item-tracking">
+      <h3>Phantom-zone estimate</h3>
+      <p class="simulation-card-note">Each surviving marked ore triggers uniformly from 1–15 seconds. A zone remains at that route position for 30 seconds; ore reaching the furnace before its trigger does not spawn a zone. Rates include the current ore-cap throughput adjustment.</p>
+      <table class="simulation-hover-table">
+        <thead><tr><th>Dropper</th><th>Triggers before furnace</th><th>Spawns/min</th><th>Active zones</th><th>Ore spacing</th></tr></thead>
+        <tbody>${phantomZones.map(({ route, zone }) => `<tr><td>#${route.dropperOrder}</td><td>${(zone.spawnBeforeFurnaceProbability * 100).toFixed(2)}%</td><td>${zone.expectedSpawnsPerMinute.toFixed(2)}</td><td>${zone.expectedActiveZones.toFixed(2)}</td><td>${zone.dropIntervalSeconds == null ? 'N/A' : `${zone.dropIntervalSeconds.toFixed(3)}s`}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="item-stat-grid">${statRowsHtml([
+        ['Random trigger', 'Uniform from 1–15 seconds'],
+        ['Zone lifetime', `${phantomZones[0].zone.zoneLifetimeSeconds}s`],
+        ['Phantom multiplier', `${Number(phantomZones[0].zone.multiplier).toFixed(2)}×`],
+        ['Maximum boosts per ore', '3'],
+      ])}</div>
+      <details class="phantom-zone-breakdown">
+        <summary>Per-section spawn estimate</summary>
+        ${phantomZones.map(({ route, zone }) => `<table class="simulation-hover-table">
+          <thead><tr><th>Dropper</th><th>Section</th><th>Trigger time</th><th>Spawn chance</th><th>Active zones</th></tr></thead>
+          <tbody>${zone.candidates.map((candidate) => `<tr><td>#${route.dropperOrder}</td><td>${escapeHtml(candidate.name ?? candidate.componentId)}</td><td>${candidate.startSeconds.toFixed(3)}–${candidate.endSeconds.toFixed(3)}s</td><td>${(candidate.spawnProbability * 100).toFixed(2)}%</td><td>${candidate.expectedActiveZones.toFixed(2)}</td></tr>`).join('')}</tbody>
+        </table>`).join('')}
+      </details>
+    </section>` : '';
+
+  return `${timingHtml}${phantomZoneHtml}${destructionHtml}${valueHtml}${sizeHtml}${replicationHtml}${effectHtml}${diagnosticsHtml}`;
+}
+
 function itemDetailsHtml(item) {
   const processingZone = furnaceProcessingZoneGeometry(item);
   return `
     <strong>${escapeHtml(item.name)}</strong>
-    <p>${escapeHtml(item.description ?? 'No description loaded for this item.')}</p>
+    <p>${escapeHtml(displayItemDescription(item))}</p>
+    ${categorizedManualSimulationHtml(item)}
     ${statsSectionsHtml(item.stats)}
     <dl class="item-meta">
       <dt>Database size</dt><dd>${item.itemWidth}×${item.itemLength}</dd>
       <dt>Grid footprint</dt><dd>${item.width}×${item.height}</dd>
       <dt>Top-left</dt><dd>${columnName(item.x)}${item.y}</dd>
+      ${item.coordinateRange ? `<dt>Mapped range</dt><dd>${escapeHtml(item.coordinateRange)}</dd>
+        <dt>Occupied cells</dt><dd>${item.occupiedCells.length}</dd>` : ''}
       <dt>Facing</dt><dd>${escapeHtml(item.direction)}</dd>
       ${processingZone ? `
         <dt>Processing zone</dt><dd>${processingZone.width}×${processingZone.height} at ${coordinateRange(processingZone)}</dd>
         <dt>Zone placement</dt><dd>${escapeHtml(item.processingZonePlacement.replaceAll('-', ' '))}</dd>` : ''}
+    </dl>`;
+}
+
+function conveyorDetailsHtml(conveyor) {
+  const isTeleporter = Boolean(conveyor.teleporterRole);
+  const isWall = Boolean(conveyor.wall);
+  return `
+    <strong>${escapeHtml(conveyor.conveyor)}</strong>
+    <p>${isWall
+      ? 'A separate 1x2 barrier. It occupies grid space and does not transport ore.'
+      : isTeleporter
+      ? `${escapeHtml(conveyor.teleporterColor)} teleporter ${escapeHtml(conveyor.teleporterRole)} · requires Rebirth 5.`
+      : 'External conveyor segment from the planner rules.'}</p>
+    ${categorizedManualSimulationHtml(conveyor)}
+    <dl class="item-meta">
+      <dt>Grid footprint</dt><dd>${conveyor.width}x${conveyor.height}</dd>
+      <dt>Top-left</dt><dd>${columnName(conveyor.x)}${conveyor.y}</dd>
+      ${conveyor.coordinateRange ? `<dt>Mapped range</dt><dd>${escapeHtml(conveyor.coordinateRange)}</dd>
+        <dt>Occupied cells</dt><dd>${conveyor.occupiedCells.length}</dd>` : ''}
+      <dt>Facing</dt><dd>${escapeHtml(conveyor.direction)}</dd>
+      ${conveyor.speed != null ? `<dt>Speed</dt><dd>${conveyor.speed}</dd>` : ''}
     </dl>`;
 }
 
@@ -279,6 +739,27 @@ function updateItemGeometry(item, { x = item.x, y = item.y, direction = item.dir
     height: portable
       ? (horizontal ? item.itemLength : item.itemWidth)
       : (horizontal ? item.itemWidth : item.itemLength),
+  };
+}
+
+function updateConveyorGeometry(conveyor, {
+  x = conveyor.x,
+  y = conveyor.y,
+  direction = conveyor.direction,
+} = {}) {
+  const definition = conveyorCatalog.find((entry) => entry.name === conveyor.conveyor);
+  const itemWidth = conveyor.itemWidth ?? definition?.size.width;
+  const itemLength = conveyor.itemLength ?? definition?.size.length;
+  const horizontal = direction === 'east' || direction === 'west';
+  return {
+    ...conveyor,
+    x,
+    y,
+    direction,
+    itemWidth,
+    itemLength,
+    width: horizontal ? itemLength : itemWidth,
+    height: horizontal ? itemWidth : itemLength,
   };
 }
 
@@ -356,8 +837,29 @@ function coordinateRange({ x, y, width, height }) {
   return start === end ? start : `${start}:${end}`;
 }
 
+function mapPlacementCoordinates(placement) {
+  const occupiedCells = [];
+  for (let y = placement.y; y < placement.y + placement.height; y += 1) {
+    for (let x = placement.x; x < placement.x + placement.width; x += 1) {
+      occupiedCells.push({ x, y, coordinate: `${columnName(x)}${y}` });
+    }
+  }
+  const topLeft = `${columnName(placement.x)}${placement.y}`;
+  const bottomRight = `${columnName(placement.x + placement.width - 1)}${placement.y + placement.height - 1}`;
+  return {
+    ...placement,
+    topLeft,
+    bottomRight,
+    facing: placement.direction,
+    footprint: { width: placement.width, height: placement.height },
+    occupiedCells,
+    coordinateRange: topLeft === bottomRight ? topLeft : `${topLeft}:${bottomRight}`,
+  };
+}
+
 let activePlan = null;
 let selectedItemId = null;
+let hoveredPlacementId = null;
 let editNotice = '';
 
 function clearPlanner() {
@@ -370,7 +872,219 @@ function clearPlanner() {
   workflowStage = 0;
   workflowProgress = null;
   selectedItemId = null;
+  hoveredPlacementId = null;
   editNotice = '';
+}
+
+function browserStorage() {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function saveViewPreferences() {
+  const storage = browserStorage();
+  if (!storage) return false;
+  try {
+    storage.setItem(viewPreferencesStorageKey, JSON.stringify({
+      version: 1,
+      baseSize: Number(sizeSlider.value),
+      gridZoom: Number(zoomSlider.value),
+    }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function loadViewPreferences() {
+  const storage = browserStorage();
+  if (!storage) return false;
+  try {
+    const saved = JSON.parse(storage.getItem(viewPreferencesStorageKey));
+    if (saved?.version !== 1) return false;
+    const baseSize = Number(saved.baseSize);
+    const gridZoom = Number(saved.gridZoom);
+    if (baseSize >= Number(sizeSlider.min) && baseSize <= Number(sizeSlider.max)) sizeSlider.value = baseSize;
+    if (gridZoom >= Number(zoomSlider.min) && gridZoom <= Number(zoomSlider.max)) zoomSlider.value = gridZoom;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function savePlannerMode() {
+  const storage = browserStorage();
+  if (!storage) return false;
+  try {
+    storage.setItem(plannerModeStorageKey, plannerMode);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function loadPlannerMode() {
+  const storage = browserStorage();
+  if (!storage) return 'build';
+  try {
+    const savedMode = storage.getItem(plannerModeStorageKey);
+    return savedMode === 'generation' ? 'generation' : 'build';
+  } catch {
+    return 'build';
+  }
+}
+
+function applyPlannerModeUi() {
+  document.body?.classList?.toggle('mode-build', plannerMode === 'build');
+  document.body?.classList?.toggle('mode-generation', plannerMode === 'generation');
+  (plannerModeToggle.querySelectorAll?.('[data-planner-mode]') ?? []).forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.plannerMode === plannerMode));
+  });
+  renderKeybindGuide();
+}
+
+function generationSourceSignature() {
+  const generatedPlan = globalThis.TycoonActivePlan;
+  return JSON.stringify({
+    activePlan: generatedPlan ? {
+      valid: generatedPlan.valid,
+      title: generatedPlan.title,
+      profile: generatedPlan.profile,
+      items: generatedPlan.items?.map(({ id, name, variant, x, y, width, height, direction }) => (
+        { id, name, variant, x, y, width, height, direction }
+      )),
+      conveyors: generatedPlan.conveyors?.map(({ id, conveyor, x, y, width, height, direction }) => (
+        { id, conveyor, x, y, width, height, direction }
+      )),
+      metrics: generatedPlan.metrics,
+    } : null,
+    workflow: globalThis.TycoonWorkflowState ?? null,
+  });
+}
+
+function generationSourceChanged() {
+  const storage = browserStorage();
+  if (!storage) return false;
+  try {
+    const baseline = storage.getItem(generationBaselineStorageKey);
+    return Boolean(baseline && baseline !== generationSourceSignature());
+  } catch {
+    return false;
+  }
+}
+
+function saveWorkspace() {
+  if (!activePlan || plannerMode !== 'build') return false;
+  try {
+    const storage = globalThis.localStorage;
+    if (!storage) return false;
+    storage.setItem(workspaceStorageKey, JSON.stringify({
+      version: 1,
+      mode: plannerMode,
+      databaseHash: globalThis.TycoonDatabase?.sourceHash ?? null,
+      baseSize: Number(sizeSlider.value),
+      plan: {
+        title: activePlan.title,
+        minimumSize: activePlan.minimumSize,
+        items: activePlan.items,
+        lanes: activePlan.lanes,
+      },
+    }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function loadSavedWorkspace() {
+  if (plannerMode !== 'build') return false;
+  try {
+    const storage = globalThis.localStorage;
+    if (!storage) return false;
+    const saved = JSON.parse(storage.getItem(workspaceStorageKey));
+    if (!saved?.plan || saved.version !== 1) return false;
+    const currentDatabaseHash = globalThis.TycoonDatabase?.sourceHash ?? null;
+    if (saved.databaseHash && currentDatabaseHash && saved.databaseHash !== currentDatabaseHash) return false;
+    const savedSize = Number(saved.baseSize);
+    if (savedSize >= Number(sizeSlider.min) && savedSize <= Number(sizeSlider.max)) sizeSlider.value = savedSize;
+    coordinateMap.push(...(saved.plan.items ?? [])
+      .map((item) => mapPlacementCoordinates(refreshPlacementMetadata(item))));
+    routeSegments.push(...(saved.plan.lanes ?? []).map((lane) => (
+      mapPlacementCoordinates(updateConveyorGeometry(lane))
+    )));
+    validateCoordinateMap(coordinateMap, Number(sizeSlider.value));
+    validateRouteSegments(routeSegments, coordinateMap, Number(sizeSlider.value));
+    activePlan = {
+      title: saved.plan.title ?? 'Benchmark workspace',
+      minimumSize: Number(saved.plan.minimumSize ?? sizeSlider.min),
+      items: coordinateMap,
+      lanes: routeSegments,
+    };
+    workflowStage = 2;
+    editNotice = `Restored ${coordinateMap.length} item${coordinateMap.length === 1 ? '' : 's'} and ${routeSegments.length} conveyor${routeSegments.length === 1 ? '' : 's'} from this browser.`;
+    return true;
+  } catch {
+    coordinateMap.length = 0;
+    routeSegments.length = 0;
+    activePlan = null;
+    return false;
+  }
+}
+
+function resetWorkspaceForMode({ render = true } = {}) {
+  if (itemEditor.open) itemEditor.close();
+  massPlacementDrag = null;
+  boxSelectionDrag = null;
+  massMoveInteraction = null;
+  massSelectedIds.clear();
+  buildInteraction = null;
+  placementGhost = null;
+  clearPlanner();
+  const storage = browserStorage();
+  try {
+    storage?.removeItem(workspaceStorageKey);
+  } catch {
+    // The page still works without persistent browser storage.
+  }
+  if (plannerMode === 'build') {
+    activePlan = {
+      title: 'Manual build workspace',
+      minimumSize: Number(sizeSlider.min),
+      items: coordinateMap,
+      lanes: routeSegments,
+    };
+    workflowStage = 2;
+    editNotice = 'Build mode · Stage 3 ready. Add items now; validation runs only when you request it.';
+    saveWorkspace();
+  } else {
+    workflowStage = 0;
+    editNotice = 'Generation mode · Stage 1 ready for a new generated setup.';
+    try {
+      storage?.setItem(generationBaselineStorageKey, generationSourceSignature());
+    } catch {
+      // Generation mode still resets correctly without persistent storage.
+    }
+  }
+  applyPlannerModeUi();
+  savePlannerMode();
+  if (render) {
+    buildModeMessage('Choose an item, move over the grid, then click to place it.', false);
+    renderWorkflow();
+    renderItemLibrary();
+    renderGrid(Number(sizeSlider.value));
+  }
+}
+
+function setPlannerMode(mode, { reset = true } = {}) {
+  if (!['build', 'generation'].includes(mode)) return false;
+  plannerMode = mode;
+  applyPlannerModeUi();
+  savePlannerMode();
+  if (reset) resetWorkspaceForMode();
+  return true;
 }
 
 function completedStageForPlan(plan) {
@@ -384,17 +1098,44 @@ function completedStageForPlan(plan) {
   return 3;
 }
 
+function runManualSimulation() {
+  if (plannerMode !== 'build') return false;
+  if (buildInteraction) cancelBuildInteraction();
+  simulateBaseButton.disabled = true;
+  simulateBaseButton.textContent = 'Simulatingâ€¦';
+  try {
+    const result = globalThis.TycoonPlanner.simulateManualBase({
+      items: activePlan?.items ?? [],
+      conveyors: activePlan?.lanes ?? [],
+      database: globalThis.TycoonDatabase,
+      plotSize: Number(sizeSlider.value),
+      oreCap: 100,
+    });
+    validation = { ...result, kind: 'manual-simulation' };
+    workflowStage = 3;
+    editNotice = result.valid
+      ? 'Simulation complete. No optimizer or item suggestions were run.'
+      : `Simulation complete with ${result.diagnostics.length} issue${result.diagnostics.length === 1 ? '' : 's'}.`;
+    renderWorkflow();
+    renderGrid(Number(sizeSlider.value));
+    return result.valid;
+  } finally {
+    simulateBaseButton.disabled = false;
+    simulateBaseButton.textContent = 'Simulate base';
+  }
+}
+
 function loadGeneratedPlan(plan) {
   clearPlanner();
   if (!plan?.valid) return false;
   sizeSlider.value = plan.profile.plotSize;
-  coordinateMap.push(...plan.items.map((item, index) => ({
+  coordinateMap.push(...plan.items.map((item, index) => mapPlacementCoordinates({
     ...item,
     order: item.order ?? index + 1,
     label: item.label ?? `${item.order ?? index + 1}. ${shortLabel(item.name)}`,
     stats: item.stats ?? {},
   })));
-  routeSegments.push(...plan.conveyors);
+  routeSegments.push(...plan.conveyors.map(mapPlacementCoordinates));
   const metrics = plan.metrics ?? {};
   const optimization = plan.optimization ?? {};
   validation = {
@@ -442,16 +1183,60 @@ const legendItems = [
   ['portable', 'Portables'], ['furnace', 'Furnace'], ['routing', 'Blue = external conveyor'],
 ];
 
+function phantomZoneOverlayGroups() {
+  if (validation?.kind !== 'manual-simulation') return [];
+  const groups = new Map();
+  for (const route of validation.routes ?? []) {
+    for (const zone of route.phantomZones ?? []) {
+      for (const candidate of zone.candidates ?? []) {
+        const path = candidate.path;
+        if (!path) continue;
+        const groupKey = `${path.x},${path.y},${path.width},${path.height}`;
+        const group = groups.get(groupKey) ?? { path, entries: [] };
+        group.entries.push({ route, zone, candidate });
+        groups.set(groupKey, group);
+      }
+    }
+  }
+  return [...groups.values()];
+}
+
+function renderPhantomZoneOverlays() {
+  const groups = phantomZoneOverlayGroups();
+  for (const group of groups) {
+    const overlay = document.createElement('div');
+    overlay.className = 'phantom-zone-overlay';
+    overlay.style.left = `calc(${group.path.x - 1} * var(--tile))`;
+    overlay.style.top = `calc(${group.path.y - 1} * var(--tile))`;
+    overlay.style.width = `calc(${group.path.width} * var(--tile))`;
+    overlay.style.height = `calc(${group.path.height} * var(--tile))`;
+    overlay.title = group.entries.map(({ route, zone, candidate }) => (
+      `Dropper #${route.dropperOrder}: ${(candidate.spawnProbability * 100).toFixed(2)}% spawn chance here (${candidate.startSeconds.toFixed(3)}-${candidate.endSeconds.toFixed(3)}s); ${candidate.expectedActiveZones.toFixed(2)} expected active zones; ${zone.zoneLifetimeSeconds}s lifetime; ${zone.multiplier}x boost.`
+    )).join('\n');
+    const label = document.createElement('span');
+    label.textContent = `PZ ${group.entries.reduce((total, entry) => total + entry.candidate.expectedActiveZones, 0).toFixed(1)}`;
+    overlay.append(label);
+    grid.append(overlay);
+  }
+  return groups.length;
+}
+
 const conveyorAbbreviations = {
   'Normal Conveyor': 'Con',
   'Supercharged Conveyor': 'Sup',
   'Ultracharged Conveyor': 'Ult',
+  'Conveyor Wall': 'Wall',
   'Centering Conveyor': 'Cen',
   'Half Conveyor': 'Hal',
   'Quarter Conveyor': 'Qua',
+  'Red Teleporter Sender': 'R Send',
+  'Red Teleporter Receiver': 'R Recv',
+  'Blue Teleporter Sender': 'B Send',
+  'Blue Teleporter Receiver': 'B Recv',
 };
 
 function renderGrid(size) {
+  renderKeybindGuide();
   const tiles = size * size;
   grid.replaceChildren();
   grid.style.gridTemplateColumns = `repeat(${size}, var(--tile))`;
@@ -490,6 +1275,7 @@ function renderGrid(size) {
   tileCount.textContent = tiles.toLocaleString();
   status.textContent = `Planning canvas · ${tiles.toLocaleString()} tiles available`;
   renderPlan(size);
+  renderPlacementGhost();
 }
 
 function columnName(number) {
@@ -505,6 +1291,7 @@ function columnName(number) {
 
 function renderWorkflow() {
   const listedItems = activePlan?.items ?? coordinateMap;
+  const buildSimulationVisible = plannerMode !== 'build' || validation?.kind === 'manual-simulation';
   workflowSteps.replaceChildren(...workflow.map((label, index) => {
     const step = document.createElement('li');
     const isDone = index < workflowStage;
@@ -515,7 +1302,7 @@ function renderWorkflow() {
     return step;
   }));
 
-  if (workflowStage >= 2 && listedItems.length) {
+  if (workflowStage >= 2 && listedItems.length && buildSimulationVisible) {
     coordinateSummary.hidden = false;
     coordinateSummary.innerHTML = `
       <table>
@@ -537,7 +1324,7 @@ function renderWorkflow() {
       </table>`;
   }
 
-  if (workflowStage >= 2 && !listedItems.length && workflowProgress) {
+  if (workflowStage >= 2 && !listedItems.length && workflowProgress && buildSimulationVisible) {
     const summary = workflowProgress.summary ?? {};
     coordinateSummary.hidden = false;
     coordinateSummary.innerHTML = `
@@ -550,11 +1337,45 @@ function renderWorkflow() {
       ${workflowProgress.validationPending ? ' · Route validation pending' : ''}`;
   }
 
-  if (workflowStage < 2 || (workflowStage >= 2 && !listedItems.length && !workflowProgress)) coordinateSummary.hidden = true;
+  if (!buildSimulationVisible || workflowStage < 2 || (workflowStage >= 2 && !listedItems.length && !workflowProgress)) coordinateSummary.hidden = true;
   if (workflowStage < 3 || !validation) validationSummary.hidden = true;
 
   if (workflowStage >= 3 && validation) {
     validationSummary.hidden = false;
+    if (validation.kind === 'manual-simulation') {
+      const metrics = validation.metrics;
+      validationSummary.className = `validation-summary${validation.valid ? '' : ' is-error'}`;
+      validationSummary.innerHTML = `
+        <strong>${validation.valid ? 'Simulation complete: every dropper reaches the furnace.' : 'Simulation found base problems.'}</strong>
+        <div class="simulation-metrics">
+          <div class="simulation-metric"><span>Ore reaches end</span><strong>${validation.routes.filter((route) => route.reachedFurnace).length}/${validation.routes.length} routes</strong></div>
+          <div class="simulation-metric"><span>Longest route</span><strong>${metrics.routeTimeSeconds.toFixed(3)} seconds</strong></div>
+          <div class="simulation-metric"><span>Active ore</span><strong>${metrics.cappedActiveOres.toFixed(2)} / ${metrics.oreCap}${metrics.limitedByOreCap ? ' (cap limited)' : ''}</strong></div>
+          <div class="simulation-metric"><span>Projected without cap</span><strong>${metrics.projectedActiveOres.toFixed(2)} ores</strong></div>
+          <div class="simulation-metric"><span>Furnace throughput</span><strong>${metrics.furnaceEntriesPerMinute.toFixed(2)} ores/min</strong></div>
+          <div class="simulation-metric"><span>Ore destroyed</span><strong>${metrics.destroyedOresPerMinute.toFixed(2)} ores/min</strong></div>
+          <div class="simulation-metric"><span>Survival to furnace</span><strong>${(metrics.survivalToFurnace * 100).toFixed(2)}%</strong></div>
+          <div class="simulation-metric"><span>Expected income</span><strong>${abbreviatedRate(metrics.expectedCashPerMinute)}</strong></div>
+          <div class="simulation-metric"><span>Space</span><strong>${metrics.reservedTiles} used / ${metrics.remainingTiles} free</strong></div>
+        </div>
+        ${validation.routes.length ? `<table class="simulation-route-table">
+          <thead><tr><th>Dropper</th><th>Reaches furnace</th><th>Teleporter</th><th>Travel time</th><th>Survival</th><th>Destroyed/min</th><th>Value before furnace</th><th>Value after furnace</th></tr></thead>
+          <tbody>${validation.routes.map((route) => `<tr>
+            <td>${escapeHtml(route.dropper)}</td>
+            <td>${route.reachedFurnace ? 'Yes' : 'No'}</td>
+            <td>${(route.teleporterJumps ?? []).length ? escapeHtml(route.teleporterJumps.map((jump) => jump.color).join(', ')) : 'None'}</td>
+            <td>${route.seconds == null ? 'N/A' : `${route.seconds.toFixed(3)}s`}</td>
+            <td>${route.reachedFurnace ? `${((route.survival ?? 0) * 100).toFixed(2)}%` : 'N/A'}</td>
+            <td>${route.reachedFurnace ? (route.destroyedOresPerMinute ?? 0).toFixed(2) : 'N/A'}</td>
+            <td>${route.valueBeforeFurnace == null ? 'N/A' : simulationMoney(route.valueBeforeFurnace)}</td>
+            <td>${route.cashPerOre == null ? 'N/A' : simulationMoney(route.cashPerOre)}</td>
+          </tr>`).join('')}</tbody>
+        </table>` : ''}
+        ${validation.diagnostics.length ? `<ul class="simulation-diagnostics">${validation.diagnostics.map((entry) => `<li><strong>${escapeHtml(entry.code)}:</strong> ${escapeHtml(entry.message)}</li>`).join('')}</ul>` : ''}
+        <p>This is a simulation of the current layout only; no replacement items or optimization suggestions were generated.</p>`;
+      return;
+    }
+    validationSummary.className = 'validation-summary';
     validationSummary.innerHTML = `
       <strong>Route validated:</strong> ${validation.routeTimeSeconds}s end-to-end ·
       ${validation.averageRemovalTimeSeconds}s average removal ×
@@ -583,7 +1404,232 @@ function renderWorkflow() {
 }
 
 function findSelectedItem() {
-  return activePlan?.items.find((item) => item.id === selectedItemId) ?? null;
+  return activePlan?.items.find((item) => item.id === selectedItemId)
+    ?? activePlan?.lanes.find((lane) => lane.id === selectedItemId)
+    ?? null;
+}
+
+function findPlacementById(id) {
+  if (!id) return null;
+  return activePlan?.items.find((item) => item.id === id)
+    ?? activePlan?.lanes.find((lane) => lane.id === id)
+    ?? null;
+}
+
+function setHoveredPlacement(placement) {
+  hoveredPlacementId = placement?.id ?? null;
+}
+
+function clearHoveredPlacement(placement) {
+  if (hoveredPlacementId === placement?.id) hoveredPlacementId = null;
+}
+
+function isTypingTarget(target) {
+  const tagName = target?.tagName?.toLowerCase();
+  return target?.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+}
+
+function startMovingHoveredPlacement() {
+  if (plannerMode !== 'build' || buildInteraction || massMoveInteraction || itemEditor.open || massSelectionDialog.open) return false;
+  const placement = findPlacementById(hoveredPlacementId);
+  if (!placement) return false;
+  hoveredPlacementId = null;
+  hideItemTooltip();
+  startMovingPlacement(placement);
+  return true;
+}
+
+function buildRecordForPlacement(placement) {
+  if (isConveyorPlacement(placement)) {
+    return conveyorCatalog.find((record) => record.name === placement.conveyor) ?? null;
+  }
+  return databaseRecordForItem(placement);
+}
+
+function startCopyingHoveredPlacement() {
+  if (plannerMode !== 'build' || buildInteraction || massMoveInteraction || itemEditor.open || massSelectionDialog.open) return false;
+  const placement = findPlacementById(hoveredPlacementId);
+  const record = buildRecordForPlacement(placement);
+  if (!placement || !record) return false;
+  hoveredPlacementId = null;
+  hideItemTooltip();
+  startPlacingRecord(record, placement.direction);
+  return true;
+}
+
+function removeHoveredPlacement() {
+  if (plannerMode !== 'build' || buildInteraction || massMoveInteraction || itemEditor.open || massSelectionDialog.open) return false;
+  const placement = findPlacementById(hoveredPlacementId);
+  if (!placement) return false;
+  return removePlacement(placement);
+}
+
+function isConveyorPlacement(placement) {
+  return Boolean(placement?.conveyor);
+}
+
+function selectionRectangle(anchor, current) {
+  return {
+    x: Math.min(anchor.x, current.x),
+    y: Math.min(anchor.y, current.y),
+    width: Math.abs(current.x - anchor.x) + 1,
+    height: Math.abs(current.y - anchor.y) + 1,
+  };
+}
+
+function placementIntersectsRectangle(placement, rectangle) {
+  return placement.x < rectangle.x + rectangle.width
+    && placement.x + placement.width > rectangle.x
+    && placement.y < rectangle.y + rectangle.height
+    && placement.y + placement.height > rectangle.y;
+}
+
+function selectedMassPlacements() {
+  return [...(activePlan?.items ?? []), ...(activePlan?.lanes ?? [])]
+    .filter((placement) => massSelectedIds.has(placement.id));
+}
+
+function massSelectionBounds(placements) {
+  if (!placements.length) return null;
+  const x = Math.min(...placements.map((placement) => placement.x));
+  const y = Math.min(...placements.map((placement) => placement.y));
+  const right = Math.max(...placements.map((placement) => placement.x + placement.width));
+  const bottom = Math.max(...placements.map((placement) => placement.y + placement.height));
+  return { x, y, width: right - x, height: bottom - y };
+}
+
+function renderMassSelectionEmphasis() {
+  grid.querySelector('.mass-selection-bounds')?.remove();
+  const placements = selectedMassPlacements();
+  const bounds = massSelectionBounds(placements);
+  grid.classList.toggle('has-mass-selection', Boolean(bounds && !massMoveInteraction));
+  if (!bounds || massMoveInteraction) return;
+  const outline = document.createElement('div');
+  outline.className = 'mass-selection-bounds';
+  outline.style.left = `calc(${bounds.x - 1} * var(--tile))`;
+  outline.style.top = `calc(${bounds.y - 1} * var(--tile))`;
+  outline.style.width = `calc(${bounds.width} * var(--tile))`;
+  outline.style.height = `calc(${bounds.height} * var(--tile))`;
+  const label = document.createElement('span');
+  label.textContent = `${placements.length} SELECTED · ROTATES TOGETHER`;
+  outline.append(label);
+  grid.append(outline);
+}
+
+function clearMassSelection({ render = true } = {}) {
+  massSelectedIds.clear();
+  boxSelectionDrag = null;
+  if (massSelectionDialog.open) massSelectionDialog.close();
+  if (render) renderGrid(Number(sizeSlider.value));
+}
+
+function updateMassSelectionDialog() {
+  const placements = selectedMassPlacements();
+  const itemCount = placements.filter((placement) => !isConveyorPlacement(placement)).length;
+  const conveyorCount = placements.length - itemCount;
+  massSelectionTitle.textContent = `${placements.length} placement${placements.length === 1 ? '' : 's'} selected`;
+  const names = placements.slice(0, 8).map((placement, index) => `${index + 1}. ${escapeHtml(placement.name ?? placement.conveyor)}`).join('<br>');
+  massSelectionDetails.innerHTML = `<strong>Highlighted items rotate together</strong><p>${itemCount} item${itemCount === 1 ? '' : 's'} · ${conveyorCount} conveyor${conveyorCount === 1 ? '' : 's'}</p><p>${names}${placements.length > 8 ? `<br>+${placements.length - 8} more` : ''}</p><p>The large gold arrow on each selected placement shows its current facing and updates after every rotation.</p>`;
+  massSelectionError.hidden = true;
+  if (massSelectionDialog.open) positionMassSelectionDialog();
+}
+
+function positionMassSelectionDialog() {
+  const bounds = massSelectionBounds(selectedMassPlacements());
+  if (!bounds || !massSelectionDialog.open) return;
+  const gridRectangle = grid.getBoundingClientRect();
+  const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile')) || baseTileSize;
+  const selectionCenterX = gridRectangle.left + (bounds.x - 1 + bounds.width / 2) * tileSize;
+  const panelWidth = massSelectionDialog.offsetWidth || 360;
+  const dockLeft = selectionCenterX >= window.innerWidth / 2;
+  massSelectionDialog.style.left = `${dockLeft ? 16 : Math.max(16, window.innerWidth - panelWidth - 16)}px`;
+  massSelectionDialog.style.top = '16px';
+}
+
+function openMassSelectionDialog() {
+  if (!massSelectedIds.size) return;
+  updateMassSelectionDialog();
+  if (!massSelectionDialog.open) massSelectionDialog.show();
+  positionMassSelectionDialog();
+  renderKeybindGuide();
+}
+
+function validateMassPlacementGroup(candidates) {
+  try {
+    const selectedIds = new Set(candidates.map((candidate) => candidate.id));
+    const items = activePlan.items
+      .filter((item) => !selectedIds.has(item.id))
+      .concat(candidates.filter((candidate) => !isConveyorPlacement(candidate)));
+    const lanes = activePlan.lanes
+      .filter((lane) => !selectedIds.has(lane.id))
+      .concat(candidates.filter(isConveyorPlacement));
+    validateCoordinateMap(items, Number(sizeSlider.value));
+    validateRouteSegments(lanes, items, Number(sizeSlider.value));
+    return { valid: true, error: '' };
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
+}
+
+function rotateMassSelection() {
+  const originals = selectedMassPlacements();
+  const candidates = originals.map((placement) => {
+    const direction = rotateDirection(placement.direction, 'right');
+    return isConveyorPlacement(placement)
+      ? updateConveyorGeometry(placement, { direction })
+      : updateItemGeometry(placement, { direction });
+  });
+  const result = validateMassPlacementGroup(candidates);
+  if (!result.valid) {
+    massSelectionError.textContent = result.error;
+    massSelectionError.hidden = false;
+    return;
+  }
+  candidates.forEach(replaceMappedItem);
+  validation = null;
+  workflowStage = Math.min(workflowStage, 2);
+  editNotice = `${candidates.length} selected placement${candidates.length === 1 ? '' : 's'} rotated clockwise; route validation is required.`;
+  saveWorkspace();
+  renderWorkflow();
+  renderGrid(Number(sizeSlider.value));
+  updateMassSelectionDialog();
+}
+
+function deleteMassSelection() {
+  const count = massSelectedIds.size;
+  const removeSelected = (list) => {
+    for (let index = list.length - 1; index >= 0; index -= 1) {
+      if (massSelectedIds.has(list[index].id)) list.splice(index, 1);
+    }
+  };
+  removeSelected(activePlan.items);
+  removeSelected(activePlan.lanes);
+  if (coordinateMap !== activePlan.items) removeSelected(coordinateMap);
+  if (routeSegments !== activePlan.lanes) removeSelected(routeSegments);
+  activePlan.items.forEach((item, index) => { item.order = index + 1; });
+  massSelectionDialog.close();
+  massSelectedIds.clear();
+  validation = null;
+  workflowStage = Math.min(workflowStage, 2);
+  editNotice = `${count} selected placement${count === 1 ? '' : 's'} removed; route validation is required.`;
+  saveWorkspace();
+  renderWorkflow();
+  renderGrid(Number(sizeSlider.value));
+}
+
+function startMassMove() {
+  const originals = selectedMassPlacements().map((placement) => ({ ...placement }));
+  if (!originals.length) return;
+  const bounds = {
+    x: Math.min(...originals.map((placement) => placement.x)),
+    y: Math.min(...originals.map((placement) => placement.y)),
+  };
+  massMoveInteraction = { originals, bounds, candidates: originals, valid: true, error: '' };
+  massSelectionDialog.close();
+  hideItemTooltip();
+  buildModeMessage(`Moving ${originals.length} selected placements. Move the mouse and click to place; Esc cancels.`);
+  renderGrid(Number(sizeSlider.value));
+  renderMassMoveGhosts();
 }
 
 function placeTooltip(event, element) {
@@ -598,20 +1644,35 @@ function placeTooltip(event, element) {
 }
 
 function showItemTooltip(item, event, element) {
+  if (buildInteraction) return;
+  if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
   itemTooltip.innerHTML = itemDetailsHtml(item);
   itemTooltip.hidden = false;
   placeTooltip(event, element);
 }
 
 function hideItemTooltip() {
+  if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
+  tooltipHideTimer = null;
   itemTooltip.hidden = true;
 }
+
+function scheduleItemTooltipHide() {
+  if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
+  tooltipHideTimer = setTimeout(hideItemTooltip, 180);
+}
+
+itemTooltip.addEventListener('pointerenter', () => {
+  if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
+  tooltipHideTimer = null;
+});
+itemTooltip.addEventListener('pointerleave', hideItemTooltip);
 
 function openItemEditor(item) {
   selectedItemId = item.id;
   hideItemTooltip();
-  itemEditorTitle.textContent = item.name;
-  itemEditorDetails.innerHTML = itemDetailsHtml(item);
+  itemEditorTitle.textContent = item.name ?? item.conveyor;
+  itemEditorDetails.innerHTML = isConveyorPlacement(item) ? conveyorDetailsHtml(item) : itemDetailsHtml(item);
   moveCoordinate.value = `${columnName(item.x)}${item.y}`;
   itemEditorError.hidden = true;
   itemEditorError.textContent = '';
@@ -619,16 +1680,47 @@ function openItemEditor(item) {
 }
 
 function replaceMappedItem(updatedItem) {
-  const planIndex = activePlan.items.findIndex((item) => item.id === updatedItem.id);
-  activePlan.items.splice(planIndex, 1, updatedItem);
-
-  const mapIndex = coordinateMap.findIndex((item) => item.id === updatedItem.id);
-  if (mapIndex !== -1 && coordinateMap !== activePlan.items) {
-    coordinateMap.splice(mapIndex, 1, updatedItem);
+  const mappedItem = mapPlacementCoordinates(updatedItem);
+  if (isConveyorPlacement(mappedItem)) {
+    const laneIndex = activePlan.lanes.findIndex((lane) => lane.id === mappedItem.id);
+    activePlan.lanes.splice(laneIndex, 1, mappedItem);
+    const routeIndex = routeSegments.findIndex((lane) => lane.id === mappedItem.id);
+    if (routeIndex !== -1 && routeSegments !== activePlan.lanes) routeSegments.splice(routeIndex, 1, mappedItem);
+    return mappedItem;
   }
+  const planIndex = activePlan.items.findIndex((item) => item.id === mappedItem.id);
+  activePlan.items.splice(planIndex, 1, mappedItem);
+
+  const mapIndex = coordinateMap.findIndex((item) => item.id === mappedItem.id);
+  if (mapIndex !== -1 && coordinateMap !== activePlan.items) {
+    coordinateMap.splice(mapIndex, 1, mappedItem);
+  }
+  return mappedItem;
+}
+
+function placeOnGrid(placement) {
+  const mappedPlacement = mapPlacementCoordinates(placement);
+  if (isConveyorPlacement(mappedPlacement)) {
+    activePlan.lanes.push(mappedPlacement);
+    if (routeSegments !== activePlan.lanes) routeSegments.push(mappedPlacement);
+  } else {
+    activePlan.items.push(mappedPlacement);
+    if (coordinateMap !== activePlan.items) coordinateMap.push(mappedPlacement);
+    activePlan.items.forEach((item, index) => { item.order = index + 1; });
+    coordinateMap.forEach((item, index) => { item.order = index + 1; });
+  }
+  return mappedPlacement;
 }
 
 function validateItemEdit(updatedItem) {
+  if (isConveyorPlacement(updatedItem)) {
+    const candidates = activePlan.lanes.map((lane) => (
+      lane.id === updatedItem.id ? updatedItem : lane
+    ));
+    validateCoordinateMap(activePlan.items, Number(sizeSlider.value));
+    validateRouteSegments(candidates, activePlan.items, Number(sizeSlider.value));
+    return;
+  }
   const candidates = activePlan.items.map((item) => (
     item.id === updatedItem.id ? updatedItem : item
   ));
@@ -641,6 +1733,7 @@ function refreshAfterEdit(message) {
   validation = null;
   workflowStage = Math.min(workflowStage, 2);
   editNotice = message;
+  saveWorkspace();
   renderWorkflow();
   renderGrid(Number(sizeSlider.value));
 }
@@ -648,13 +1741,20 @@ function refreshAfterEdit(message) {
 function submitItemMove() {
   const item = findSelectedItem();
   if (!item) return;
+  itemEditor.close();
+  startMovingPlacement(item);
+}
+
+function submitTypedItemMove() {
+  const item = findSelectedItem();
+  if (!item) return;
   try {
     const coordinate = parseCoordinate(moveCoordinate.value);
-    const updatedItem = updateItemGeometry(item, coordinate);
+    const updatedItem = isConveyorPlacement(item) ? { ...item, ...coordinate } : updateItemGeometry(item, coordinate);
     validateItemEdit(updatedItem);
     replaceMappedItem(updatedItem);
     itemEditor.close();
-    refreshAfterEdit(`${item.name} moved to ${columnName(coordinate.x)}${coordinate.y}; route validation is required.`);
+    refreshAfterEdit(`${item.name ?? item.conveyor} moved to ${columnName(coordinate.x)}${coordinate.y}; route validation is required.`);
   } catch (error) {
     itemEditorError.textContent = error.message;
     itemEditorError.hidden = false;
@@ -666,30 +1766,667 @@ function rotateSelectedItem(turn) {
   if (!item) return;
   try {
     const direction = rotateDirection(item.direction, turn);
-    const updatedItem = updateItemGeometry(item, { direction });
+    const updatedItem = isConveyorPlacement(item)
+      ? updateConveyorGeometry(item, { direction })
+      : updateItemGeometry(item, { direction });
     validateItemEdit(updatedItem);
     replaceMappedItem(updatedItem);
     itemEditor.close();
-    refreshAfterEdit(`${item.name} rotated ${turn} to face ${direction}; route validation is required.`);
+    refreshAfterEdit(`${item.name ?? item.conveyor} rotated ${turn} to face ${direction}; route validation is required.`);
   } catch (error) {
     itemEditorError.textContent = error.message;
     itemEditorError.hidden = false;
   }
 }
 
-function removeSelectedItem() {
-  const item = findSelectedItem();
-  if (!item) return;
-  activePlan.items = activePlan.items.filter((candidate) => candidate.id !== item.id);
-  if (coordinateMap !== activePlan.items) {
+function removePlacement(item) {
+  if (!item) return false;
+  if (isConveyorPlacement(item)) {
+    activePlan.lanes = activePlan.lanes.filter((candidate) => candidate.id !== item.id);
+    const routeIndex = routeSegments.findIndex((candidate) => candidate.id === item.id);
+    if (routeIndex !== -1 && routeSegments !== activePlan.lanes) routeSegments.splice(routeIndex, 1);
+  } else {
+    activePlan.items = activePlan.items.filter((candidate) => candidate.id !== item.id);
+  }
+  if (!isConveyorPlacement(item) && coordinateMap !== activePlan.items) {
     const mapIndex = coordinateMap.findIndex((candidate) => candidate.id === item.id);
     if (mapIndex !== -1) coordinateMap.splice(mapIndex, 1);
   }
-  activePlan.items.forEach((candidate, index) => { candidate.order = index + 1; });
-  coordinateMap.forEach((candidate, index) => { candidate.order = index + 1; });
-  itemEditor.close();
-  selectedItemId = null;
-  refreshAfterEdit(`${item.name} removed; route validation is required.`);
+  if (!isConveyorPlacement(item)) {
+    activePlan.items.forEach((candidate, index) => { candidate.order = index + 1; });
+    coordinateMap.forEach((candidate, index) => { candidate.order = index + 1; });
+  }
+  if (itemEditor.open) itemEditor.close();
+  if (selectedItemId === item.id) selectedItemId = null;
+  if (hoveredPlacementId === item.id) hoveredPlacementId = null;
+  hideItemTooltip();
+  refreshAfterEdit(`${item.name ?? item.conveyor} removed; route validation is required.`);
+  return true;
+}
+
+function removeSelectedItem() {
+  return removePlacement(findSelectedItem());
+}
+
+function ensureEditablePlan() {
+  if (activePlan) return;
+  coordinateMap.length = 0;
+  routeSegments.length = 0;
+  activePlan = {
+    title: 'Benchmark workspace',
+    minimumSize: Number(sizeSlider.min),
+    items: coordinateMap,
+    lanes: routeSegments,
+  };
+  workflowStage = Math.max(workflowStage, 2);
+  stagePreviewSummary.hidden = true;
+}
+
+function databaseRecordForItem(item) {
+  const variant = item?.stats?.Variant ?? item?.variant ?? 'Base';
+  const key = `${item?.name ?? ''}::${variant}`.toLowerCase();
+  const candidates = (globalThis.TycoonDatabase?.records ?? [])
+    .filter((record) => record.key === key);
+  return uniqueDatabaseRecords(candidates)[0] ?? null;
+}
+
+function recordDescription(record) {
+  const placeholder = /refer to (?:the )?["“]?stats for nerds/i;
+  const mechanic = record?.description
+    ?? (record?.effects && record.effects !== 'N/A' && !placeholder.test(record.effects)
+      ? record.effects
+      : '');
+  return [mechanic, record?.source ?? '']
+    .filter(Boolean)
+    .join(' · ') || 'No mechanic description is available in the database.';
+}
+
+function displayItemDescription(item) {
+  const placeholder = /refer to (?:the )?["“]?stats for nerds/i;
+  if (item?.description && !placeholder.test(item.description)) return item.description;
+  const record = databaseRecordForItem(item);
+  return record ? recordDescription(record) : 'No mechanic description is available in the database.';
+}
+
+function refreshPlacementMetadata(item) {
+  const record = databaseRecordForItem(item);
+  const stats = { ...(item?.stats ?? {}), ...(record ? recordStats(record) : {}) };
+  delete stats.Effects;
+  delete stats.Description;
+  return {
+    ...item,
+    description: record ? recordDescription(record) : displayItemDescription(item),
+    stats,
+  };
+}
+
+function recordStats(record) {
+  return {
+    Variant: displayVariant(record),
+    Rarity: record.rarity ?? 'Unknown',
+    ...(record.mainStat != null ? { 'Main stat': record.mainStat } : {}),
+    ...(record.range ? { Range: record.range } : {}),
+    ...(record.conveyorSpeed != null ? { 'Conveyor speed': record.conveyorSpeed } : {}),
+    ...(record.dropSpeed != null ? { 'Drop speed': record.dropSpeed } : {}),
+    ...(record.oreSize != null ? { 'Ore size': record.oreSize } : {}),
+  };
+}
+
+function placementFromRecord(record, x = 1, y = 1, direction = 'east') {
+  if (record.type === 'conveyor') {
+    return updateConveyorGeometry({
+      id: `manual-conveyor-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      name: record.name,
+      conveyor: record.name,
+      x,
+      y,
+      itemWidth: record.size.width,
+      itemLength: record.size.length,
+      width: record.size.length,
+      height: record.size.width,
+      direction,
+      speed: record.speed,
+      wall: record.wall ?? false,
+      nonTransport: record.nonTransport ?? false,
+      teleporterColor: record.teleporterColor ?? null,
+      teleporterRole: record.teleporterRole ?? null,
+    });
+  }
+  const type = databaseRenderType(record);
+  return placeItem(
+    (activePlan?.items.length ?? 0) + 1,
+    record.name,
+    x,
+    y,
+    record.size.width,
+    record.size.length,
+    direction,
+    type,
+    {
+      id: `manual-item-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      description: recordDescription(record),
+      stats: recordStats(record),
+    },
+  );
+}
+
+function buildModeMessage(message, active = true) {
+  buildModeHint.textContent = message;
+  buildModeHint.classList.toggle('is-active', active);
+  grid.classList.toggle('is-building', active);
+}
+
+function renderKeybindGuide() {
+  if (!keybindGuide) return;
+  if (plannerMode !== 'build') {
+    keybindGuide.hidden = true;
+    return;
+  }
+  keybindGuide.hidden = false;
+  keybindGuide.classList?.toggle('is-active', Boolean(buildInteraction || massMoveInteraction));
+  if (massMoveInteraction) {
+    keybindGuide.innerHTML = `
+      <h2>Moving selection</h2>
+      <div class="keybind-row"><kbd>Click</kbd><span>Place group</span></div>
+      <div class="keybind-row"><kbd>Esc</kbd><span>Cancel</span></div>`;
+    return;
+  }
+  if (massSelectionDialog.open && massSelectedIds.size) {
+    keybindGuide.innerHTML = `
+      <h2>Group selection</h2>
+      <div class="keybind-row"><kbd>R</kbd><span>Rotate all 90Â°</span></div>
+      <div class="keybind-row"><kbd>M</kbd><span>Move selection</span></div>
+      <div class="keybind-row"><kbd>Esc</kbd><span>Cancel selection</span></div>`;
+    return;
+  }
+  if (buildInteraction) {
+    const action = buildInteraction.mode === 'move' ? 'Moving an item' : 'Placing an item';
+    keybindGuide.innerHTML = `
+      <h2>${action}</h2>
+      <div class="keybind-row"><kbd>R</kbd><span>Rotate 90°</span></div>
+      ${buildInteraction.mode === 'place' ? '<div class="keybind-row"><kbd>Hold click</kbd><span>Place straight line</span></div>' : ''}
+      <div class="keybind-row"><kbd>Esc</kbd><span>Cancel</span></div>`;
+    return;
+  }
+  keybindGuide.innerHTML = `
+    <h2>Hover shortcuts</h2>
+    <p>Drag empty build space to box-select items, or point at one and press:</p>
+    <div class="keybind-row"><kbd>Drag</kbd><span>Box select</span></div>
+    <div class="keybind-row"><kbd>M</kbd><span>Move</span></div>
+    <div class="keybind-row"><kbd>C</kbd><span>Copy</span></div>
+    <div class="keybind-row"><kbd>Backspace / Del</kbd><span>Delete</span></div>`;
+}
+
+function startPlacingRecord(record, direction = 'east') {
+  ensureEditablePlan();
+  massPlacementDrag = null;
+  buildInteraction = {
+    mode: 'place',
+    record,
+    candidate: placementFromRecord(record, 1, 1, direction),
+    sourceId: null,
+    valid: false,
+    error: 'Move over the grid to choose a location.',
+  };
+  buildModeMessage(`Placing ${displayVariant(record)} ${record.name}. Click once to place, or hold left click and drag for a straight line; R rotates clockwise; Esc cancels.`);
+  renderItemLibrary();
+  renderGrid(Number(sizeSlider.value));
+}
+
+function startMovingPlacement(placement) {
+  massPlacementDrag = null;
+  buildInteraction = {
+    mode: 'move',
+    record: null,
+    candidate: { ...placement },
+    sourceId: placement.id,
+    valid: false,
+    error: 'Move over the grid to choose a location.',
+  };
+  buildModeMessage(`Moving ${placement.name ?? placement.conveyor}. Click a green preview to place; R rotates clockwise; Esc cancels.`);
+  renderGrid(Number(sizeSlider.value));
+}
+
+function rotateActivePlacementClockwise() {
+  if (!buildInteraction) return false;
+  const candidate = buildInteraction.candidate;
+  const direction = rotateDirection(candidate.direction, 'right');
+  buildInteraction.candidate = isConveyorPlacement(candidate)
+    ? updateConveyorGeometry(candidate, { direction })
+    : updateItemGeometry(candidate, { direction });
+  candidateAt(buildInteraction.candidate.x, buildInteraction.candidate.y);
+  renderPlacementGhost();
+  const label = candidate.name ?? candidate.conveyor;
+  const action = buildInteraction.mode === 'move' ? 'Moving' : 'Placing';
+  buildModeMessage(
+    buildInteraction.valid
+      ? `${action} ${label}, facing ${direction}. Click to place; R rotates clockwise; Esc cancels.`
+      : `${label} now faces ${direction}, but this position is blocked. Move to a green position.`,
+  );
+  return true;
+}
+
+function cancelBuildInteraction(message = 'Choose an item, move over the grid, then click to place it.') {
+  massPlacementDrag = null;
+  buildInteraction = null;
+  placementGhost = null;
+  buildModeMessage(message, false);
+  renderItemLibrary();
+  renderGrid(Number(sizeSlider.value));
+}
+
+function candidateAt(x, y) {
+  if (!buildInteraction) return null;
+  const candidate = isConveyorPlacement(buildInteraction.candidate)
+    ? updateConveyorGeometry(buildInteraction.candidate, { x, y })
+    : updateItemGeometry(buildInteraction.candidate, { x, y });
+  const result = validateBuildCandidate(candidate);
+  buildInteraction.valid = result.valid;
+  buildInteraction.error = result.error;
+  buildInteraction.candidate = candidate;
+  return candidate;
+}
+
+function validateBuildCandidate(candidate, stagedCandidates = []) {
+  try {
+    if (isConveyorPlacement(candidate)) {
+      const lanes = activePlan.lanes
+        .filter((lane) => lane.id !== buildInteraction.sourceId)
+        .concat(stagedCandidates.filter(isConveyorPlacement), candidate);
+      validateRouteSegments(lanes, activePlan.items, Number(sizeSlider.value));
+    } else {
+      const items = activePlan.items
+        .filter((item) => item.id !== buildInteraction.sourceId)
+        .concat(stagedCandidates.filter((item) => !isConveyorPlacement(item)), candidate);
+      validateCoordinateMap(items, Number(sizeSlider.value));
+      validateRouteSegments(activePlan.lanes, items, Number(sizeSlider.value));
+    }
+    return { valid: true, error: '' };
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
+}
+
+function axisLockedLineCoordinates(anchor, current, footprint, lockedAxis = null) {
+  const deltaX = current.x - anchor.x;
+  const deltaY = current.y - anchor.y;
+  const axis = lockedAxis ?? ((deltaX || deltaY) ? (Math.abs(deltaX) >= Math.abs(deltaY) ? 'horizontal' : 'vertical') : null);
+  if (!axis) return { axis: null, coordinates: [{ ...anchor }] };
+  const delta = axis === 'horizontal' ? deltaX : deltaY;
+  const step = Math.max(1, axis === 'horizontal' ? footprint.width : footprint.height);
+  const direction = delta < 0 ? -1 : 1;
+  const count = Math.floor(Math.abs(delta) / step);
+  const coordinates = Array.from({ length: count + 1 }, (_, index) => ({
+    x: anchor.x + (axis === 'horizontal' ? index * step * direction : 0),
+    y: anchor.y + (axis === 'vertical' ? index * step * direction : 0),
+  }));
+  return { axis, coordinates };
+}
+
+function gridCoordinateFromPointer(event) {
+  const rectangle = grid.getBoundingClientRect();
+  const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile')) || baseTileSize;
+  return {
+    x: Math.floor((event.clientX - rectangle.left) / tileSize) + 1,
+    y: Math.floor((event.clientY - rectangle.top) / tileSize) + 1,
+  };
+}
+
+function clampedGridCoordinateFromPointer(event) {
+  const coordinate = gridCoordinateFromPointer(event);
+  const size = Number(sizeSlider.value);
+  return {
+    x: Math.max(1, Math.min(size, coordinate.x)),
+    y: Math.max(1, Math.min(size, coordinate.y)),
+  };
+}
+
+function renderBoxSelectionOverlay() {
+  grid.querySelector('.box-selection-overlay')?.remove();
+  if (!boxSelectionDrag?.active) return;
+  const rectangle = selectionRectangle(boxSelectionDrag.anchor, boxSelectionDrag.current);
+  const overlay = document.createElement('div');
+  overlay.className = 'box-selection-overlay';
+  overlay.style.left = `calc(${rectangle.x - 1} * var(--tile))`;
+  overlay.style.top = `calc(${rectangle.y - 1} * var(--tile))`;
+  overlay.style.width = `calc(${rectangle.width} * var(--tile))`;
+  overlay.style.height = `calc(${rectangle.height} * var(--tile))`;
+  grid.append(overlay);
+}
+
+function startBoxSelectionDrag(event) {
+  if (event.button !== 0 || plannerMode !== 'build' || buildInteraction || massMoveInteraction || itemEditor.open || massSelectionDialog.open) return;
+  const coordinate = clampedGridCoordinateFromPointer(event);
+  boxSelectionDrag = {
+    pointerId: event.pointerId,
+    anchor: coordinate,
+    current: coordinate,
+    startClientX: event.clientX,
+    startClientY: event.clientY,
+    active: false,
+  };
+  grid.setPointerCapture?.(event.pointerId);
+}
+
+function updateBoxSelectionDrag(event) {
+  if (!boxSelectionDrag || event.pointerId !== boxSelectionDrag.pointerId) return false;
+  boxSelectionDrag.current = clampedGridCoordinateFromPointer(event);
+  const movedPixels = Math.hypot(event.clientX - boxSelectionDrag.startClientX, event.clientY - boxSelectionDrag.startClientY);
+  if (movedPixels >= 5) boxSelectionDrag.active = true;
+  if (boxSelectionDrag.active) {
+    event.preventDefault();
+    renderBoxSelectionOverlay();
+  }
+  return true;
+}
+
+function finishBoxSelectionDrag(event) {
+  if (!boxSelectionDrag || event.pointerId !== boxSelectionDrag.pointerId) return;
+  updateBoxSelectionDrag(event);
+  grid.releasePointerCapture?.(event.pointerId);
+  const drag = boxSelectionDrag;
+  boxSelectionDrag = null;
+  grid.querySelector('.box-selection-overlay')?.remove();
+  if (!drag.active) return;
+  const rectangle = selectionRectangle(drag.anchor, drag.current);
+  massSelectedIds.clear();
+  for (const placement of [...activePlan.items, ...activePlan.lanes]) {
+    if (placementIntersectsRectangle(placement, rectangle)) massSelectedIds.add(placement.id);
+  }
+  suppressGridClick = true;
+  setTimeout(() => { suppressGridClick = false; }, 0);
+  renderGrid(Number(sizeSlider.value));
+  if (massSelectedIds.size) openMassSelectionDialog();
+  else buildModeMessage('No items were inside that selection box.', false);
+}
+
+function cancelBoxSelectionDrag(event) {
+  if (!boxSelectionDrag || (event?.pointerId != null && event.pointerId !== boxSelectionDrag.pointerId)) return;
+  boxSelectionDrag = null;
+  grid.querySelector('.box-selection-overlay')?.remove();
+}
+
+function updateMassMovePreview(event) {
+  if (!massMoveInteraction) return;
+  const coordinate = clampedGridCoordinateFromPointer(event);
+  const deltaX = coordinate.x - massMoveInteraction.bounds.x;
+  const deltaY = coordinate.y - massMoveInteraction.bounds.y;
+  const candidates = massMoveInteraction.originals.map((placement) => (
+    isConveyorPlacement(placement)
+      ? updateConveyorGeometry(placement, { x: placement.x + deltaX, y: placement.y + deltaY })
+      : updateItemGeometry(placement, { x: placement.x + deltaX, y: placement.y + deltaY })
+  ));
+  const result = validateMassPlacementGroup(candidates);
+  massMoveInteraction.candidates = candidates;
+  massMoveInteraction.valid = result.valid;
+  massMoveInteraction.error = result.error;
+  renderMassMoveGhosts();
+  buildModeMessage(result.valid
+    ? `Moving ${candidates.length} placements. Click to place the group; Esc cancels.`
+    : result.error);
+}
+
+function renderMassMoveGhosts() {
+  grid.querySelectorAll('.selection-move-ghost').forEach((ghost) => ghost.remove());
+  if (!massMoveInteraction) return;
+  for (const candidate of massMoveInteraction.candidates) {
+    const ghost = document.createElement('div');
+    ghost.className = `placement-ghost selection-move-ghost${massMoveInteraction.valid ? '' : ' is-invalid'}`;
+    ghost.style.left = `calc(${candidate.x - 1} * var(--tile))`;
+    ghost.style.top = `calc(${candidate.y - 1} * var(--tile))`;
+    ghost.style.width = `calc(${candidate.width} * var(--tile))`;
+    ghost.style.height = `calc(${candidate.height} * var(--tile))`;
+    const label = document.createElement('span');
+    label.className = 'placement-ghost-label';
+    label.textContent = shortLabel(candidate.name ?? candidate.conveyor);
+    ghost.append(label);
+    grid.append(ghost);
+  }
+}
+
+function commitMassMove(event) {
+  if (!massMoveInteraction) return false;
+  updateMassMovePreview(event);
+  if (!massMoveInteraction.valid) return true;
+  const candidates = massMoveInteraction.candidates;
+  candidates.forEach(replaceMappedItem);
+  massMoveInteraction = null;
+  massSelectedIds.clear();
+  validation = null;
+  workflowStage = Math.min(workflowStage, 2);
+  editNotice = `${candidates.length} selected placement${candidates.length === 1 ? '' : 's'} moved together; route validation is required.`;
+  saveWorkspace();
+  renderWorkflow();
+  renderGrid(Number(sizeSlider.value));
+  buildModeMessage(editNotice, false);
+  return true;
+}
+
+function cancelMassMove() {
+  if (!massMoveInteraction) return false;
+  massMoveInteraction = null;
+  massSelectedIds.clear();
+  buildModeMessage('Group move cancelled.', false);
+  renderGrid(Number(sizeSlider.value));
+  return true;
+}
+
+function renderPlacementGhost() {
+  grid.querySelectorAll('.placement-ghost').forEach((ghost) => ghost.remove());
+  placementGhost = null;
+  if (!buildInteraction?.candidate) return;
+  const candidate = buildInteraction.candidate;
+  const element = document.createElement('div');
+  const conveyorClass = candidate.conveyor
+    ? ` ${candidate.conveyor.toLowerCase().replaceAll(' ', '-')}`
+    : '';
+  element.className = `placement-ghost${conveyorClass} direction-${candidate.direction}${buildInteraction.valid ? '' : ' is-invalid'}`;
+  element.style.left = `calc(${candidate.x - 1} * var(--tile))`;
+  element.style.top = `calc(${candidate.y - 1} * var(--tile))`;
+  element.style.width = `calc(${candidate.width} * var(--tile))`;
+  element.style.height = `calc(${candidate.height} * var(--tile))`;
+  if (candidate.type === 'furnace') {
+    const processingZone = furnaceProcessingZoneGeometry(candidate);
+    if (processingZone) {
+      const zone = document.createElement('span');
+      zone.className = 'furnace-processing-zone placement-ghost-zone';
+      zone.style.left = `calc(${processingZone.x - candidate.x} * var(--tile))`;
+      zone.style.top = `calc(${processingZone.y - candidate.y} * var(--tile))`;
+      zone.style.width = `calc(${processingZone.width} * var(--tile))`;
+      zone.style.height = `calc(${processingZone.height} * var(--tile))`;
+      element.append(zone);
+    }
+  } else if (!candidate.conveyor && candidate.type !== 'portable' && candidate.type !== 'dropper') {
+    const belt = document.createElement('span');
+    belt.className = 'item-belt placement-ghost-belt';
+    if (candidate.direction === 'east' || candidate.direction === 'west') {
+      belt.style.left = '0';
+      belt.style.top = `calc(${(candidate.height - candidate.conveyorWidth) / 2} * var(--tile))`;
+      belt.style.width = '100%';
+      belt.style.height = `calc(${candidate.conveyorWidth} * var(--tile))`;
+    } else {
+      belt.style.top = '0';
+      belt.style.left = `calc(${(candidate.width - candidate.conveyorWidth) / 2} * var(--tile))`;
+      belt.style.height = '100%';
+      belt.style.width = `calc(${candidate.conveyorWidth} * var(--tile))`;
+    }
+    element.append(belt);
+  }
+  const label = document.createElement('span');
+  label.className = 'placement-ghost-label';
+  label.textContent = shortLabel(candidate.name ?? candidate.conveyor);
+  const arrow = document.createElement('span');
+  arrow.className = 'plan-direction placement-ghost-direction';
+  arrow.textContent = { north: '↑', east: '→', south: '↓', west: '←' }[candidate.direction] ?? '';
+  arrow.setAttribute('aria-label', `Facing ${candidate.direction}`);
+  element.append(label, arrow);
+  element.setAttribute('aria-label', `${candidate.name ?? candidate.conveyor}, facing ${candidate.direction}`);
+  element.title = buildInteraction.error || `Place at ${columnName(candidate.x)}${candidate.y}`;
+  grid.append(element);
+  placementGhost = element;
+}
+
+function renderMassPlacementGhosts() {
+  grid.querySelectorAll('.placement-ghost').forEach((ghost) => ghost.remove());
+  placementGhost = null;
+  for (const preview of massPlacementDrag?.previews ?? []) {
+    const candidate = preview.candidate;
+    const element = document.createElement('div');
+    const conveyorClass = candidate.conveyor
+      ? ` ${candidate.conveyor.toLowerCase().replaceAll(' ', '-')}`
+      : '';
+    element.className = `placement-ghost placement-line-ghost${conveyorClass} direction-${candidate.direction}${preview.valid ? '' : ' is-invalid'}`;
+    element.style.left = `calc(${candidate.x - 1} * var(--tile))`;
+    element.style.top = `calc(${candidate.y - 1} * var(--tile))`;
+    element.style.width = `calc(${candidate.width} * var(--tile))`;
+    element.style.height = `calc(${candidate.height} * var(--tile))`;
+    element.title = preview.error || `Place at ${columnName(candidate.x)}${candidate.y}`;
+    const label = document.createElement('span');
+    label.className = 'placement-ghost-label';
+    label.textContent = shortLabel(candidate.name ?? candidate.conveyor);
+    element.append(label);
+    grid.append(element);
+  }
+}
+
+function updateMassPlacementDrag(event) {
+  if (!massPlacementDrag || !buildInteraction || buildInteraction.mode !== 'place') return;
+  const current = gridCoordinateFromPointer(event);
+  const line = axisLockedLineCoordinates(
+    massPlacementDrag.anchor,
+    current,
+    buildInteraction.candidate,
+    massPlacementDrag.axis,
+  );
+  massPlacementDrag.axis = line.axis;
+  const stagedCandidates = [];
+  massPlacementDrag.previews = line.coordinates.map((coordinate) => {
+    const candidate = placementFromRecord(
+      buildInteraction.record,
+      coordinate.x,
+      coordinate.y,
+      buildInteraction.candidate.direction,
+    );
+    const result = validateBuildCandidate(candidate, stagedCandidates);
+    if (result.valid) stagedCandidates.push(candidate);
+    return { candidate, ...result };
+  });
+  renderMassPlacementGhosts();
+  const validCount = massPlacementDrag.previews.filter((preview) => preview.valid).length;
+  const axisText = massPlacementDrag.axis ? `${massPlacementDrag.axis} axis locked` : 'drag to choose an axis';
+  buildModeMessage(`${axisText} · ${validCount} valid placement${validCount === 1 ? '' : 's'} · release to place.`);
+}
+
+function startMassPlacementDrag(event) {
+  if (!buildInteraction || buildInteraction.mode !== 'place' || event.button !== 0) return;
+  event.preventDefault();
+  const anchor = gridCoordinateFromPointer(event);
+  massPlacementDrag = { pointerId: event.pointerId, anchor, axis: null, previews: [] };
+  grid.setPointerCapture?.(event.pointerId);
+  updateMassPlacementDrag(event);
+}
+
+function finishMassPlacementDrag(event) {
+  if (!massPlacementDrag || event.pointerId !== massPlacementDrag.pointerId || !buildInteraction) return;
+  updateMassPlacementDrag(event);
+  grid.releasePointerCapture?.(event.pointerId);
+  const previews = massPlacementDrag.previews;
+  const validCandidates = previews.filter((preview) => preview.valid).map((preview) => preview.candidate);
+  const lastCandidate = previews.at(-1)?.candidate ?? buildInteraction.candidate;
+  massPlacementDrag = null;
+  suppressGridClick = true;
+  setTimeout(() => { suppressGridClick = false; }, 0);
+  if (!validCandidates.length) {
+    candidateAt(lastCandidate.x, lastCandidate.y);
+    renderPlacementGhost();
+    buildModeMessage('No valid spaces were available on that line.');
+    return;
+  }
+  validCandidates.forEach(placeOnGrid);
+  buildInteraction.candidate = placementFromRecord(
+    buildInteraction.record,
+    lastCandidate.x,
+    lastCandidate.y,
+    lastCandidate.direction,
+  );
+  buildInteraction.valid = false;
+  buildInteraction.error = 'Move over the grid to choose another location.';
+  validation = null;
+  workflowStage = Math.min(Math.max(workflowStage, 2), 2);
+  const label = lastCandidate.name ?? lastCandidate.conveyor;
+  editNotice = `${validCandidates.length} ${label}${validCandidates.length === 1 ? '' : 's'} placed in a straight line; route validation is required.`;
+  saveWorkspace();
+  renderWorkflow();
+  renderItemLibrary();
+  renderGrid(Number(sizeSlider.value));
+  buildModeMessage(`${validCandidates.length} placed. Hold left click and drag to place another straight line; Esc finishes.`);
+}
+
+function cancelMassPlacementDrag(event) {
+  if (!massPlacementDrag || (event?.pointerId != null && event.pointerId !== massPlacementDrag.pointerId)) return;
+  massPlacementDrag = null;
+  renderPlacementGhost();
+}
+
+function updateBuildPreview(event) {
+  if (massMoveInteraction) {
+    updateMassMovePreview(event);
+    return;
+  }
+  if (!buildInteraction) return;
+  if (massPlacementDrag) {
+    updateMassPlacementDrag(event);
+    return;
+  }
+  const coordinate = gridCoordinateFromPointer(event);
+  candidateAt(coordinate.x, coordinate.y);
+  renderPlacementGhost();
+  if (placementGhost) placementGhost.title = buildInteraction.error || `Place at ${columnName(coordinate.x)}${coordinate.y}`;
+}
+
+function commitBuildInteraction(event) {
+  if (massMoveInteraction) {
+    commitMassMove(event);
+    return;
+  }
+  if (!buildInteraction) return;
+  if (suppressGridClick) {
+    suppressGridClick = false;
+    return;
+  }
+  updateBuildPreview(event);
+  if (!buildInteraction.valid) {
+    buildModeMessage(buildInteraction.error || 'That position is not valid.');
+    return;
+  }
+  const candidate = buildInteraction.candidate;
+  const label = candidate.name ?? candidate.conveyor;
+  const interactionMode = buildInteraction.mode;
+  if (buildInteraction.mode === 'move') {
+    replaceMappedItem(candidate);
+    buildInteraction = null;
+    placementGhost = null;
+    buildModeMessage(`${label} moved to ${columnName(candidate.x)}${candidate.y}.`, false);
+  } else {
+    placeOnGrid(candidate);
+    buildInteraction.candidate = placementFromRecord(
+      buildInteraction.record,
+      candidate.x,
+      candidate.y,
+      candidate.direction,
+    );
+    candidateAt(candidate.x, candidate.y);
+    buildModeMessage(`${label} placed at ${columnName(candidate.x)}${candidate.y}. Move and click to place another; Esc finishes.`);
+  }
+  validation = null;
+  workflowStage = Math.min(Math.max(workflowStage, 2), 2);
+  editNotice = interactionMode === 'move'
+    ? `${label} moved and its coordinate map was updated; route validation is required.`
+    : `${label} placed with ${candidate.width * candidate.height} occupied coordinate${candidate.width * candidate.height === 1 ? '' : 's'} mapped; route validation is required before using this as a benchmark.`;
+  saveWorkspace();
+  renderWorkflow();
+  renderItemLibrary();
+  renderGrid(Number(sizeSlider.value));
 }
 
 function validateCoordinateMap(items, size) {
@@ -759,6 +2496,7 @@ function validateRouteSegments(segments, items, size) {
     'Supercharged Conveyor': { width: 2, length: 2 },
     'Centering Conveyor': { width: 2, length: 2 },
     'Ultracharged Conveyor': { width: 4, length: 2 },
+    'Conveyor Wall': { width: 1, length: 2 },
   };
 
   items.forEach((item) => {
@@ -990,15 +2728,28 @@ function renderPlanningPreview(size) {
     : `Step 2 mapping · ${map.items?.length ?? 0} items positioned provisionally`;
 }
 
+function renderGenerationReady(size) {
+  stagePreviewSummary.hidden = false;
+  stagePreviewSummary.className = 'stage-preview-summary';
+  stagePreviewSummary.innerHTML = '<strong>Generation mode · Stage 1</strong><span>Ready to collect a new player profile and generate a setup.</span>';
+  legend.textContent = 'Generation canvas · no setup has been generated yet.';
+  status.textContent = `Generation mode · Stage 1 · ${size * size} tiles ready`;
+}
+
 function renderPlan(size) {
   grid.querySelectorAll('.plan-item, .plan-lane, .portable-beam, .planning-preview-item, .planning-preview-route, .planning-preview-beam, .planning-preview-furnace-zone').forEach((item) => item.remove());
 
   if (!activePlan) {
-    renderPlanningPreview(size);
+    if (plannerMode === 'generation' && workflowStage === 0) renderGenerationReady(size);
+    else renderPlanningPreview(size);
     return;
   }
 
-  if (workflowStage < 5) {
+  if (plannerMode === 'build') {
+    stagePreviewSummary.hidden = false;
+    stagePreviewSummary.className = 'stage-preview-summary is-mapping';
+    stagePreviewSummary.innerHTML = '<strong>Build mode · Stage 3</strong><span>Your manual layout is saved automatically. Ask Codex when you want to run Stages 3–5 and benchmark it.</span>';
+  } else if (workflowStage < 5) {
     stagePreviewSummary.hidden = false;
     stagePreviewSummary.className = 'stage-preview-summary is-mapping';
     stagePreviewSummary.innerHTML = `<strong>${workflowStage >= 4 ? 'Optimization complete; final verification pending' : 'Optimization and grid preview in progress'}</strong><span>A validated layout is not final until optimization and final verification are both complete.</span>`;
@@ -1014,9 +2765,9 @@ function renderPlan(size) {
     item.type ??= itemType(item.name);
     const element = document.createElement('button');
     element.type = 'button';
-    element.className = `plan-item ${item.type}`;
+    element.className = `plan-item ${item.type}${buildInteraction?.sourceId === item.id || massMoveInteraction?.originals.some((original) => original.id === item.id) ? ' is-moving-source' : ''}${massSelectedIds.has(item.id) ? ' is-box-selected' : ''}`;
     element.dataset.itemId = item.id;
-    element.setAttribute('aria-label', `${item.name}, facing ${item.direction}. Click to edit.`);
+    element.setAttribute('aria-label', `${item.name}, facing ${item.direction}. Click to edit, press M to move, C to copy, or Delete to remove.`);
     const direction = { north: '↑', east: '→', south: '↓', west: '←' }[item.direction] ?? '';
     if (item.type === 'furnace') {
       const processingZone = furnaceProcessingZoneGeometry(item);
@@ -1060,21 +2811,52 @@ function renderPlan(size) {
       arrow.setAttribute('aria-label', `Facing ${item.direction}`);
       element.append(arrow);
     }
+    if (massSelectedIds.has(item.id)) {
+      const badge = document.createElement('span');
+      badge.className = 'mass-selection-number';
+      badge.textContent = String([...massSelectedIds].indexOf(item.id) + 1);
+      const facing = document.createElement('span');
+      facing.className = 'mass-selection-facing';
+      facing.textContent = `${direction} ${item.direction.slice(0, 1).toUpperCase()}`;
+      facing.setAttribute('aria-label', `Now facing ${item.direction}`);
+      element.append(badge, facing);
+    }
     element.style.left = `calc(${item.x - 1} * var(--tile))`;
     element.style.top = `calc(${item.y - 1} * var(--tile))`;
     element.style.width = `calc(${item.width} * var(--tile))`;
     element.style.height = `calc(${item.height} * var(--tile))`;
-    element.addEventListener('pointerenter', (event) => showItemTooltip(item, event, element));
+    element.addEventListener('pointerenter', (event) => {
+      setHoveredPlacement(item);
+      showItemTooltip(item, event, element);
+    });
     element.addEventListener('pointermove', (event) => placeTooltip(event, element));
-    element.addEventListener('pointerleave', hideItemTooltip);
-    element.addEventListener('focus', () => showItemTooltip(item, null, element));
-    element.addEventListener('blur', hideItemTooltip);
-    element.addEventListener('click', () => openItemEditor(item));
+    element.addEventListener('pointerleave', () => {
+      clearHoveredPlacement(item);
+      scheduleItemTooltipHide();
+    });
+    element.addEventListener('focus', () => {
+      setHoveredPlacement(item);
+      showItemTooltip(item, null, element);
+    });
+    element.addEventListener('blur', () => {
+      clearHoveredPlacement(item);
+      hideItemTooltip();
+    });
+    element.addEventListener('click', (event) => {
+      if (suppressGridClick) {
+        suppressGridClick = false;
+        event.stopPropagation();
+        return;
+      }
+      if (buildInteraction || massMoveInteraction) return;
+      event.stopPropagation();
+      openItemEditor(item);
+    });
 
     const beam = portableBeamGeometry(item);
     if (beam) {
       const beamElement = document.createElement('div');
-      beamElement.className = 'portable-beam';
+      beamElement.className = `portable-beam${massSelectedIds.has(item.id) ? ' is-box-selected' : ''}`;
       beamElement.title = `${item.name} two-tile upgrade beam`;
       beamElement.style.left = `calc(${beam.x - 1} * var(--tile))`;
       beamElement.style.top = `calc(${beam.y - 1} * var(--tile))`;
@@ -1086,26 +2868,59 @@ function renderPlan(size) {
   });
 
   activePlan.lanes.forEach((lane) => {
-    const element = document.createElement('div');
+    lane.id ??= `conveyor-${activePlan.lanes.indexOf(lane) + 1}`;
+    const element = document.createElement('button');
+    element.type = 'button';
     const conveyorClass = lane.conveyor.toLowerCase().replaceAll(' ', '-');
     const arrow = { north: '↑', east: '→', south: '↓', west: '←' }[lane.direction] ?? '';
     const abbreviation = conveyorAbbreviations[lane.conveyor] ?? lane.label;
     const directionClass = `direction-${lane.direction}`;
-    element.className = `plan-lane ${conveyorClass} ${directionClass}${lane.wall ? ' has-wall' : ''}`;
+    element.className = `plan-lane ${conveyorClass} ${directionClass}${lane.wall ? ' has-wall' : ''}${buildInteraction?.sourceId === lane.id || massMoveInteraction?.originals.some((original) => original.id === lane.id) ? ' is-moving-source' : ''}${massSelectedIds.has(lane.id) ? ' is-box-selected' : ''}`;
     element.textContent = `${abbreviation}${arrow ? ` ${arrow}` : ''}`;
+    if (massSelectedIds.has(lane.id)) {
+      const badge = document.createElement('span');
+      badge.className = 'mass-selection-number';
+      badge.textContent = String([...massSelectedIds].indexOf(lane.id) + 1);
+      const facing = document.createElement('span');
+      facing.className = 'mass-selection-facing';
+      facing.textContent = `${arrow} ${lane.direction.slice(0, 1).toUpperCase()}`;
+      facing.setAttribute('aria-label', `Now facing ${lane.direction}`);
+      element.append(badge, facing);
+    }
     element.title = `${lane.conveyor} · facing ${lane.direction} · speed ${lane.speed}`;
     element.setAttribute(
       'aria-label',
-      `${lane.conveyor}, facing ${lane.direction}, speed ${lane.speed}`,
+      `${lane.conveyor}, facing ${lane.direction}, speed ${lane.speed}. Press M to move, C to copy, or Delete to remove while highlighted.`,
     );
     element.style.left = `calc(${lane.x - 1} * var(--tile))`;
     element.style.top = `calc(${lane.y - 1} * var(--tile))`;
     element.style.width = `calc(${lane.width} * var(--tile))`;
     element.style.height = `calc(${lane.height} * var(--tile))`;
+    element.addEventListener('pointerenter', () => setHoveredPlacement(lane));
+    element.addEventListener('pointerleave', () => clearHoveredPlacement(lane));
+    element.addEventListener('focus', () => setHoveredPlacement(lane));
+    element.addEventListener('blur', () => clearHoveredPlacement(lane));
+    element.addEventListener('click', (event) => {
+      if (suppressGridClick) {
+        suppressGridClick = false;
+        event.stopPropagation();
+        return;
+      }
+      if (buildInteraction || massMoveInteraction) return;
+      event.stopPropagation();
+      openItemEditor(lane);
+    });
     grid.append(element);
   });
 
-  legend.innerHTML = legendItems.map(([type, label]) => `<span class="legend-key"><span class="legend-swatch ${type}"></span>${label}</span>`).join('');
+  renderMassSelectionEmphasis();
+  if (massMoveInteraction) renderMassMoveGhosts();
+
+  const phantomOverlayCount = renderPhantomZoneOverlays();
+  const visibleLegendItems = phantomOverlayCount
+    ? [...legendItems, ['phantom-zone', 'PZ = possible Crimson phantom zone']]
+    : legendItems;
+  legend.innerHTML = visibleLegendItems.map(([type, label]) => `<span class="legend-key"><span class="legend-swatch ${type}"></span>${label}</span>`).join('');
   const reservedTiles = validateCoordinateMap(activePlan.items, size)
     + validateRouteSegments(activePlan.lanes ?? [], activePlan.items, size);
   const remainingTiles = Math.max(0, size * size - reservedTiles);
@@ -1120,9 +2935,20 @@ function renderPlan(size) {
 }
 
 clearPlanner();
-if (globalThis.TycoonActivePlan?.valid) loadGeneratedPlan(globalThis.TycoonActivePlan);
-else loadWorkflowProgress(globalThis.TycoonWorkflowState);
-sizeSlider.addEventListener('input', () => renderGrid(Number(sizeSlider.value)));
+plannerMode = loadPlannerMode();
+applyPlannerModeUi();
+if (plannerMode === 'build') {
+  if (!loadSavedWorkspace()) resetWorkspaceForMode({ render: false });
+} else if (generationSourceChanged()) {
+  if (globalThis.TycoonActivePlan?.valid) loadGeneratedPlan(globalThis.TycoonActivePlan);
+  else loadWorkflowProgress(globalThis.TycoonWorkflowState);
+} else {
+  resetWorkspaceForMode({ render: false });
+}
+loadViewPreferences();
+sizeSlider.addEventListener('input', () => applyBaseSize(sizeSlider.value));
+sizeOut.addEventListener('click', () => applyBaseSize(Number(sizeSlider.value) - Number(sizeSlider.step || 1)));
+sizeIn.addEventListener('click', () => applyBaseSize(Number(sizeSlider.value) + Number(sizeSlider.step || 1)));
 zoomSlider.addEventListener('input', () => applyGridZoom(zoomSlider.value));
 zoomOut.addEventListener('click', () => applyGridZoom(Number(zoomSlider.value) - Number(zoomSlider.step)));
 zoomIn.addEventListener('click', () => applyGridZoom(Number(zoomSlider.value) + Number(zoomSlider.step)));
@@ -1139,10 +2965,117 @@ itemEditor.addEventListener('close', () => {
   selectedItemId = null;
   itemEditorError.hidden = true;
 });
+massSelectionDialog.addEventListener('click', (event) => {
+  const action = event.target.closest('[data-mass-action]')?.dataset.massAction;
+  if (!action) return;
+  if (action === 'close') clearMassSelection();
+  if (action === 'rotate') rotateMassSelection();
+  if (action === 'move') startMassMove();
+  if (action === 'delete') deleteMassSelection();
+});
+massSelectionDialog.addEventListener('close', () => {
+  if (massMoveInteraction || !massSelectedIds.size) return;
+  massSelectedIds.clear();
+  renderGrid(Number(sizeSlider.value));
+});
 moveCoordinate.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
     event.preventDefault();
-    submitItemMove();
+    submitTypedItemMove();
+  }
+});
+itemSearch.addEventListener('input', renderItemLibrary);
+libraryFilterToggle.addEventListener('click', () => {
+  const expanded = libraryFilterToggle.getAttribute('aria-expanded') === 'true';
+  libraryFilterToggle.setAttribute('aria-expanded', String(!expanded));
+  libraryFilterPanel.hidden = expanded;
+});
+[librarySort, libraryTierFilter, libraryVariantFilter].forEach((control) => {
+  control.addEventListener('change', renderItemLibrary);
+});
+libraryFilterReset.addEventListener('click', () => {
+  librarySort.value = 'tier-name';
+  libraryTierFilter.value = 'all';
+  libraryVariantFilter.value = 'all';
+  renderItemLibrary();
+});
+libraryTabs.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-category]');
+  if (!button) return;
+  if (button.dataset.category === libraryCategory) return;
+  libraryCategory = button.dataset.category;
+  itemSearch.value = '';
+  libraryTierFilter.value = 'all';
+  libraryVariantFilter.value = 'all';
+  libraryTabs.querySelectorAll('[data-category]').forEach((tab) => {
+    tab.setAttribute('aria-selected', String(tab === button));
+  });
+  renderItemLibrary();
+});
+plannerModeToggle.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-planner-mode]');
+  if (!button || button.dataset.plannerMode === plannerMode) return;
+  setPlannerMode(button.dataset.plannerMode);
+});
+simulateBaseButton.addEventListener('click', runManualSimulation);
+clearWorkspaceButton.addEventListener('click', () => {
+  const modeLabel = plannerMode === 'build' ? 'Build Mode at Stage 3' : 'Generation Mode at Stage 1';
+  if (!globalThis.confirm(`Clear the grid and restart ${modeLabel}?`)) return;
+  resetWorkspaceForMode();
+});
+grid.addEventListener('pointerdown', startBoxSelectionDrag);
+grid.addEventListener('pointerdown', startMassPlacementDrag);
+grid.addEventListener('pointermove', updateBoxSelectionDrag);
+grid.addEventListener('pointermove', updateBuildPreview);
+grid.addEventListener('pointerup', finishBoxSelectionDrag);
+grid.addEventListener('pointerup', finishMassPlacementDrag);
+grid.addEventListener('pointercancel', cancelBoxSelectionDrag);
+grid.addEventListener('pointercancel', cancelMassPlacementDrag);
+grid.addEventListener('click', commitBuildInteraction);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && massMoveInteraction) {
+    event.preventDefault();
+    cancelMassMove();
+    return;
+  }
+  if (massSelectionDialog.open && massSelectedIds.size && !event.repeat && !isTypingTarget(event.target)) {
+    const key = event.key.toLowerCase();
+    if (key === 'r') {
+      event.preventDefault();
+      rotateMassSelection();
+      return;
+    }
+    if (key === 'm') {
+      event.preventDefault();
+      startMassMove();
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      clearMassSelection();
+      return;
+    }
+  }
+  if ((event.key === 'Backspace' || event.key === 'Delete') && !event.repeat && !isTypingTarget(event.target)) {
+    if (removeHoveredPlacement()) event.preventDefault();
+    return;
+  }
+  if (event.key.toLowerCase() === 'c' && !event.repeat && !isTypingTarget(event.target)) {
+    if (startCopyingHoveredPlacement()) event.preventDefault();
+    return;
+  }
+  if (event.key.toLowerCase() === 'm' && !event.repeat && !isTypingTarget(event.target)) {
+    if (startMovingHoveredPlacement()) event.preventDefault();
+    return;
+  }
+  if (event.key.toLowerCase() === 'r' && !event.repeat && buildInteraction) {
+    event.preventDefault();
+    rotateActivePlacementClockwise();
+    return;
+  }
+  if (event.key === 'Escape' && buildInteraction && !itemEditor.open) {
+    event.preventDefault();
+    cancelBuildInteraction();
   }
 });
 if (coordinateMap.length > 0 || routeSegments.length > 0) {
@@ -1154,5 +3087,6 @@ if (coordinateMap.length > 0 || routeSegments.length > 0) {
   }
 }
 renderWorkflow();
+renderItemLibrary();
 applyGridZoom(zoomSlider.value);
 renderGrid(Number(sizeSlider.value));

@@ -1,0 +1,25 @@
+{
+  "id": "teleporter-route-to-furnace",
+  "kind": "route-teleporter-pair",
+  "observed": "A dropper route stopped at a teleporter sender and was reported as unable to reach the furnace.",
+  "expected": "A sender transfers the ore to the receiver of the same color, and directed routing continues from the receiver toward the furnace.",
+  "input": {
+    "components": [
+      { "id": "red-sender", "teleporterColor": "red", "teleporterRole": "sender" },
+      { "id": "red-receiver", "teleporterColor": "red", "teleporterRole": "receiver" },
+      { "id": "blue-receiver", "teleporterColor": "blue", "teleporterRole": "receiver" },
+      { "id": "furnace-conveyor" }
+    ],
+    "physicalEdges": {
+      "red-sender": ["blue-receiver"],
+      "red-receiver": ["furnace-conveyor"],
+      "blue-receiver": [],
+      "furnace-conveyor": []
+    }
+  },
+  "assert": {
+    "senderTargets": ["red-receiver"],
+    "receiverTargets": ["furnace-conveyor"],
+    "diagnosticCount": 0
+  }
+}

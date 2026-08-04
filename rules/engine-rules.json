@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 7,
   "crateProgression": [
     "Basic", "Advanced", "Factory", "Quarry", "Futuristic", "Toxic",
     "Desert", "Fantasy", "Space", "Candy", "Periastron", "Ancient",
@@ -9,7 +9,7 @@
   "oreCap": 100,
   "safeTurnSpeed": 16.8,
   "teleporterMinimumRebirth": 5,
-  "teleportersEnabled": false,
+  "teleportersEnabled": true,
   "finalCapTolerance": 0.05,
   "optimizationPolicy": {
     "primaryObjective": "expectedCashPerMinute",
@@ -40,16 +40,33 @@
     "Toxic Wasteland": { "across": 2, "depth": 2, "placement": "front-corner" }
   },
   "scannerFinalCapgraderOnly": true,
+  "defaultScannerHitChance": 0.25,
+  "scannerHitChances": {
+    "Star Scanner": 0.3,
+    "Azure Scanner": 0.9,
+    "Ancient Scanner": 0.5
+  },
+  "crimsonPillars": {
+    "minimumTriggerSeconds": 1,
+    "markWindowSeconds": 15,
+    "triggerDistribution": "uniform",
+    "triggerProbability": 1,
+    "phantomZoneLifetimeSeconds": 30,
+    "basePhantomMultiplier": 1.5,
+    "shinyPhantomMultiplier": 1.65,
+    "maximumBoostsPerOre": 3
+  },
   "recommendedLambdaCount": 3,
   "builtInComplexModels": ["Lambda Upgrader", "Runic Array"],
   "destructiveEffectTimers": { "Fire": 2, "Toxic": 5, "Nuclear": 3, "Overcharged": 3 },
+  "effectClearers": ["Chartreuse Collider"],
   "effectDefinitions": {
     "Fire": {
       "type": "destructive",
       "timerSeconds": 2,
       "sourceTimerSeconds": { "Dragon's Breath": 3 },
       "appliedBy": ["Ore Flamethrower", "Dragon's Breath", "Fire Crystal Dropper", "Pineapple Dropper"],
-      "removedBy": ["Oasis Cleanser", "Leviathans' Wrath", "Ore Wash"],
+      "removedBy": ["Oasis Cleanser", "Leviathans' Wrath", "Ore Wash", "Chartreuse Collider"],
       "interaction": "Fire and Frost on the same ore destroy it."
     },
     "Nuclear": {
@@ -57,20 +74,20 @@
       "timerSeconds": 3,
       "appliedBy": ["Nuclear Upgrader", "Meltdown Dropper"],
       "immuneDroppers": ["Uranium Dropper", "Meltdown Dropper"],
-      "removedBy": ["Ore Wash"]
+      "removedBy": ["Ore Wash", "Chartreuse Collider"]
     },
     "Toxic": {
       "type": "destructive",
       "timerSeconds": 5,
       "appliedBy": ["Acid Plant"],
       "immuneDroppers": ["Uranium Dropper"],
-      "removedBy": ["Ore Wash"]
+      "removedBy": ["Ore Wash", "Chartreuse Collider"]
     },
     "Overcharged": {
       "type": "destructive",
       "timerSeconds": 3,
       "appliedBy": ["Chartreuse Collider"],
-      "removedBy": [],
+      "removedBy": ["Chartreuse Collider"],
       "interaction": "Prevents further effects; Ore Wash makes the ore explode."
     },
     "Derp": { "type": "cosmetic", "appliedBy": ["Derp Blaster", "Godly Stone Dropper"] },
@@ -85,7 +102,7 @@
     "Neon": {
       "type": "cosmetic-material",
       "appliedBy": ["Fire Crystal Dropper", "Netrozite Dropper", "Slushie Dropper", "Kunzite Dropper", "Meltdown Dropper", "Sugarbomb Dropper", "Martian Tech", "Electric Overdrive"],
-      "removedBy": ["Ore Glazer"]
+      "removedBy": ["Ore Glazer", "Chartreuse Collider"]
     }
   },
   "validationCodes": {
@@ -102,6 +119,7 @@
     "PORTABLE_BEFORE_CAP": "A portable may not touch ore until all capgraders are complete.",
     "CAP_RANGE": "A capgrader receives ore outside its input range.",
     "USE_LIMIT": "An ore exceeds an item's shared limited-use pool.",
-    "TELEPORTER_DISABLED": "Teleporters are intentionally unsupported until their rules are supplied."
+    "ORE_SIZE": "Ore exceeds an item's maximum confirmed acceptable size from the Ore SizeHeight sheet.",
+    "TELEPORTER_PAIR": "A teleporter sender requires a receiver of the same color."
   }
 }

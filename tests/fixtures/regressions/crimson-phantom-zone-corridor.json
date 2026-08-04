@@ -1,0 +1,30 @@
+{
+  "id": "crimson-phantom-zone-corridor",
+  "kind": "crimson-phantom-zone-simulation",
+  "observed": "Crimson Pillars showed a possible route corridor but did not estimate random spawn positions or the number of 30-second phantom zones active at once.",
+  "expected": "Each marked ore receives a uniformly random trigger time from 1 through 15 seconds. The simulator distributes spawn probability over the reachable route and uses the 30-second lifetime to estimate simultaneous active zones.",
+  "input": {
+    "item": "Crimson Pillars",
+    "variant": "Base",
+    "startingValue": 100,
+    "dropRate": 2,
+    "minimumDelaySeconds": 1,
+    "windowSeconds": 15,
+    "zoneLifetimeSeconds": 30,
+    "components": [
+      { "id": "pillars", "seconds": 1, "path": { "x": 1, "y": 1, "width": 2, "height": 2 } },
+      { "id": "near", "seconds": 4, "path": { "x": 3, "y": 1, "width": 2, "height": 2 } },
+      { "id": "edge", "seconds": 12, "path": { "x": 5, "y": 1, "width": 2, "height": 2 } },
+      { "id": "late", "seconds": 2, "path": { "x": 7, "y": 1, "width": 2, "height": 2 } }
+    ]
+  },
+  "assert": {
+    "directValue": 100,
+    "candidateIds": ["near", "edge"],
+    "lastCandidateEndSeconds": 15,
+    "candidateSpawnProbabilities": [0.21428571428571427, 0.7857142857142857],
+    "spawnBeforeFurnaceProbability": 1,
+    "expectedSpawnsPerMinute": 120,
+    "expectedActiveZones": 60
+  }
+}

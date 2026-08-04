@@ -1,6 +1,6 @@
 import { diagnostic } from './utils.mjs';
 
-const HARD_CODES = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'ITEM_ILLEGAL', 'USE_LIMIT', 'WRONG_LANE']);
+const HARD_CODES = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'ITEM_ILLEGAL', 'USE_LIMIT', 'ORE_SIZE', 'WRONG_LANE']);
 const conveyorRules = {
   'Quarter Conveyor': { width: 1, length: 1 },
   'Half Conveyor': { width: 2, length: 1 },
@@ -8,6 +8,7 @@ const conveyorRules = {
   'Supercharged Conveyor': { width: 2, length: 2 },
   'Centering Conveyor': { width: 2, length: 2 },
   'Ultracharged Conveyor': { width: 4, length: 2 },
+  'Conveyor Wall': { width: 1, length: 2, wall: true },
 };
 
 const cellKey = (x, y) => `${x},${y}`;
@@ -44,7 +45,8 @@ function dropFrontCells(item) {
 
 function connectivityDiagnostics(plan) {
   const traversable = new Set();
-  plan.conveyors.forEach((entry) => rectCells(entry).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
+  plan.conveyors.filter((entry) => !entry.wall && entry.conveyor !== 'Conveyor Wall')
+    .forEach((entry) => rectCells(entry).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
   plan.items.forEach((entry) => itemPathCells(entry).forEach(({ x, y }) => traversable.add(cellKey(x, y))));
   const starts = plan.items.filter((item) => item.type === 'dropper').flatMap(dropFrontCells).filter(({ x, y }) => traversable.has(cellKey(x, y)));
   const furnace = plan.items.find((item) => item.type === 'furnace');

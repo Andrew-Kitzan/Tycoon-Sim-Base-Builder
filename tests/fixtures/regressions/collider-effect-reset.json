@@ -1,0 +1,19 @@
+{
+  "id": "collider-effect-reset",
+  "kind": "effect-removal-and-reapplication",
+  "observed": "Overcharged exposure continued through later colliders as though the effect could not be removed.",
+  "expected": "A collider clears every existing effect, including Overcharged, before applying its own fresh Overcharged effect and restarting the timer.",
+  "input": {
+    "item": "Chartreuse Collider",
+    "effect": "Overcharged",
+    "secondsToNextCollider": 2.9,
+    "secondsFromNextColliderToFurnace": 2.9
+  },
+  "assert": {
+    "effectApplications": 2,
+    "firstSafetyPoint": "Chartreuse Collider",
+    "secondSafetyPoint": "Furnace",
+    "firstSafe": true,
+    "secondSafe": true
+  }
+}

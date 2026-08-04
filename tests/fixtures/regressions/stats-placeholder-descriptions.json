@@ -1,0 +1,17 @@
+{
+  "id": "stats-placeholder-descriptions",
+  "kind": "database-description-import",
+  "observed": "Item descriptions displayed the placeholder 'Refer to the Stats for Nerds Page' instead of explaining the mechanic.",
+  "expected": "Every placeholder item imports a concrete mechanic description from the Stats for Nerds worksheet, and the placeholder text is absent from generated data.",
+  "input": {
+    "items": [
+      "Corium Dropper", "Wind-Up Dropper", "Sugarbomb Dropper", "Dream Machine",
+      "Raceway Accelerator", "Runic Array", "Crimson Pillars", "Lambda Upgrader",
+      "Tiki Evaluator", "Parasitic Fiend", "Mischievous Furnace", "Periastron's Throne"
+    ]
+  },
+  "assert": {
+    "forbiddenPattern": "refer to.*stats for nerds",
+    "minimumDescriptionLength": 30
+  }
+}

@@ -5,7 +5,7 @@
   "description": "Grid-based Tycoon Sim 2 base planner and validation rules.",
   "scripts": {
     "test": "node tests/validate-planner.js && node tests/engine.test.mjs && node tests/regression-fixtures.test.mjs",
-    "check": "node --check planner-core.js && node --check app.js && node --check engine/xlsx-reader.mjs && node --check scripts/sync-database.mjs && node --check scripts/report-database-conflicts.mjs && node --check scripts/planner-cli.mjs && node --check scripts/full-build.mjs && node tests/validate-planner.js && node tests/engine.test.mjs && node tests/regression-fixtures.test.mjs",
+    "check": "node --check planner-core.js && node --check app.js && node --check engine/xlsx-reader.mjs && node --check engine/item-constraints.mjs && node --check engine/crimson.mjs && node --check engine/teleporters.mjs && node --check scripts/sync-database.mjs && node --check scripts/report-database-conflicts.mjs && node --check scripts/planner-cli.mjs && node --check scripts/full-build.mjs && node tests/validate-planner.js && node tests/engine.test.mjs && node tests/regression-fixtures.test.mjs",
     "database:sync": "node scripts/sync-database.mjs && node scripts/report-database-conflicts.mjs",
     "database:index": "node scripts/build-database-index.mjs",
     "database:report": "node scripts/report-database-conflicts.mjs",

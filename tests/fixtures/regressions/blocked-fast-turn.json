@@ -1,0 +1,13 @@
+{
+  "id": "blocked-fast-turn",
+  "observed": "Every turn above speed 16.8 was rejected even when a Conveyor Wall or portable footprint blocked the outside of the turn.",
+  "expected": "A fast turn is rejected only when its outside cells are not fully covered by a Conveyor Wall or portable footprint.",
+  "kind": "route-geometry",
+  "input": {
+    "before": { "direction": "east", "path": { "x": 1, "y": 2, "width": 2, "height": 2 } },
+    "after": { "direction": "south", "path": { "x": 3, "y": 2, "width": 1, "height": 1 } },
+    "wall": { "x": 4, "y": 2, "width": 1, "height": 2 },
+    "portable": { "x": 4, "y": 1, "width": 2, "height": 2 }
+  },
+  "assert": { "unblocked": false, "wallBlocked": true, "portableBlocked": true }
+}

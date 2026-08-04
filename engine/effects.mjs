@@ -19,8 +19,10 @@ function isWasher(item) {
   return /ore wash(?:er)?/i.test(item.name) || /removes? (?:all )?(?:ore )?effects?/i.test(item.effects ?? '');
 }
 
-function isEffectRemover(item, effect) {
-  if (isWasher(item)) return true;
+function isEffectRemover(item, effect, rules) {
+  if (rules?.effectClearers?.includes(item.name) || /collider/i.test(item.name)) return true;
+  if (rules?.effectDefinitions?.[effect]?.removedBy?.includes(item.name)) return true;
+  if (isWasher(item)) return effect.toLowerCase() !== 'overcharged';
   return effect.toLowerCase() === 'fire' && /oasis/i.test(item.name);
 }
 
@@ -44,12 +46,9 @@ export function evaluateEffectSafety({ dropper, dropperCount = 1, chain, layout,
         results.push({ effect, chainIndex: index, appliedBy: item.name, safe: true, immune: true, exposureSeconds: 0, timerSeconds: timerForEffect(effect, item, rules) });
         continue;
       }
-      const washable = effect.toLowerCase() !== 'overcharged';
       let destination = chain.length;
-      if (washable) {
-        const removerIndex = chain.findIndex((entry, candidateIndex) => candidateIndex > index && isEffectRemover(entry.item ?? entry, effect));
-        if (removerIndex >= 0) destination = removerIndex;
-      }
+      const removerIndex = chain.findIndex((entry, candidateIndex) => candidateIndex > index && isEffectRemover(entry.item ?? entry, effect, rules));
+      if (removerIndex >= 0) destination = removerIndex;
       const startSequence = dropperCount + index;
       const destinationSequence = dropperCount + destination;
       let exposureSeconds = (layout.connections ?? [])
@@ -76,4 +75,4 @@ export function evaluateEffectSafety({ dropper, dropperCount = 1, chain, layout,
 }
 
 export function isEffectWasher(item) { return isWasher(item); }
-export function removesEffect(item, effect) { return isEffectRemover(item, effect); }
+export function removesEffect(item, effect, rules = null) { return isEffectRemover(item, effect, rules); }
