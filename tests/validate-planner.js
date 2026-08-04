@@ -72,6 +72,8 @@ assert.match(indexSource, /planner-loadout-actions[\s\S]+id="load-bases"[\s\S]+i
 assert.match(indexSource, /id="save-base-dialog"/);
 assert.match(indexSource, /id="load-base-dialog"/);
 assert.match(indexSource, /id="confirm-load-base-dialog"/);
+assert.doesNotMatch(indexSource, /Ã—/);
+assert.equal((indexSource.match(/&times;/g) ?? []).length, 4);
 assert.match(indexSource, /id="saved-loadout-folder-input"[^>]+webkitdirectory/);
 assert.match(indexSource, /Load anyway/);
 assert.match(indexSource, /Never mind/);
