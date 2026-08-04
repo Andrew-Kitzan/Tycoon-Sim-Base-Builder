@@ -9,9 +9,13 @@
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <div>
+        <div class="planner-brand">
           <p class="eyebrow">TYCOON SIM 2</p>
           <h1>Base Planner</h1>
+          <div class="planner-loadout-actions" aria-label="Saved base controls">
+            <button id="load-bases" class="saved-base-button" type="button">Load Bases</button>
+            <button id="save-base" class="saved-base-button" type="button" disabled title="Simulate the current base before saving">Save Base</button>
+          </div>
         </div>
         <div class="topbar-actions">
           <div id="planner-mode-toggle" class="planner-mode-toggle" role="group" aria-label="Planner mode">
@@ -165,6 +169,72 @@
           <button type="button" data-mass-action="rotate">Rotate all 90°</button>
           <button type="button" data-mass-action="move">Move selection</button>
           <button class="danger-button" type="button" data-mass-action="delete">Delete selection</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="save-base-dialog" class="item-editor saved-base-dialog" aria-labelledby="save-base-title">
+      <form id="save-base-form" class="item-editor-card">
+        <div class="item-editor-heading">
+          <div>
+            <p class="panel-label">Saved loadouts</p>
+            <h2 id="save-base-title">Save this base</h2>
+          </div>
+          <button class="icon-button" type="button" data-save-base-action="close" aria-label="Close save base menu">Ã—</button>
+        </div>
+        <label class="coordinate-control" for="saved-base-name">
+          <span>Setup name</span>
+          <input id="saved-base-name" name="saved-base-name" type="text" maxlength="80" required autocomplete="off" placeholder="Example: Rebirth 7 Azure route" />
+        </label>
+        <div id="save-base-metadata" class="saved-base-metadata" aria-live="polite"></div>
+        <p class="saved-base-file-note">The base is kept in this browser and written as a shareable JSON file. Choose your <strong>saved-loadouts</strong> folder when prompted.</p>
+        <p id="save-base-status" class="item-editor-error" role="status" hidden></p>
+        <div class="item-editor-actions">
+          <button type="button" data-save-base-action="close">Cancel</button>
+          <button class="primary-button" type="submit">Save Base</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="load-base-dialog" class="item-editor load-base-dialog" aria-labelledby="load-base-title">
+      <div class="item-editor-card">
+        <div class="item-editor-heading">
+          <div>
+            <p class="panel-label">Saved loadouts</p>
+            <h2 id="load-base-title">Load a base</h2>
+          </div>
+          <button class="icon-button" type="button" data-load-base-action="close" aria-label="Close load base menu">Ã—</button>
+        </div>
+        <div class="saved-base-import-actions">
+          <button type="button" data-load-base-action="import-folder">Import saved-loadouts folder</button>
+          <button type="button" data-load-base-action="import-files">Import JSON files</button>
+          <input id="saved-loadout-folder-input" type="file" accept=".json,application/json" multiple webkitdirectory hidden />
+          <input id="saved-loadout-file-input" type="file" accept=".json,application/json" multiple hidden />
+        </div>
+        <p id="load-base-status" class="saved-base-library-status" role="status"></p>
+        <div class="saved-base-browser">
+          <div id="saved-base-list" class="saved-base-list" role="listbox" aria-label="Saved bases"></div>
+          <section id="saved-base-details" class="saved-base-details" aria-live="polite">
+            <p>Select a saved base to see its benchmark stats.</p>
+          </section>
+        </div>
+        <div id="saved-base-preview" class="saved-base-preview" hidden></div>
+        <div class="item-editor-actions saved-base-load-actions">
+          <button type="button" data-load-base-action="preview" disabled>Preview</button>
+          <button class="primary-button" type="button" data-load-base-action="load" disabled>Load Base</button>
+          <button class="danger-button" type="button" data-load-base-action="delete" disabled>Delete</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="confirm-load-base-dialog" class="item-editor confirm-load-base-dialog" aria-labelledby="confirm-load-base-title">
+      <div class="item-editor-card">
+        <p class="panel-label">Unsaved work warning</p>
+        <h2 id="confirm-load-base-title">Load this base anyway?</h2>
+        <p>Your current grid will be cleared and replaced. If the current layout has not been saved, that data will be lost.</p>
+        <div class="item-editor-actions">
+          <button type="button" data-confirm-load-action="cancel">Never mind</button>
+          <button class="danger-button" type="button" data-confirm-load-action="load">Load anyway</button>
         </div>
       </div>
     </dialog>

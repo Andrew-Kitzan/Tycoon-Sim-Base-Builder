@@ -1,0 +1,6467 @@
+{
+  "fileType": "tycoon-sim-2-loadout",
+  "version": 1,
+  "id": "loadout-1785823384206-3ef36df007b29",
+  "name": "Qd P2W Update 1 base",
+  "createdAt": "2026-08-04T06:03:04.206Z",
+  "updatedAt": "2026-08-04T06:03:04.206Z",
+  "databaseHash": "3be34b7cc44f8d3877dbac4a486d7bd1e449a6a96f99ccb4fc0966b069cb4a46",
+  "plan": {
+    "plotSize": 30,
+    "items": [
+      {
+        "id": "manual-item-1785797665555-e6426217877f7",
+        "order": 1,
+        "name": "Iron Dropper",
+        "label": "IRON DROPPER",
+        "description": "Obtained from advanced crate",
+        "stats": {
+          "Variant": "Base",
+          "Rarity": "Common",
+          "Main stat": 10,
+          "Drop speed": 2,
+          "Ore size": 1
+        },
+        "x": 1,
+        "y": 1,
+        "itemWidth": 2,
+        "itemLength": 3,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "dropper",
+        "topLeft": "A1",
+        "bottomRight": "B3",
+        "facing": "south",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 1,
+            "coordinate": "A1"
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "coordinate": "B1"
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "coordinate": "A2"
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "coordinate": "B2"
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "coordinate": "A3"
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "coordinate": "B3"
+          }
+        ],
+        "coordinateRange": "A1:B3"
+      },
+      {
+        "id": "manual-item-1785797674566-5139a14ef60ec8",
+        "order": 2,
+        "name": "Iron Dropper",
+        "label": "IRON DROPPER",
+        "description": "Obtained from advanced crate",
+        "stats": {
+          "Variant": "Base",
+          "Rarity": "Common",
+          "Main stat": 10,
+          "Drop speed": 2,
+          "Ore size": 1
+        },
+        "x": 3,
+        "y": 1,
+        "itemWidth": 2,
+        "itemLength": 3,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "dropper",
+        "topLeft": "C1",
+        "bottomRight": "D3",
+        "facing": "south",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 3,
+            "y": 1,
+            "coordinate": "C1"
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "coordinate": "D1"
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "coordinate": "C2"
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "coordinate": "D2"
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "coordinate": "C3"
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "coordinate": "D3"
+          }
+        ],
+        "coordinateRange": "C1:D3"
+      },
+      {
+        "id": "manual-item-1785797839721-87ee0d74e0f2c8",
+        "order": 3,
+        "name": "Castle Fortress",
+        "label": "CASTLE",
+        "description": "Obtained from fantasy crate",
+        "stats": {
+          "Variant": "Mythic",
+          "Rarity": "Legendary",
+          "Main stat": 6250,
+          "Range": "N/A",
+          "Conveyor speed": 6
+        },
+        "x": 5,
+        "y": 2,
+        "itemWidth": 6,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 6,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "E2",
+        "bottomRight": "G7",
+        "facing": "east",
+        "footprint": {
+          "width": 3,
+          "height": 6
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 2,
+            "coordinate": "E2"
+          },
+          {
+            "x": 6,
+            "y": 2,
+            "coordinate": "F2"
+          },
+          {
+            "x": 7,
+            "y": 2,
+            "coordinate": "G2"
+          },
+          {
+            "x": 5,
+            "y": 3,
+            "coordinate": "E3"
+          },
+          {
+            "x": 6,
+            "y": 3,
+            "coordinate": "F3"
+          },
+          {
+            "x": 7,
+            "y": 3,
+            "coordinate": "G3"
+          },
+          {
+            "x": 5,
+            "y": 4,
+            "coordinate": "E4"
+          },
+          {
+            "x": 6,
+            "y": 4,
+            "coordinate": "F4"
+          },
+          {
+            "x": 7,
+            "y": 4,
+            "coordinate": "G4"
+          },
+          {
+            "x": 5,
+            "y": 5,
+            "coordinate": "E5"
+          },
+          {
+            "x": 6,
+            "y": 5,
+            "coordinate": "F5"
+          },
+          {
+            "x": 7,
+            "y": 5,
+            "coordinate": "G5"
+          },
+          {
+            "x": 5,
+            "y": 6,
+            "coordinate": "E6"
+          },
+          {
+            "x": 6,
+            "y": 6,
+            "coordinate": "F6"
+          },
+          {
+            "x": 7,
+            "y": 6,
+            "coordinate": "G6"
+          },
+          {
+            "x": 5,
+            "y": 7,
+            "coordinate": "E7"
+          },
+          {
+            "x": 6,
+            "y": 7,
+            "coordinate": "F7"
+          },
+          {
+            "x": 7,
+            "y": 7,
+            "coordinate": "G7"
+          }
+        ],
+        "coordinateRange": "E2:G7"
+      },
+      {
+        "id": "manual-item-1785798628565-d37d59e6bfc42",
+        "order": 4,
+        "name": "Fine Point Upgrader",
+        "label": "FINE POINT",
+        "description": "Centered · Obtained from toxic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 2.2,
+          "Range": "0-15K",
+          "Conveyor speed": 12
+        },
+        "x": 8,
+        "y": 3,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "H3",
+        "bottomRight": "J6",
+        "facing": "east",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 8,
+            "y": 3,
+            "coordinate": "H3"
+          },
+          {
+            "x": 9,
+            "y": 3,
+            "coordinate": "I3"
+          },
+          {
+            "x": 10,
+            "y": 3,
+            "coordinate": "J3"
+          },
+          {
+            "x": 8,
+            "y": 4,
+            "coordinate": "H4"
+          },
+          {
+            "x": 9,
+            "y": 4,
+            "coordinate": "I4"
+          },
+          {
+            "x": 10,
+            "y": 4,
+            "coordinate": "J4"
+          },
+          {
+            "x": 8,
+            "y": 5,
+            "coordinate": "H5"
+          },
+          {
+            "x": 9,
+            "y": 5,
+            "coordinate": "I5"
+          },
+          {
+            "x": 10,
+            "y": 5,
+            "coordinate": "J5"
+          },
+          {
+            "x": 8,
+            "y": 6,
+            "coordinate": "H6"
+          },
+          {
+            "x": 9,
+            "y": 6,
+            "coordinate": "I6"
+          },
+          {
+            "x": 10,
+            "y": 6,
+            "coordinate": "J6"
+          }
+        ],
+        "coordinateRange": "H3:J6"
+      },
+      {
+        "id": "manual-item-1785798654073-27aed03f93352",
+        "order": 5,
+        "name": "Oil Well",
+        "label": "OIL WELL",
+        "description": "Ore with fire effect will explode and be destroyed if they enter this upgrader within its upgrade range. · Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.265,
+          "Range": "5K-65K",
+          "Conveyor speed": 18
+        },
+        "x": 12,
+        "y": 3,
+        "itemWidth": 3,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "L3",
+        "bottomRight": "M5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 12,
+            "y": 3,
+            "coordinate": "L3"
+          },
+          {
+            "x": 13,
+            "y": 3,
+            "coordinate": "M3"
+          },
+          {
+            "x": 12,
+            "y": 4,
+            "coordinate": "L4"
+          },
+          {
+            "x": 13,
+            "y": 4,
+            "coordinate": "M4"
+          },
+          {
+            "x": 12,
+            "y": 5,
+            "coordinate": "L5"
+          },
+          {
+            "x": 13,
+            "y": 5,
+            "coordinate": "M5"
+          }
+        ],
+        "coordinateRange": "L3:M5"
+      },
+      {
+        "id": "manual-item-1785798654683-b092d0b2d6ab5",
+        "order": 6,
+        "name": "Oil Well",
+        "label": "OIL WELL",
+        "description": "Ore with fire effect will explode and be destroyed if they enter this upgrader within its upgrade range. · Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.265,
+          "Range": "5K-65K",
+          "Conveyor speed": 18
+        },
+        "x": 14,
+        "y": 3,
+        "itemWidth": 3,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "N3",
+        "bottomRight": "O5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 14,
+            "y": 3,
+            "coordinate": "N3"
+          },
+          {
+            "x": 15,
+            "y": 3,
+            "coordinate": "O3"
+          },
+          {
+            "x": 14,
+            "y": 4,
+            "coordinate": "N4"
+          },
+          {
+            "x": 15,
+            "y": 4,
+            "coordinate": "O4"
+          },
+          {
+            "x": 14,
+            "y": 5,
+            "coordinate": "N5"
+          },
+          {
+            "x": 15,
+            "y": 5,
+            "coordinate": "O5"
+          }
+        ],
+        "coordinateRange": "N3:O5"
+      },
+      {
+        "id": "manual-item-1785798665650-0eab8b37aeb758",
+        "order": 7,
+        "name": "Oil Well",
+        "label": "OIL WELL",
+        "description": "Ore with fire effect will explode and be destroyed if they enter this upgrader within its upgrade range. · Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.265,
+          "Range": "5K-65K",
+          "Conveyor speed": 18
+        },
+        "x": 16,
+        "y": 3,
+        "itemWidth": 3,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "P3",
+        "bottomRight": "Q5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 16,
+            "y": 3,
+            "coordinate": "P3"
+          },
+          {
+            "x": 17,
+            "y": 3,
+            "coordinate": "Q3"
+          },
+          {
+            "x": 16,
+            "y": 4,
+            "coordinate": "P4"
+          },
+          {
+            "x": 17,
+            "y": 4,
+            "coordinate": "Q4"
+          },
+          {
+            "x": 16,
+            "y": 5,
+            "coordinate": "P5"
+          },
+          {
+            "x": 17,
+            "y": 5,
+            "coordinate": "Q5"
+          }
+        ],
+        "coordinateRange": "P3:Q5"
+      },
+      {
+        "id": "manual-item-1785798666311-7e93c3c109fbd",
+        "order": 8,
+        "name": "Oil Well",
+        "label": "OIL WELL",
+        "description": "Ore with fire effect will explode and be destroyed if they enter this upgrader within its upgrade range. · Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.265,
+          "Range": "5K-65K",
+          "Conveyor speed": 18
+        },
+        "x": 18,
+        "y": 3,
+        "itemWidth": 3,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "R3",
+        "bottomRight": "S5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 18,
+            "y": 3,
+            "coordinate": "R3"
+          },
+          {
+            "x": 19,
+            "y": 3,
+            "coordinate": "S3"
+          },
+          {
+            "x": 18,
+            "y": 4,
+            "coordinate": "R4"
+          },
+          {
+            "x": 19,
+            "y": 4,
+            "coordinate": "S4"
+          },
+          {
+            "x": 18,
+            "y": 5,
+            "coordinate": "R5"
+          },
+          {
+            "x": 19,
+            "y": 5,
+            "coordinate": "S5"
+          }
+        ],
+        "coordinateRange": "R3:S5"
+      },
+      {
+        "id": "manual-item-1785798667104-efaac5027ab6b",
+        "order": 9,
+        "name": "Oil Well",
+        "label": "OIL WELL",
+        "description": "Ore with fire effect will explode and be destroyed if they enter this upgrader within its upgrade range. · Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.265,
+          "Range": "5K-65K",
+          "Conveyor speed": 18
+        },
+        "x": 20,
+        "y": 3,
+        "itemWidth": 3,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "T3",
+        "bottomRight": "U5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 20,
+            "y": 3,
+            "coordinate": "T3"
+          },
+          {
+            "x": 21,
+            "y": 3,
+            "coordinate": "U3"
+          },
+          {
+            "x": 20,
+            "y": 4,
+            "coordinate": "T4"
+          },
+          {
+            "x": 21,
+            "y": 4,
+            "coordinate": "U4"
+          },
+          {
+            "x": 20,
+            "y": 5,
+            "coordinate": "T5"
+          },
+          {
+            "x": 21,
+            "y": 5,
+            "coordinate": "U5"
+          }
+        ],
+        "coordinateRange": "T3:U5"
+      },
+      {
+        "id": "manual-item-1785798667954-eba64f0d212568",
+        "order": 10,
+        "name": "Oil Well",
+        "label": "OIL WELL",
+        "description": "Ore with fire effect will explode and be destroyed if they enter this upgrader within its upgrade range. · Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.265,
+          "Range": "5K-65K",
+          "Conveyor speed": 18
+        },
+        "x": 22,
+        "y": 3,
+        "itemWidth": 3,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "V3",
+        "bottomRight": "W5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 22,
+            "y": 3,
+            "coordinate": "V3"
+          },
+          {
+            "x": 23,
+            "y": 3,
+            "coordinate": "W3"
+          },
+          {
+            "x": 22,
+            "y": 4,
+            "coordinate": "V4"
+          },
+          {
+            "x": 23,
+            "y": 4,
+            "coordinate": "W4"
+          },
+          {
+            "x": 22,
+            "y": 5,
+            "coordinate": "V5"
+          },
+          {
+            "x": 23,
+            "y": 5,
+            "coordinate": "W5"
+          }
+        ],
+        "coordinateRange": "V3:W5"
+      },
+      {
+        "id": "manual-item-1785798742535-be125d0221994",
+        "order": 11,
+        "name": "Oil Well",
+        "label": "OIL WELL",
+        "description": "Ore with fire effect will explode and be destroyed if they enter this upgrader within its upgrade range. · Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.265,
+          "Range": "5K-65K",
+          "Conveyor speed": 18
+        },
+        "x": 24,
+        "y": 3,
+        "itemWidth": 3,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "X3",
+        "bottomRight": "Y5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 24,
+            "y": 3,
+            "coordinate": "X3"
+          },
+          {
+            "x": 25,
+            "y": 3,
+            "coordinate": "Y3"
+          },
+          {
+            "x": 24,
+            "y": 4,
+            "coordinate": "X4"
+          },
+          {
+            "x": 25,
+            "y": 4,
+            "coordinate": "Y4"
+          },
+          {
+            "x": 24,
+            "y": 5,
+            "coordinate": "X5"
+          },
+          {
+            "x": 25,
+            "y": 5,
+            "coordinate": "Y5"
+          }
+        ],
+        "coordinateRange": "X3:Y5"
+      },
+      {
+        "id": "manual-item-1785798759319-ca2d621fb4cb5",
+        "order": 12,
+        "name": "Fairy Forest",
+        "label": "FAIRY FOREST",
+        "description": "Obtained from fantasy crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.375,
+          "Range": "50K-135K",
+          "Conveyor speed": 12
+        },
+        "x": 26,
+        "y": 3,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "Z3",
+        "bottomRight": "AB6",
+        "facing": "east",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 26,
+            "y": 3,
+            "coordinate": "Z3"
+          },
+          {
+            "x": 27,
+            "y": 3,
+            "coordinate": "AA3"
+          },
+          {
+            "x": 28,
+            "y": 3,
+            "coordinate": "AB3"
+          },
+          {
+            "x": 26,
+            "y": 4,
+            "coordinate": "Z4"
+          },
+          {
+            "x": 27,
+            "y": 4,
+            "coordinate": "AA4"
+          },
+          {
+            "x": 28,
+            "y": 4,
+            "coordinate": "AB4"
+          },
+          {
+            "x": 26,
+            "y": 5,
+            "coordinate": "Z5"
+          },
+          {
+            "x": 27,
+            "y": 5,
+            "coordinate": "AA5"
+          },
+          {
+            "x": 28,
+            "y": 5,
+            "coordinate": "AB5"
+          },
+          {
+            "x": 26,
+            "y": 6,
+            "coordinate": "Z6"
+          },
+          {
+            "x": 27,
+            "y": 6,
+            "coordinate": "AA6"
+          },
+          {
+            "x": 28,
+            "y": 6,
+            "coordinate": "AB6"
+          }
+        ],
+        "coordinateRange": "Z3:AB6"
+      },
+      {
+        "id": "manual-item-1785798765425-44510123720ea",
+        "order": 13,
+        "name": "Fairy Forest",
+        "label": "FAIRY FOREST",
+        "description": "Obtained from fantasy crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.375,
+          "Range": "50K-135K",
+          "Conveyor speed": 12
+        },
+        "x": 27,
+        "y": 7,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "AA7",
+        "bottomRight": "AD9",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 27,
+            "y": 7,
+            "coordinate": "AA7"
+          },
+          {
+            "x": 28,
+            "y": 7,
+            "coordinate": "AB7"
+          },
+          {
+            "x": 29,
+            "y": 7,
+            "coordinate": "AC7"
+          },
+          {
+            "x": 30,
+            "y": 7,
+            "coordinate": "AD7"
+          },
+          {
+            "x": 27,
+            "y": 8,
+            "coordinate": "AA8"
+          },
+          {
+            "x": 28,
+            "y": 8,
+            "coordinate": "AB8"
+          },
+          {
+            "x": 29,
+            "y": 8,
+            "coordinate": "AC8"
+          },
+          {
+            "x": 30,
+            "y": 8,
+            "coordinate": "AD8"
+          },
+          {
+            "x": 27,
+            "y": 9,
+            "coordinate": "AA9"
+          },
+          {
+            "x": 28,
+            "y": 9,
+            "coordinate": "AB9"
+          },
+          {
+            "x": 29,
+            "y": 9,
+            "coordinate": "AC9"
+          },
+          {
+            "x": 30,
+            "y": 9,
+            "coordinate": "AD9"
+          }
+        ],
+        "coordinateRange": "AA7:AD9"
+      },
+      {
+        "id": "manual-item-1785798931145-6f0dce1157284",
+        "order": 14,
+        "name": "Fairy Forest",
+        "label": "FAIRY FOREST",
+        "description": "Obtained from fantasy crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.375,
+          "Range": "50K-135K",
+          "Conveyor speed": 12
+        },
+        "x": 27,
+        "y": 10,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "AA10",
+        "bottomRight": "AD12",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 27,
+            "y": 10,
+            "coordinate": "AA10"
+          },
+          {
+            "x": 28,
+            "y": 10,
+            "coordinate": "AB10"
+          },
+          {
+            "x": 29,
+            "y": 10,
+            "coordinate": "AC10"
+          },
+          {
+            "x": 30,
+            "y": 10,
+            "coordinate": "AD10"
+          },
+          {
+            "x": 27,
+            "y": 11,
+            "coordinate": "AA11"
+          },
+          {
+            "x": 28,
+            "y": 11,
+            "coordinate": "AB11"
+          },
+          {
+            "x": 29,
+            "y": 11,
+            "coordinate": "AC11"
+          },
+          {
+            "x": 30,
+            "y": 11,
+            "coordinate": "AD11"
+          },
+          {
+            "x": 27,
+            "y": 12,
+            "coordinate": "AA12"
+          },
+          {
+            "x": 28,
+            "y": 12,
+            "coordinate": "AB12"
+          },
+          {
+            "x": 29,
+            "y": 12,
+            "coordinate": "AC12"
+          },
+          {
+            "x": 30,
+            "y": 12,
+            "coordinate": "AD12"
+          }
+        ],
+        "coordinateRange": "AA10:AD12"
+      },
+      {
+        "id": "manual-item-1785800092869-646c43c4eeffc8",
+        "order": 15,
+        "name": "Incremental Upgrader",
+        "label": "INCREMENTAL",
+        "description": "1.21 multi first time through, 1.375 second time, and 1.925 3rd time · Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 27,
+        "y": 14,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "AA14",
+        "bottomRight": "AD15",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 27,
+            "y": 14,
+            "coordinate": "AA14"
+          },
+          {
+            "x": 28,
+            "y": 14,
+            "coordinate": "AB14"
+          },
+          {
+            "x": 29,
+            "y": 14,
+            "coordinate": "AC14"
+          },
+          {
+            "x": 30,
+            "y": 14,
+            "coordinate": "AD14"
+          },
+          {
+            "x": 27,
+            "y": 15,
+            "coordinate": "AA15"
+          },
+          {
+            "x": 28,
+            "y": 15,
+            "coordinate": "AB15"
+          },
+          {
+            "x": 29,
+            "y": 15,
+            "coordinate": "AC15"
+          },
+          {
+            "x": 30,
+            "y": 15,
+            "coordinate": "AD15"
+          }
+        ],
+        "coordinateRange": "AA14:AD15"
+      },
+      {
+        "id": "manual-item-1785800094492-8d8dd75ddb9a38",
+        "order": 16,
+        "name": "Incremental Upgrader",
+        "label": "INCREMENTAL",
+        "description": "1.21 multi first time through, 1.375 second time, and 1.925 3rd time · Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 27,
+        "y": 16,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "AA16",
+        "bottomRight": "AD17",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 27,
+            "y": 16,
+            "coordinate": "AA16"
+          },
+          {
+            "x": 28,
+            "y": 16,
+            "coordinate": "AB16"
+          },
+          {
+            "x": 29,
+            "y": 16,
+            "coordinate": "AC16"
+          },
+          {
+            "x": 30,
+            "y": 16,
+            "coordinate": "AD16"
+          },
+          {
+            "x": 27,
+            "y": 17,
+            "coordinate": "AA17"
+          },
+          {
+            "x": 28,
+            "y": 17,
+            "coordinate": "AB17"
+          },
+          {
+            "x": 29,
+            "y": 17,
+            "coordinate": "AC17"
+          },
+          {
+            "x": 30,
+            "y": 17,
+            "coordinate": "AD17"
+          }
+        ],
+        "coordinateRange": "AA16:AD17"
+      },
+      {
+        "id": "manual-item-1785800095461-30d08dcee2b678",
+        "order": 17,
+        "name": "Incremental Upgrader",
+        "label": "INCREMENTAL",
+        "description": "1.21 multi first time through, 1.375 second time, and 1.925 3rd time · Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 27,
+        "y": 18,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "AA18",
+        "bottomRight": "AD19",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 27,
+            "y": 18,
+            "coordinate": "AA18"
+          },
+          {
+            "x": 28,
+            "y": 18,
+            "coordinate": "AB18"
+          },
+          {
+            "x": 29,
+            "y": 18,
+            "coordinate": "AC18"
+          },
+          {
+            "x": 30,
+            "y": 18,
+            "coordinate": "AD18"
+          },
+          {
+            "x": 27,
+            "y": 19,
+            "coordinate": "AA19"
+          },
+          {
+            "x": 28,
+            "y": 19,
+            "coordinate": "AB19"
+          },
+          {
+            "x": 29,
+            "y": 19,
+            "coordinate": "AC19"
+          },
+          {
+            "x": 30,
+            "y": 19,
+            "coordinate": "AD19"
+          }
+        ],
+        "coordinateRange": "AA18:AD19"
+      },
+      {
+        "id": "manual-item-1785800215800-b9f5a56e7b2238",
+        "order": 18,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 26,
+        "y": 13,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "Z13",
+        "bottomRight": "AA13",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 26,
+            "y": 13,
+            "coordinate": "Z13"
+          },
+          {
+            "x": 27,
+            "y": 13,
+            "coordinate": "AA13"
+          }
+        ],
+        "coordinateRange": "Z13:AA13"
+      },
+      {
+        "id": "manual-item-1785800220908-a864ab8f14c7a",
+        "order": 19,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 25,
+        "y": 14,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "Y14",
+        "bottomRight": "Z14",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 25,
+            "y": 14,
+            "coordinate": "Y14"
+          },
+          {
+            "x": 26,
+            "y": 14,
+            "coordinate": "Z14"
+          }
+        ],
+        "coordinateRange": "Y14:Z14"
+      },
+      {
+        "id": "manual-item-1785800269664-eaa39d669a5788",
+        "order": 20,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 25,
+        "y": 15,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "Y15",
+        "bottomRight": "Z15",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 25,
+            "y": 15,
+            "coordinate": "Y15"
+          },
+          {
+            "x": 26,
+            "y": 15,
+            "coordinate": "Z15"
+          }
+        ],
+        "coordinateRange": "Y15:Z15"
+      },
+      {
+        "id": "manual-item-1785800271027-1d0f7e3099c768",
+        "order": 21,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 25,
+        "y": 16,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "Y16",
+        "bottomRight": "Z16",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 25,
+            "y": 16,
+            "coordinate": "Y16"
+          },
+          {
+            "x": 26,
+            "y": 16,
+            "coordinate": "Z16"
+          }
+        ],
+        "coordinateRange": "Y16:Z16"
+      },
+      {
+        "id": "manual-item-1785800306287-c7e986f316c878",
+        "order": 22,
+        "name": "Lambda Upgrader",
+        "label": "LAMBDA",
+        "description": "each time an ore is upgraded there is a 1 - 1.5 / upgrade Count chance to destroy the ore. \n\nIf it survives it has a 1/19  chance to multiply by 3.52, 1/19 chance to add 1,100, 1/19 to create an explosion, 1/19 chance to set the ore value to 1, 1/19 chance to fling your ore and multiply by 2.42, 1/19 chance to multiply by 6.6 and apply sparkle effect to the ore, and a 13/19 chance to multiply by 2.42.\n\nTotal survival Chance= 1.5^(n-1) / n! · Obtained from toxic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Epic",
+          "Range": "N/A",
+          "Conveyor speed": 24
+        },
+        "x": 15,
+        "y": 27,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "O27",
+        "bottomRight": "Q30",
+        "facing": "west",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 15,
+            "y": 27,
+            "coordinate": "O27"
+          },
+          {
+            "x": 16,
+            "y": 27,
+            "coordinate": "P27"
+          },
+          {
+            "x": 17,
+            "y": 27,
+            "coordinate": "Q27"
+          },
+          {
+            "x": 15,
+            "y": 28,
+            "coordinate": "O28"
+          },
+          {
+            "x": 16,
+            "y": 28,
+            "coordinate": "P28"
+          },
+          {
+            "x": 17,
+            "y": 28,
+            "coordinate": "Q28"
+          },
+          {
+            "x": 15,
+            "y": 29,
+            "coordinate": "O29"
+          },
+          {
+            "x": 16,
+            "y": 29,
+            "coordinate": "P29"
+          },
+          {
+            "x": 17,
+            "y": 29,
+            "coordinate": "Q29"
+          },
+          {
+            "x": 15,
+            "y": 30,
+            "coordinate": "O30"
+          },
+          {
+            "x": 16,
+            "y": 30,
+            "coordinate": "P30"
+          },
+          {
+            "x": 17,
+            "y": 30,
+            "coordinate": "Q30"
+          }
+        ],
+        "coordinateRange": "O27:Q30"
+      },
+      {
+        "id": "manual-item-1785800307948-7b6d166a553108",
+        "order": 23,
+        "name": "Lambda Upgrader",
+        "label": "LAMBDA",
+        "description": "each time an ore is upgraded there is a 1 - 1.5 / upgrade Count chance to destroy the ore. \n\nIf it survives it has a 1/19  chance to multiply by 3.52, 1/19 chance to add 1,100, 1/19 to create an explosion, 1/19 chance to set the ore value to 1, 1/19 chance to fling your ore and multiply by 2.42, 1/19 chance to multiply by 6.6 and apply sparkle effect to the ore, and a 13/19 chance to multiply by 2.42.\n\nTotal survival Chance= 1.5^(n-1) / n! · Obtained from toxic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Epic",
+          "Range": "N/A",
+          "Conveyor speed": 24
+        },
+        "x": 12,
+        "y": 27,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "L27",
+        "bottomRight": "N30",
+        "facing": "west",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 12,
+            "y": 27,
+            "coordinate": "L27"
+          },
+          {
+            "x": 13,
+            "y": 27,
+            "coordinate": "M27"
+          },
+          {
+            "x": 14,
+            "y": 27,
+            "coordinate": "N27"
+          },
+          {
+            "x": 12,
+            "y": 28,
+            "coordinate": "L28"
+          },
+          {
+            "x": 13,
+            "y": 28,
+            "coordinate": "M28"
+          },
+          {
+            "x": 14,
+            "y": 28,
+            "coordinate": "N28"
+          },
+          {
+            "x": 12,
+            "y": 29,
+            "coordinate": "L29"
+          },
+          {
+            "x": 13,
+            "y": 29,
+            "coordinate": "M29"
+          },
+          {
+            "x": 14,
+            "y": 29,
+            "coordinate": "N29"
+          },
+          {
+            "x": 12,
+            "y": 30,
+            "coordinate": "L30"
+          },
+          {
+            "x": 13,
+            "y": 30,
+            "coordinate": "M30"
+          },
+          {
+            "x": 14,
+            "y": 30,
+            "coordinate": "N30"
+          }
+        ],
+        "coordinateRange": "L27:N30"
+      },
+      {
+        "id": "manual-item-1785800308591-a9c5ea24770648",
+        "order": 24,
+        "name": "Lambda Upgrader",
+        "label": "LAMBDA",
+        "description": "each time an ore is upgraded there is a 1 - 1.5 / upgrade Count chance to destroy the ore. \n\nIf it survives it has a 1/19  chance to multiply by 3.52, 1/19 chance to add 1,100, 1/19 to create an explosion, 1/19 chance to set the ore value to 1, 1/19 chance to fling your ore and multiply by 2.42, 1/19 chance to multiply by 6.6 and apply sparkle effect to the ore, and a 13/19 chance to multiply by 2.42.\n\nTotal survival Chance= 1.5^(n-1) / n! · Obtained from toxic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Epic",
+          "Range": "N/A",
+          "Conveyor speed": 24
+        },
+        "x": 9,
+        "y": 27,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "I27",
+        "bottomRight": "K30",
+        "facing": "west",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 9,
+            "y": 27,
+            "coordinate": "I27"
+          },
+          {
+            "x": 10,
+            "y": 27,
+            "coordinate": "J27"
+          },
+          {
+            "x": 11,
+            "y": 27,
+            "coordinate": "K27"
+          },
+          {
+            "x": 9,
+            "y": 28,
+            "coordinate": "I28"
+          },
+          {
+            "x": 10,
+            "y": 28,
+            "coordinate": "J28"
+          },
+          {
+            "x": 11,
+            "y": 28,
+            "coordinate": "K28"
+          },
+          {
+            "x": 9,
+            "y": 29,
+            "coordinate": "I29"
+          },
+          {
+            "x": 10,
+            "y": 29,
+            "coordinate": "J29"
+          },
+          {
+            "x": 11,
+            "y": 29,
+            "coordinate": "K29"
+          },
+          {
+            "x": 9,
+            "y": 30,
+            "coordinate": "I30"
+          },
+          {
+            "x": 10,
+            "y": 30,
+            "coordinate": "J30"
+          },
+          {
+            "x": 11,
+            "y": 30,
+            "coordinate": "K30"
+          }
+        ],
+        "coordinateRange": "I27:K30"
+      },
+      {
+        "id": "manual-item-1785800318786-0c35eec4f311b",
+        "order": 25,
+        "name": "Ore Expander",
+        "label": "ORE EXPANDER",
+        "description": "grows ore by 55% · Obtained from futuristic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Epic",
+          "Main stat": 2.2,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 6,
+        "y": 27,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "F27",
+        "bottomRight": "H30",
+        "facing": "west",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 6,
+            "y": 27,
+            "coordinate": "F27"
+          },
+          {
+            "x": 7,
+            "y": 27,
+            "coordinate": "G27"
+          },
+          {
+            "x": 8,
+            "y": 27,
+            "coordinate": "H27"
+          },
+          {
+            "x": 6,
+            "y": 28,
+            "coordinate": "F28"
+          },
+          {
+            "x": 7,
+            "y": 28,
+            "coordinate": "G28"
+          },
+          {
+            "x": 8,
+            "y": 28,
+            "coordinate": "H28"
+          },
+          {
+            "x": 6,
+            "y": 29,
+            "coordinate": "F29"
+          },
+          {
+            "x": 7,
+            "y": 29,
+            "coordinate": "G29"
+          },
+          {
+            "x": 8,
+            "y": 29,
+            "coordinate": "H29"
+          },
+          {
+            "x": 6,
+            "y": 30,
+            "coordinate": "F30"
+          },
+          {
+            "x": 7,
+            "y": 30,
+            "coordinate": "G30"
+          },
+          {
+            "x": 8,
+            "y": 30,
+            "coordinate": "H30"
+          }
+        ],
+        "coordinateRange": "F27:H30"
+      },
+      {
+        "id": "manual-item-1785800352825-0089117dc7e5e",
+        "order": 26,
+        "name": "Ore Shrinker",
+        "label": "ORE SHRINKER",
+        "description": "Shrinks the ore size by 15% · Obtained from futuristic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.43,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 4,
+        "y": 27,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 2,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "D27",
+        "bottomRight": "E30",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 4,
+            "y": 27,
+            "coordinate": "D27"
+          },
+          {
+            "x": 5,
+            "y": 27,
+            "coordinate": "E27"
+          },
+          {
+            "x": 4,
+            "y": 28,
+            "coordinate": "D28"
+          },
+          {
+            "x": 5,
+            "y": 28,
+            "coordinate": "E28"
+          },
+          {
+            "x": 4,
+            "y": 29,
+            "coordinate": "D29"
+          },
+          {
+            "x": 5,
+            "y": 29,
+            "coordinate": "E29"
+          },
+          {
+            "x": 4,
+            "y": 30,
+            "coordinate": "D30"
+          },
+          {
+            "x": 5,
+            "y": 30,
+            "coordinate": "E30"
+          }
+        ],
+        "coordinateRange": "D27:E30"
+      },
+      {
+        "id": "manual-item-1785800356106-b7d8061643d5a",
+        "order": 27,
+        "name": "Ore Shrinker",
+        "label": "ORE SHRINKER",
+        "description": "Shrinks the ore size by 15% · Obtained from futuristic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.43,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 1,
+        "y": 25,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "upgrader",
+        "topLeft": "A25",
+        "bottomRight": "D26",
+        "facing": "north",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 25,
+            "coordinate": "A25"
+          },
+          {
+            "x": 2,
+            "y": 25,
+            "coordinate": "B25"
+          },
+          {
+            "x": 3,
+            "y": 25,
+            "coordinate": "C25"
+          },
+          {
+            "x": 4,
+            "y": 25,
+            "coordinate": "D25"
+          },
+          {
+            "x": 1,
+            "y": 26,
+            "coordinate": "A26"
+          },
+          {
+            "x": 2,
+            "y": 26,
+            "coordinate": "B26"
+          },
+          {
+            "x": 3,
+            "y": 26,
+            "coordinate": "C26"
+          },
+          {
+            "x": 4,
+            "y": 26,
+            "coordinate": "D26"
+          }
+        ],
+        "coordinateRange": "A25:D26"
+      },
+      {
+        "id": "manual-item-1785800359998-61b6136bd14eb",
+        "order": 28,
+        "name": "Ore Shrinker",
+        "label": "ORE SHRINKER",
+        "description": "Shrinks the ore size by 15% · Obtained from futuristic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.43,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 1,
+        "y": 23,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "upgrader",
+        "topLeft": "A23",
+        "bottomRight": "D24",
+        "facing": "north",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 23,
+            "coordinate": "A23"
+          },
+          {
+            "x": 2,
+            "y": 23,
+            "coordinate": "B23"
+          },
+          {
+            "x": 3,
+            "y": 23,
+            "coordinate": "C23"
+          },
+          {
+            "x": 4,
+            "y": 23,
+            "coordinate": "D23"
+          },
+          {
+            "x": 1,
+            "y": 24,
+            "coordinate": "A24"
+          },
+          {
+            "x": 2,
+            "y": 24,
+            "coordinate": "B24"
+          },
+          {
+            "x": 3,
+            "y": 24,
+            "coordinate": "C24"
+          },
+          {
+            "x": 4,
+            "y": 24,
+            "coordinate": "D24"
+          }
+        ],
+        "coordinateRange": "A23:D24"
+      },
+      {
+        "id": "manual-item-1785800361679-9f1ad18e8630b",
+        "order": 29,
+        "name": "Ore Shrinker",
+        "label": "ORE SHRINKER",
+        "description": "Shrinks the ore size by 15% · Obtained from futuristic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.43,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 1,
+        "y": 21,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "upgrader",
+        "topLeft": "A21",
+        "bottomRight": "D22",
+        "facing": "north",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 21,
+            "coordinate": "A21"
+          },
+          {
+            "x": 2,
+            "y": 21,
+            "coordinate": "B21"
+          },
+          {
+            "x": 3,
+            "y": 21,
+            "coordinate": "C21"
+          },
+          {
+            "x": 4,
+            "y": 21,
+            "coordinate": "D21"
+          },
+          {
+            "x": 1,
+            "y": 22,
+            "coordinate": "A22"
+          },
+          {
+            "x": 2,
+            "y": 22,
+            "coordinate": "B22"
+          },
+          {
+            "x": 3,
+            "y": 22,
+            "coordinate": "C22"
+          },
+          {
+            "x": 4,
+            "y": 22,
+            "coordinate": "D22"
+          }
+        ],
+        "coordinateRange": "A21:D22"
+      },
+      {
+        "id": "manual-item-1785800362623-0edf4761104ac",
+        "order": 30,
+        "name": "Ore Shrinker",
+        "label": "ORE SHRINKER",
+        "description": "Shrinks the ore size by 15% · Obtained from futuristic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.43,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 1,
+        "y": 19,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "upgrader",
+        "topLeft": "A19",
+        "bottomRight": "D20",
+        "facing": "north",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 19,
+            "coordinate": "A19"
+          },
+          {
+            "x": 2,
+            "y": 19,
+            "coordinate": "B19"
+          },
+          {
+            "x": 3,
+            "y": 19,
+            "coordinate": "C19"
+          },
+          {
+            "x": 4,
+            "y": 19,
+            "coordinate": "D19"
+          },
+          {
+            "x": 1,
+            "y": 20,
+            "coordinate": "A20"
+          },
+          {
+            "x": 2,
+            "y": 20,
+            "coordinate": "B20"
+          },
+          {
+            "x": 3,
+            "y": 20,
+            "coordinate": "C20"
+          },
+          {
+            "x": 4,
+            "y": 20,
+            "coordinate": "D20"
+          }
+        ],
+        "coordinateRange": "A19:D20"
+      },
+      {
+        "id": "manual-item-1785800388053-6015bb24cfc9f8",
+        "order": 31,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 1,
+        "y": 27,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "A27",
+        "bottomRight": "B27",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 27,
+            "coordinate": "A27"
+          },
+          {
+            "x": 2,
+            "y": 27,
+            "coordinate": "B27"
+          }
+        ],
+        "coordinateRange": "A27:B27"
+      },
+      {
+        "id": "manual-item-1785800389437-0723e1fafab3e8",
+        "order": 32,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 1,
+        "y": 28,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "A28",
+        "bottomRight": "B28",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 28,
+            "coordinate": "A28"
+          },
+          {
+            "x": 2,
+            "y": 28,
+            "coordinate": "B28"
+          }
+        ],
+        "coordinateRange": "A28:B28"
+      },
+      {
+        "id": "manual-item-1785800389826-ef7cbf9322706",
+        "order": 33,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 1,
+        "y": 29,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "A29",
+        "bottomRight": "B29",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 29,
+            "coordinate": "A29"
+          },
+          {
+            "x": 2,
+            "y": 29,
+            "coordinate": "B29"
+          }
+        ],
+        "coordinateRange": "A29:B29"
+      },
+      {
+        "id": "manual-item-1785800390276-530582ecd683b",
+        "order": 34,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 26,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E26",
+        "bottomRight": "F26",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 26,
+            "coordinate": "E26"
+          },
+          {
+            "x": 6,
+            "y": 26,
+            "coordinate": "F26"
+          }
+        ],
+        "coordinateRange": "E26:F26"
+      },
+      {
+        "id": "manual-item-1785800396182-d5585114603b9",
+        "order": 35,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 25,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E25",
+        "bottomRight": "F25",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 25,
+            "coordinate": "E25"
+          },
+          {
+            "x": 6,
+            "y": 25,
+            "coordinate": "F25"
+          }
+        ],
+        "coordinateRange": "E25:F25"
+      },
+      {
+        "id": "manual-item-1785800396733-9b3595f23a2178",
+        "order": 36,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 24,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E24",
+        "bottomRight": "F24",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 24,
+            "coordinate": "E24"
+          },
+          {
+            "x": 6,
+            "y": 24,
+            "coordinate": "F24"
+          }
+        ],
+        "coordinateRange": "E24:F24"
+      },
+      {
+        "id": "manual-item-1785800397395-d46893db106828",
+        "order": 37,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 23,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E23",
+        "bottomRight": "F23",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 23,
+            "coordinate": "E23"
+          },
+          {
+            "x": 6,
+            "y": 23,
+            "coordinate": "F23"
+          }
+        ],
+        "coordinateRange": "E23:F23"
+      },
+      {
+        "id": "manual-item-1785800397998-e3eb1f582e24a",
+        "order": 38,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 22,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E22",
+        "bottomRight": "F22",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 22,
+            "coordinate": "E22"
+          },
+          {
+            "x": 6,
+            "y": 22,
+            "coordinate": "F22"
+          }
+        ],
+        "coordinateRange": "E22:F22"
+      },
+      {
+        "id": "manual-item-1785800398506-015bd99c62b33",
+        "order": 39,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 21,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E21",
+        "bottomRight": "F21",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 21,
+            "coordinate": "E21"
+          },
+          {
+            "x": 6,
+            "y": 21,
+            "coordinate": "F21"
+          }
+        ],
+        "coordinateRange": "E21:F21"
+      },
+      {
+        "id": "manual-item-1785800399061-52400192117a1",
+        "order": 40,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 20,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E20",
+        "bottomRight": "F20",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 20,
+            "coordinate": "E20"
+          },
+          {
+            "x": 6,
+            "y": 20,
+            "coordinate": "F20"
+          }
+        ],
+        "coordinateRange": "E20:F20"
+      },
+      {
+        "id": "manual-item-1785800399648-9b390424567698",
+        "order": 41,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 19,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "portable",
+        "topLeft": "E19",
+        "bottomRight": "F19",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 19,
+            "coordinate": "E19"
+          },
+          {
+            "x": 6,
+            "y": 19,
+            "coordinate": "F19"
+          }
+        ],
+        "coordinateRange": "E19:F19"
+      },
+      {
+        "id": "manual-item-1785800414778-4a3c3418fa46e",
+        "order": 42,
+        "name": "MVP",
+        "label": "MVP",
+        "description": "P2W · Own MVP Game Pass in Either Game",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Legendary",
+          "Main stat": 2.2,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 1,
+        "y": 15,
+        "itemWidth": 6,
+        "itemLength": 4,
+        "conveyorWidth": 2,
+        "width": 6,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "upgrader",
+        "topLeft": "A15",
+        "bottomRight": "F18",
+        "facing": "north",
+        "footprint": {
+          "width": 6,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 15,
+            "coordinate": "A15"
+          },
+          {
+            "x": 2,
+            "y": 15,
+            "coordinate": "B15"
+          },
+          {
+            "x": 3,
+            "y": 15,
+            "coordinate": "C15"
+          },
+          {
+            "x": 4,
+            "y": 15,
+            "coordinate": "D15"
+          },
+          {
+            "x": 5,
+            "y": 15,
+            "coordinate": "E15"
+          },
+          {
+            "x": 6,
+            "y": 15,
+            "coordinate": "F15"
+          },
+          {
+            "x": 1,
+            "y": 16,
+            "coordinate": "A16"
+          },
+          {
+            "x": 2,
+            "y": 16,
+            "coordinate": "B16"
+          },
+          {
+            "x": 3,
+            "y": 16,
+            "coordinate": "C16"
+          },
+          {
+            "x": 4,
+            "y": 16,
+            "coordinate": "D16"
+          },
+          {
+            "x": 5,
+            "y": 16,
+            "coordinate": "E16"
+          },
+          {
+            "x": 6,
+            "y": 16,
+            "coordinate": "F16"
+          },
+          {
+            "x": 1,
+            "y": 17,
+            "coordinate": "A17"
+          },
+          {
+            "x": 2,
+            "y": 17,
+            "coordinate": "B17"
+          },
+          {
+            "x": 3,
+            "y": 17,
+            "coordinate": "C17"
+          },
+          {
+            "x": 4,
+            "y": 17,
+            "coordinate": "D17"
+          },
+          {
+            "x": 5,
+            "y": 17,
+            "coordinate": "E17"
+          },
+          {
+            "x": 6,
+            "y": 17,
+            "coordinate": "F17"
+          },
+          {
+            "x": 1,
+            "y": 18,
+            "coordinate": "A18"
+          },
+          {
+            "x": 2,
+            "y": 18,
+            "coordinate": "B18"
+          },
+          {
+            "x": 3,
+            "y": 18,
+            "coordinate": "C18"
+          },
+          {
+            "x": 4,
+            "y": 18,
+            "coordinate": "D18"
+          },
+          {
+            "x": 5,
+            "y": 18,
+            "coordinate": "E18"
+          },
+          {
+            "x": 6,
+            "y": 18,
+            "coordinate": "F18"
+          }
+        ],
+        "coordinateRange": "A15:F18"
+      },
+      {
+        "id": "manual-item-1785800505740-6c767974dd6ea8",
+        "order": 43,
+        "name": "Ivory Solarizer",
+        "label": "IVORY SOLARIZER",
+        "description": "Obtained from periastron crate",
+        "stats": {
+          "Variant": "Shiny Mythic",
+          "Rarity": "Legendary",
+          "Main stat": 7.5,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 1,
+        "y": 11,
+        "itemWidth": 6,
+        "itemLength": 4,
+        "conveyorWidth": 2,
+        "width": 6,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "upgrader",
+        "topLeft": "A11",
+        "bottomRight": "F14",
+        "facing": "north",
+        "footprint": {
+          "width": 6,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 11,
+            "coordinate": "A11"
+          },
+          {
+            "x": 2,
+            "y": 11,
+            "coordinate": "B11"
+          },
+          {
+            "x": 3,
+            "y": 11,
+            "coordinate": "C11"
+          },
+          {
+            "x": 4,
+            "y": 11,
+            "coordinate": "D11"
+          },
+          {
+            "x": 5,
+            "y": 11,
+            "coordinate": "E11"
+          },
+          {
+            "x": 6,
+            "y": 11,
+            "coordinate": "F11"
+          },
+          {
+            "x": 1,
+            "y": 12,
+            "coordinate": "A12"
+          },
+          {
+            "x": 2,
+            "y": 12,
+            "coordinate": "B12"
+          },
+          {
+            "x": 3,
+            "y": 12,
+            "coordinate": "C12"
+          },
+          {
+            "x": 4,
+            "y": 12,
+            "coordinate": "D12"
+          },
+          {
+            "x": 5,
+            "y": 12,
+            "coordinate": "E12"
+          },
+          {
+            "x": 6,
+            "y": 12,
+            "coordinate": "F12"
+          },
+          {
+            "x": 1,
+            "y": 13,
+            "coordinate": "A13"
+          },
+          {
+            "x": 2,
+            "y": 13,
+            "coordinate": "B13"
+          },
+          {
+            "x": 3,
+            "y": 13,
+            "coordinate": "C13"
+          },
+          {
+            "x": 4,
+            "y": 13,
+            "coordinate": "D13"
+          },
+          {
+            "x": 5,
+            "y": 13,
+            "coordinate": "E13"
+          },
+          {
+            "x": 6,
+            "y": 13,
+            "coordinate": "F13"
+          },
+          {
+            "x": 1,
+            "y": 14,
+            "coordinate": "A14"
+          },
+          {
+            "x": 2,
+            "y": 14,
+            "coordinate": "B14"
+          },
+          {
+            "x": 3,
+            "y": 14,
+            "coordinate": "C14"
+          },
+          {
+            "x": 4,
+            "y": 14,
+            "coordinate": "D14"
+          },
+          {
+            "x": 5,
+            "y": 14,
+            "coordinate": "E14"
+          },
+          {
+            "x": 6,
+            "y": 14,
+            "coordinate": "F14"
+          }
+        ],
+        "coordinateRange": "A11:F14"
+      },
+      {
+        "id": "manual-item-1785800531383-2c9cf8ab15358",
+        "order": 44,
+        "name": "Plasma Upgrader",
+        "label": "PLASMA",
+        "description": "Enchanter Exclusive",
+        "stats": {
+          "Variant": "Shiny Mythic",
+          "Rarity": "Legendary",
+          "Main stat": 6,
+          "Range": "N/A",
+          "Conveyor speed": 18
+        },
+        "x": 7,
+        "y": 8,
+        "itemWidth": 6,
+        "itemLength": 5,
+        "conveyorWidth": 2,
+        "width": 5,
+        "height": 6,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "G8",
+        "bottomRight": "K13",
+        "facing": "east",
+        "footprint": {
+          "width": 5,
+          "height": 6
+        },
+        "occupiedCells": [
+          {
+            "x": 7,
+            "y": 8,
+            "coordinate": "G8"
+          },
+          {
+            "x": 8,
+            "y": 8,
+            "coordinate": "H8"
+          },
+          {
+            "x": 9,
+            "y": 8,
+            "coordinate": "I8"
+          },
+          {
+            "x": 10,
+            "y": 8,
+            "coordinate": "J8"
+          },
+          {
+            "x": 11,
+            "y": 8,
+            "coordinate": "K8"
+          },
+          {
+            "x": 7,
+            "y": 9,
+            "coordinate": "G9"
+          },
+          {
+            "x": 8,
+            "y": 9,
+            "coordinate": "H9"
+          },
+          {
+            "x": 9,
+            "y": 9,
+            "coordinate": "I9"
+          },
+          {
+            "x": 10,
+            "y": 9,
+            "coordinate": "J9"
+          },
+          {
+            "x": 11,
+            "y": 9,
+            "coordinate": "K9"
+          },
+          {
+            "x": 7,
+            "y": 10,
+            "coordinate": "G10"
+          },
+          {
+            "x": 8,
+            "y": 10,
+            "coordinate": "H10"
+          },
+          {
+            "x": 9,
+            "y": 10,
+            "coordinate": "I10"
+          },
+          {
+            "x": 10,
+            "y": 10,
+            "coordinate": "J10"
+          },
+          {
+            "x": 11,
+            "y": 10,
+            "coordinate": "K10"
+          },
+          {
+            "x": 7,
+            "y": 11,
+            "coordinate": "G11"
+          },
+          {
+            "x": 8,
+            "y": 11,
+            "coordinate": "H11"
+          },
+          {
+            "x": 9,
+            "y": 11,
+            "coordinate": "I11"
+          },
+          {
+            "x": 10,
+            "y": 11,
+            "coordinate": "J11"
+          },
+          {
+            "x": 11,
+            "y": 11,
+            "coordinate": "K11"
+          },
+          {
+            "x": 7,
+            "y": 12,
+            "coordinate": "G12"
+          },
+          {
+            "x": 8,
+            "y": 12,
+            "coordinate": "H12"
+          },
+          {
+            "x": 9,
+            "y": 12,
+            "coordinate": "I12"
+          },
+          {
+            "x": 10,
+            "y": 12,
+            "coordinate": "J12"
+          },
+          {
+            "x": 11,
+            "y": 12,
+            "coordinate": "K12"
+          },
+          {
+            "x": 7,
+            "y": 13,
+            "coordinate": "G13"
+          },
+          {
+            "x": 8,
+            "y": 13,
+            "coordinate": "H13"
+          },
+          {
+            "x": 9,
+            "y": 13,
+            "coordinate": "I13"
+          },
+          {
+            "x": 10,
+            "y": 13,
+            "coordinate": "J13"
+          },
+          {
+            "x": 11,
+            "y": 13,
+            "coordinate": "K13"
+          }
+        ],
+        "coordinateRange": "G8:K13"
+      },
+      {
+        "id": "manual-item-1785800545892-1ae618d1afb388",
+        "order": 45,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 1,
+        "y": 10,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 1,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "portable",
+        "topLeft": "A10",
+        "bottomRight": "B10",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 10,
+            "coordinate": "A10"
+          },
+          {
+            "x": 2,
+            "y": 10,
+            "coordinate": "B10"
+          }
+        ],
+        "coordinateRange": "A10:B10"
+      },
+      {
+        "id": "manual-item-1785800547411-6de99eab8dcf58",
+        "order": 46,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 3,
+        "y": 8,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 1,
+        "height": 2,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "portable",
+        "topLeft": "C8",
+        "bottomRight": "C9",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 3,
+            "y": 8,
+            "coordinate": "C8"
+          },
+          {
+            "x": 3,
+            "y": 9,
+            "coordinate": "C9"
+          }
+        ],
+        "coordinateRange": "C8:C9"
+      },
+      {
+        "id": "manual-item-1785800549610-8c712384dc28a",
+        "order": 47,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 4,
+        "y": 8,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 1,
+        "height": 2,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "portable",
+        "topLeft": "D8",
+        "bottomRight": "D9",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 4,
+            "y": 8,
+            "coordinate": "D8"
+          },
+          {
+            "x": 4,
+            "y": 9,
+            "coordinate": "D9"
+          }
+        ],
+        "coordinateRange": "D8:D9"
+      },
+      {
+        "id": "manual-item-1785800550372-a56c24edc8e1b",
+        "order": 48,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 5,
+        "y": 8,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 1,
+        "height": 2,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "portable",
+        "topLeft": "E8",
+        "bottomRight": "E9",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 8,
+            "coordinate": "E8"
+          },
+          {
+            "x": 5,
+            "y": 9,
+            "coordinate": "E9"
+          }
+        ],
+        "coordinateRange": "E8:E9"
+      },
+      {
+        "id": "manual-item-1785800552072-4d6d066ccba2e8",
+        "order": 49,
+        "name": "Portable Upgrader",
+        "label": "PORTABLE",
+        "description": "Obtained from factory crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Common",
+          "Main stat": 1.155,
+          "Range": "N/A",
+          "Conveyor speed": 0
+        },
+        "x": 6,
+        "y": 8,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "conveyorWidth": 0,
+        "width": 1,
+        "height": 2,
+        "beamLength": 2,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "portable",
+        "topLeft": "F8",
+        "bottomRight": "F9",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 6,
+            "y": 8,
+            "coordinate": "F8"
+          },
+          {
+            "x": 6,
+            "y": 9,
+            "coordinate": "F9"
+          }
+        ],
+        "coordinateRange": "F8:F9"
+      },
+      {
+        "id": "manual-item-1785800564864-77181cb2988ff8",
+        "order": 50,
+        "name": "Sword Heights",
+        "label": "SWORD HEIGHTS",
+        "description": "P2W · Buy Classic Bundle",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Legendary",
+          "Main stat": 2.42,
+          "Range": "N/A",
+          "Conveyor speed": 18
+        },
+        "x": 12,
+        "y": 8,
+        "itemWidth": 6,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 6,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "L8",
+        "bottomRight": "N13",
+        "facing": "east",
+        "footprint": {
+          "width": 3,
+          "height": 6
+        },
+        "occupiedCells": [
+          {
+            "x": 12,
+            "y": 8,
+            "coordinate": "L8"
+          },
+          {
+            "x": 13,
+            "y": 8,
+            "coordinate": "M8"
+          },
+          {
+            "x": 14,
+            "y": 8,
+            "coordinate": "N8"
+          },
+          {
+            "x": 12,
+            "y": 9,
+            "coordinate": "L9"
+          },
+          {
+            "x": 13,
+            "y": 9,
+            "coordinate": "M9"
+          },
+          {
+            "x": 14,
+            "y": 9,
+            "coordinate": "N9"
+          },
+          {
+            "x": 12,
+            "y": 10,
+            "coordinate": "L10"
+          },
+          {
+            "x": 13,
+            "y": 10,
+            "coordinate": "M10"
+          },
+          {
+            "x": 14,
+            "y": 10,
+            "coordinate": "N10"
+          },
+          {
+            "x": 12,
+            "y": 11,
+            "coordinate": "L11"
+          },
+          {
+            "x": 13,
+            "y": 11,
+            "coordinate": "M11"
+          },
+          {
+            "x": 14,
+            "y": 11,
+            "coordinate": "N11"
+          },
+          {
+            "x": 12,
+            "y": 12,
+            "coordinate": "L12"
+          },
+          {
+            "x": 13,
+            "y": 12,
+            "coordinate": "M12"
+          },
+          {
+            "x": 14,
+            "y": 12,
+            "coordinate": "N12"
+          },
+          {
+            "x": 12,
+            "y": 13,
+            "coordinate": "L13"
+          },
+          {
+            "x": 13,
+            "y": 13,
+            "coordinate": "M13"
+          },
+          {
+            "x": 14,
+            "y": 13,
+            "coordinate": "N13"
+          }
+        ],
+        "coordinateRange": "L8:N13"
+      },
+      {
+        "id": "manual-item-1785800586311-8de217d9fc0c7",
+        "order": 51,
+        "name": "Cat Upgrader",
+        "label": "CAT",
+        "description": "P2W · Buy the Cat Upgrader or Classic Bundle",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Legendary",
+          "Main stat": 1.76,
+          "Range": "N/A",
+          "Conveyor speed": 18
+        },
+        "x": 3,
+        "y": 28,
+        "itemWidth": 1,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 1,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "north",
+        "type": "upgrader",
+        "topLeft": "C28",
+        "bottomRight": "C29",
+        "facing": "north",
+        "footprint": {
+          "width": 1,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 3,
+            "y": 28,
+            "coordinate": "C28"
+          },
+          {
+            "x": 3,
+            "y": 29,
+            "coordinate": "C29"
+          }
+        ],
+        "coordinateRange": "C28:C29"
+      },
+      {
+        "id": "manual-item-1785800599066-4fcb02d10a803",
+        "order": 52,
+        "name": "Dog Upgrader",
+        "label": "DOG",
+        "description": "P2W · Buy Dog Upgrader or Classic Bundle",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Legendary",
+          "Main stat": 1.76,
+          "Range": "N/A",
+          "Conveyor speed": 18
+        },
+        "x": 3,
+        "y": 10,
+        "itemWidth": 1,
+        "itemLength": 2,
+        "conveyorWidth": 1,
+        "width": 2,
+        "height": 1,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "C10",
+        "bottomRight": "D10",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 3,
+            "y": 10,
+            "coordinate": "C10"
+          },
+          {
+            "x": 4,
+            "y": 10,
+            "coordinate": "D10"
+          }
+        ],
+        "coordinateRange": "C10:D10"
+      },
+      {
+        "id": "manual-item-1785800619173-3e0d85306f6ff8",
+        "order": 53,
+        "name": "Acid Plant",
+        "label": "ACID PLANT",
+        "description": "Only upgrades ores with no effect, and applies the toxic Effect to ore\n(neon doesnt effect) · Obtained from toxic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Uncommon",
+          "Main stat": 2.2,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 15,
+        "y": 8,
+        "itemWidth": 6,
+        "itemLength": 2,
+        "conveyorWidth": 2,
+        "width": 2,
+        "height": 6,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "O8",
+        "bottomRight": "P13",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 6
+        },
+        "occupiedCells": [
+          {
+            "x": 15,
+            "y": 8,
+            "coordinate": "O8"
+          },
+          {
+            "x": 16,
+            "y": 8,
+            "coordinate": "P8"
+          },
+          {
+            "x": 15,
+            "y": 9,
+            "coordinate": "O9"
+          },
+          {
+            "x": 16,
+            "y": 9,
+            "coordinate": "P9"
+          },
+          {
+            "x": 15,
+            "y": 10,
+            "coordinate": "O10"
+          },
+          {
+            "x": 16,
+            "y": 10,
+            "coordinate": "P10"
+          },
+          {
+            "x": 15,
+            "y": 11,
+            "coordinate": "O11"
+          },
+          {
+            "x": 16,
+            "y": 11,
+            "coordinate": "P11"
+          },
+          {
+            "x": 15,
+            "y": 12,
+            "coordinate": "O12"
+          },
+          {
+            "x": 16,
+            "y": 12,
+            "coordinate": "P12"
+          },
+          {
+            "x": 15,
+            "y": 13,
+            "coordinate": "O13"
+          },
+          {
+            "x": 16,
+            "y": 13,
+            "coordinate": "P13"
+          }
+        ],
+        "coordinateRange": "O8:P13"
+      },
+      {
+        "id": "manual-item-1785800625057-d6bc6686fa676",
+        "order": 54,
+        "name": "Cupcake-inator",
+        "label": "CUPCAKE-INATOR",
+        "description": "Applies Sparkles Effect to ore · From code \"release\"",
+        "stats": {
+          "Variant": "Base",
+          "Rarity": "Epic",
+          "Main stat": 1.25,
+          "Range": "N/A",
+          "Conveyor speed": 13.2
+        },
+        "x": 17,
+        "y": 9,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "Q9",
+        "bottomRight": "S12",
+        "facing": "east",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 17,
+            "y": 9,
+            "coordinate": "Q9"
+          },
+          {
+            "x": 18,
+            "y": 9,
+            "coordinate": "R9"
+          },
+          {
+            "x": 19,
+            "y": 9,
+            "coordinate": "S9"
+          },
+          {
+            "x": 17,
+            "y": 10,
+            "coordinate": "Q10"
+          },
+          {
+            "x": 18,
+            "y": 10,
+            "coordinate": "R10"
+          },
+          {
+            "x": 19,
+            "y": 10,
+            "coordinate": "S10"
+          },
+          {
+            "x": 17,
+            "y": 11,
+            "coordinate": "Q11"
+          },
+          {
+            "x": 18,
+            "y": 11,
+            "coordinate": "R11"
+          },
+          {
+            "x": 19,
+            "y": 11,
+            "coordinate": "S11"
+          },
+          {
+            "x": 17,
+            "y": 12,
+            "coordinate": "Q12"
+          },
+          {
+            "x": 18,
+            "y": 12,
+            "coordinate": "R12"
+          },
+          {
+            "x": 19,
+            "y": 12,
+            "coordinate": "S12"
+          }
+        ],
+        "coordinateRange": "Q9:S12"
+      },
+      {
+        "id": "manual-item-1785800632924-3a9974f02fd6c8",
+        "order": 55,
+        "name": "Ore Expander",
+        "label": "ORE EXPANDER",
+        "description": "grows ore by 55% · Obtained from futuristic crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Epic",
+          "Main stat": 2.2,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 18,
+        "y": 21,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "R21",
+        "bottomRight": "T24",
+        "facing": "west",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 18,
+            "y": 21,
+            "coordinate": "R21"
+          },
+          {
+            "x": 19,
+            "y": 21,
+            "coordinate": "S21"
+          },
+          {
+            "x": 20,
+            "y": 21,
+            "coordinate": "T21"
+          },
+          {
+            "x": 18,
+            "y": 22,
+            "coordinate": "R22"
+          },
+          {
+            "x": 19,
+            "y": 22,
+            "coordinate": "S22"
+          },
+          {
+            "x": 20,
+            "y": 22,
+            "coordinate": "T22"
+          },
+          {
+            "x": 18,
+            "y": 23,
+            "coordinate": "R23"
+          },
+          {
+            "x": 19,
+            "y": 23,
+            "coordinate": "S23"
+          },
+          {
+            "x": 20,
+            "y": 23,
+            "coordinate": "T23"
+          },
+          {
+            "x": 18,
+            "y": 24,
+            "coordinate": "R24"
+          },
+          {
+            "x": 19,
+            "y": 24,
+            "coordinate": "S24"
+          },
+          {
+            "x": 20,
+            "y": 24,
+            "coordinate": "T24"
+          }
+        ],
+        "coordinateRange": "R21:T24"
+      },
+      {
+        "id": "manual-item-1785800660286-c2d100666d354",
+        "order": 56,
+        "name": "Chartreuse Collider",
+        "label": "CHARTREUSE COLLIDER",
+        "description": "Clears all effects off the ore and than gives it the overcharged effect · Obtained from periastron crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.76,
+          "Conveyor speed": 36
+        },
+        "x": 20,
+        "y": 9,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 3,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "upgrader",
+        "topLeft": "T9",
+        "bottomRight": "V12",
+        "facing": "east",
+        "footprint": {
+          "width": 3,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 20,
+            "y": 9,
+            "coordinate": "T9"
+          },
+          {
+            "x": 21,
+            "y": 9,
+            "coordinate": "U9"
+          },
+          {
+            "x": 22,
+            "y": 9,
+            "coordinate": "V9"
+          },
+          {
+            "x": 20,
+            "y": 10,
+            "coordinate": "T10"
+          },
+          {
+            "x": 21,
+            "y": 10,
+            "coordinate": "U10"
+          },
+          {
+            "x": 22,
+            "y": 10,
+            "coordinate": "V10"
+          },
+          {
+            "x": 20,
+            "y": 11,
+            "coordinate": "T11"
+          },
+          {
+            "x": 21,
+            "y": 11,
+            "coordinate": "U11"
+          },
+          {
+            "x": 22,
+            "y": 11,
+            "coordinate": "V11"
+          },
+          {
+            "x": 20,
+            "y": 12,
+            "coordinate": "T12"
+          },
+          {
+            "x": 21,
+            "y": 12,
+            "coordinate": "U12"
+          },
+          {
+            "x": 22,
+            "y": 12,
+            "coordinate": "V12"
+          }
+        ],
+        "coordinateRange": "T9:V12"
+      },
+      {
+        "id": "manual-item-1785800664486-d4b1d75287d318",
+        "order": 57,
+        "name": "Chartreuse Collider",
+        "label": "CHARTREUSE COLLIDER",
+        "description": "Clears all effects off the ore and than gives it the overcharged effect · Obtained from periastron crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.76,
+          "Conveyor speed": 36
+        },
+        "x": 21,
+        "y": 13,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "U13",
+        "bottomRight": "X15",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 21,
+            "y": 13,
+            "coordinate": "U13"
+          },
+          {
+            "x": 22,
+            "y": 13,
+            "coordinate": "V13"
+          },
+          {
+            "x": 23,
+            "y": 13,
+            "coordinate": "W13"
+          },
+          {
+            "x": 24,
+            "y": 13,
+            "coordinate": "X13"
+          },
+          {
+            "x": 21,
+            "y": 14,
+            "coordinate": "U14"
+          },
+          {
+            "x": 22,
+            "y": 14,
+            "coordinate": "V14"
+          },
+          {
+            "x": 23,
+            "y": 14,
+            "coordinate": "W14"
+          },
+          {
+            "x": 24,
+            "y": 14,
+            "coordinate": "X14"
+          },
+          {
+            "x": 21,
+            "y": 15,
+            "coordinate": "U15"
+          },
+          {
+            "x": 22,
+            "y": 15,
+            "coordinate": "V15"
+          },
+          {
+            "x": 23,
+            "y": 15,
+            "coordinate": "W15"
+          },
+          {
+            "x": 24,
+            "y": 15,
+            "coordinate": "X15"
+          }
+        ],
+        "coordinateRange": "U13:X15"
+      },
+      {
+        "id": "manual-item-1785800665460-258ebda95ca4c8",
+        "order": 58,
+        "name": "Chartreuse Collider",
+        "label": "CHARTREUSE COLLIDER",
+        "description": "Clears all effects off the ore and than gives it the overcharged effect · Obtained from periastron crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.76,
+          "Conveyor speed": 36
+        },
+        "x": 21,
+        "y": 16,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "U16",
+        "bottomRight": "X18",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 21,
+            "y": 16,
+            "coordinate": "U16"
+          },
+          {
+            "x": 22,
+            "y": 16,
+            "coordinate": "V16"
+          },
+          {
+            "x": 23,
+            "y": 16,
+            "coordinate": "W16"
+          },
+          {
+            "x": 24,
+            "y": 16,
+            "coordinate": "X16"
+          },
+          {
+            "x": 21,
+            "y": 17,
+            "coordinate": "U17"
+          },
+          {
+            "x": 22,
+            "y": 17,
+            "coordinate": "V17"
+          },
+          {
+            "x": 23,
+            "y": 17,
+            "coordinate": "W17"
+          },
+          {
+            "x": 24,
+            "y": 17,
+            "coordinate": "X17"
+          },
+          {
+            "x": 21,
+            "y": 18,
+            "coordinate": "U18"
+          },
+          {
+            "x": 22,
+            "y": 18,
+            "coordinate": "V18"
+          },
+          {
+            "x": 23,
+            "y": 18,
+            "coordinate": "W18"
+          },
+          {
+            "x": 24,
+            "y": 18,
+            "coordinate": "X18"
+          }
+        ],
+        "coordinateRange": "U16:X18"
+      },
+      {
+        "id": "manual-item-1785800666079-6cd229d80b1a7",
+        "order": 59,
+        "name": "Chartreuse Collider",
+        "label": "CHARTREUSE COLLIDER",
+        "description": "Clears all effects off the ore and than gives it the overcharged effect · Obtained from periastron crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.76,
+          "Conveyor speed": 36
+        },
+        "x": 21,
+        "y": 19,
+        "itemWidth": 4,
+        "itemLength": 3,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 3,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "south",
+        "type": "upgrader",
+        "topLeft": "U19",
+        "bottomRight": "X21",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 3
+        },
+        "occupiedCells": [
+          {
+            "x": 21,
+            "y": 19,
+            "coordinate": "U19"
+          },
+          {
+            "x": 22,
+            "y": 19,
+            "coordinate": "V19"
+          },
+          {
+            "x": 23,
+            "y": 19,
+            "coordinate": "W19"
+          },
+          {
+            "x": 24,
+            "y": 19,
+            "coordinate": "X19"
+          },
+          {
+            "x": 21,
+            "y": 20,
+            "coordinate": "U20"
+          },
+          {
+            "x": 22,
+            "y": 20,
+            "coordinate": "V20"
+          },
+          {
+            "x": 23,
+            "y": 20,
+            "coordinate": "W20"
+          },
+          {
+            "x": 24,
+            "y": 20,
+            "coordinate": "X20"
+          },
+          {
+            "x": 21,
+            "y": 21,
+            "coordinate": "U21"
+          },
+          {
+            "x": 22,
+            "y": 21,
+            "coordinate": "V21"
+          },
+          {
+            "x": 23,
+            "y": 21,
+            "coordinate": "W21"
+          },
+          {
+            "x": 24,
+            "y": 21,
+            "coordinate": "X21"
+          }
+        ],
+        "coordinateRange": "U19:X21"
+      },
+      {
+        "id": "manual-item-1785800701840-473a9fd289e8c8",
+        "order": 60,
+        "name": "Prismatic Upgrader",
+        "label": "PRISMATIC",
+        "description": "Applies the Rainbow Effect to ores\nCentered · Enchanter Exclusive",
+        "stats": {
+          "Variant": "Shiny Mythic",
+          "Rarity": "Legendary",
+          "Main stat": 6,
+          "Range": "N/A",
+          "Conveyor speed": 16.8
+        },
+        "x": 14,
+        "y": 20,
+        "itemWidth": 6,
+        "itemLength": 4,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 6,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "N20",
+        "bottomRight": "Q25",
+        "facing": "west",
+        "footprint": {
+          "width": 4,
+          "height": 6
+        },
+        "occupiedCells": [
+          {
+            "x": 14,
+            "y": 20,
+            "coordinate": "N20"
+          },
+          {
+            "x": 15,
+            "y": 20,
+            "coordinate": "O20"
+          },
+          {
+            "x": 16,
+            "y": 20,
+            "coordinate": "P20"
+          },
+          {
+            "x": 17,
+            "y": 20,
+            "coordinate": "Q20"
+          },
+          {
+            "x": 14,
+            "y": 21,
+            "coordinate": "N21"
+          },
+          {
+            "x": 15,
+            "y": 21,
+            "coordinate": "O21"
+          },
+          {
+            "x": 16,
+            "y": 21,
+            "coordinate": "P21"
+          },
+          {
+            "x": 17,
+            "y": 21,
+            "coordinate": "Q21"
+          },
+          {
+            "x": 14,
+            "y": 22,
+            "coordinate": "N22"
+          },
+          {
+            "x": 15,
+            "y": 22,
+            "coordinate": "O22"
+          },
+          {
+            "x": 16,
+            "y": 22,
+            "coordinate": "P22"
+          },
+          {
+            "x": 17,
+            "y": 22,
+            "coordinate": "Q22"
+          },
+          {
+            "x": 14,
+            "y": 23,
+            "coordinate": "N23"
+          },
+          {
+            "x": 15,
+            "y": 23,
+            "coordinate": "O23"
+          },
+          {
+            "x": 16,
+            "y": 23,
+            "coordinate": "P23"
+          },
+          {
+            "x": 17,
+            "y": 23,
+            "coordinate": "Q23"
+          },
+          {
+            "x": 14,
+            "y": 24,
+            "coordinate": "N24"
+          },
+          {
+            "x": 15,
+            "y": 24,
+            "coordinate": "O24"
+          },
+          {
+            "x": 16,
+            "y": 24,
+            "coordinate": "P24"
+          },
+          {
+            "x": 17,
+            "y": 24,
+            "coordinate": "Q24"
+          },
+          {
+            "x": 14,
+            "y": 25,
+            "coordinate": "N25"
+          },
+          {
+            "x": 15,
+            "y": 25,
+            "coordinate": "O25"
+          },
+          {
+            "x": 16,
+            "y": 25,
+            "coordinate": "P25"
+          },
+          {
+            "x": 17,
+            "y": 25,
+            "coordinate": "Q25"
+          }
+        ],
+        "coordinateRange": "N20:Q25"
+      },
+      {
+        "id": "manual-item-1785800768526-eb4b7bbeb10528",
+        "order": 61,
+        "name": "Temple Furnace",
+        "label": "TEMPLE",
+        "description": "Obtained from desert crate",
+        "stats": {
+          "Variant": "Shiny Mythic",
+          "Rarity": "Legendary",
+          "Main stat": 9.75
+        },
+        "x": 9,
+        "y": 20,
+        "itemWidth": 6,
+        "itemLength": 5,
+        "conveyorWidth": 0,
+        "width": 5,
+        "height": 6,
+        "beamLength": 0,
+        "processingZoneAcross": 2,
+        "processingZoneDepth": 2,
+        "processingZonePlacement": "front-center",
+        "sourceDroppers": null,
+        "direction": "east",
+        "type": "furnace",
+        "topLeft": "I20",
+        "bottomRight": "M25",
+        "facing": "east",
+        "footprint": {
+          "width": 5,
+          "height": 6
+        },
+        "occupiedCells": [
+          {
+            "x": 9,
+            "y": 20,
+            "coordinate": "I20"
+          },
+          {
+            "x": 10,
+            "y": 20,
+            "coordinate": "J20"
+          },
+          {
+            "x": 11,
+            "y": 20,
+            "coordinate": "K20"
+          },
+          {
+            "x": 12,
+            "y": 20,
+            "coordinate": "L20"
+          },
+          {
+            "x": 13,
+            "y": 20,
+            "coordinate": "M20"
+          },
+          {
+            "x": 9,
+            "y": 21,
+            "coordinate": "I21"
+          },
+          {
+            "x": 10,
+            "y": 21,
+            "coordinate": "J21"
+          },
+          {
+            "x": 11,
+            "y": 21,
+            "coordinate": "K21"
+          },
+          {
+            "x": 12,
+            "y": 21,
+            "coordinate": "L21"
+          },
+          {
+            "x": 13,
+            "y": 21,
+            "coordinate": "M21"
+          },
+          {
+            "x": 9,
+            "y": 22,
+            "coordinate": "I22"
+          },
+          {
+            "x": 10,
+            "y": 22,
+            "coordinate": "J22"
+          },
+          {
+            "x": 11,
+            "y": 22,
+            "coordinate": "K22"
+          },
+          {
+            "x": 12,
+            "y": 22,
+            "coordinate": "L22"
+          },
+          {
+            "x": 13,
+            "y": 22,
+            "coordinate": "M22"
+          },
+          {
+            "x": 9,
+            "y": 23,
+            "coordinate": "I23"
+          },
+          {
+            "x": 10,
+            "y": 23,
+            "coordinate": "J23"
+          },
+          {
+            "x": 11,
+            "y": 23,
+            "coordinate": "K23"
+          },
+          {
+            "x": 12,
+            "y": 23,
+            "coordinate": "L23"
+          },
+          {
+            "x": 13,
+            "y": 23,
+            "coordinate": "M23"
+          },
+          {
+            "x": 9,
+            "y": 24,
+            "coordinate": "I24"
+          },
+          {
+            "x": 10,
+            "y": 24,
+            "coordinate": "J24"
+          },
+          {
+            "x": 11,
+            "y": 24,
+            "coordinate": "K24"
+          },
+          {
+            "x": 12,
+            "y": 24,
+            "coordinate": "L24"
+          },
+          {
+            "x": 13,
+            "y": 24,
+            "coordinate": "M24"
+          },
+          {
+            "x": 9,
+            "y": 25,
+            "coordinate": "I25"
+          },
+          {
+            "x": 10,
+            "y": 25,
+            "coordinate": "J25"
+          },
+          {
+            "x": 11,
+            "y": 25,
+            "coordinate": "K25"
+          },
+          {
+            "x": 12,
+            "y": 25,
+            "coordinate": "L25"
+          },
+          {
+            "x": 13,
+            "y": 25,
+            "coordinate": "M25"
+          }
+        ],
+        "coordinateRange": "I20:M25"
+      },
+      {
+        "id": "manual-item-1785816285284-c250a0184c87e8",
+        "order": 62,
+        "name": "Intern Dropper",
+        "label": "INTERN DROPPER",
+        "description": "From code \"intern\"",
+        "stats": {
+          "Variant": "Base",
+          "Rarity": "Common",
+          "Main stat": 10,
+          "Drop speed": 1,
+          "Ore size": 1
+        },
+        "x": 18,
+        "y": 16,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "conveyorWidth": 0,
+        "width": 2,
+        "height": 2,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "dropper",
+        "topLeft": "R16",
+        "bottomRight": "S17",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 18,
+            "y": 16,
+            "coordinate": "R16"
+          },
+          {
+            "x": 19,
+            "y": 16,
+            "coordinate": "S16"
+          },
+          {
+            "x": 18,
+            "y": 17,
+            "coordinate": "R17"
+          },
+          {
+            "x": 19,
+            "y": 17,
+            "coordinate": "S17"
+          }
+        ],
+        "coordinateRange": "R16:S17"
+      },
+      {
+        "id": "manual-item-1785816298663-dda43b03ac6cb",
+        "order": 63,
+        "name": "Crimson Pillars",
+        "label": "CRIMSON PILLARS",
+        "description": "Ores passing through Crimson Pillars are marked for up to 15 seconds, during which they may combust. If they do, the ore is destroyed and replaced by a temporary phantom zone, which provides a 1.65× multiplier to any ore that passes through it. An ore can receive this 1.65× boost a maximum of 3 times. · Obtained from periastron crate",
+        "stats": {
+          "Variant": "Shiny",
+          "Rarity": "Rare",
+          "Main stat": 1.65,
+          "Range": "N/A",
+          "Conveyor speed": 12
+        },
+        "x": 14,
+        "y": 15,
+        "itemWidth": 4,
+        "itemLength": 4,
+        "conveyorWidth": 2,
+        "width": 4,
+        "height": 4,
+        "beamLength": 0,
+        "processingZoneAcross": 0,
+        "processingZoneDepth": 0,
+        "processingZonePlacement": null,
+        "sourceDroppers": null,
+        "direction": "west",
+        "type": "upgrader",
+        "topLeft": "N15",
+        "bottomRight": "Q18",
+        "facing": "west",
+        "footprint": {
+          "width": 4,
+          "height": 4
+        },
+        "occupiedCells": [
+          {
+            "x": 14,
+            "y": 15,
+            "coordinate": "N15"
+          },
+          {
+            "x": 15,
+            "y": 15,
+            "coordinate": "O15"
+          },
+          {
+            "x": 16,
+            "y": 15,
+            "coordinate": "P15"
+          },
+          {
+            "x": 17,
+            "y": 15,
+            "coordinate": "Q15"
+          },
+          {
+            "x": 14,
+            "y": 16,
+            "coordinate": "N16"
+          },
+          {
+            "x": 15,
+            "y": 16,
+            "coordinate": "O16"
+          },
+          {
+            "x": 16,
+            "y": 16,
+            "coordinate": "P16"
+          },
+          {
+            "x": 17,
+            "y": 16,
+            "coordinate": "Q16"
+          },
+          {
+            "x": 14,
+            "y": 17,
+            "coordinate": "N17"
+          },
+          {
+            "x": 15,
+            "y": 17,
+            "coordinate": "O17"
+          },
+          {
+            "x": 16,
+            "y": 17,
+            "coordinate": "P17"
+          },
+          {
+            "x": 17,
+            "y": 17,
+            "coordinate": "Q17"
+          },
+          {
+            "x": 14,
+            "y": 18,
+            "coordinate": "N18"
+          },
+          {
+            "x": 15,
+            "y": 18,
+            "coordinate": "O18"
+          },
+          {
+            "x": 16,
+            "y": 18,
+            "coordinate": "P18"
+          },
+          {
+            "x": 17,
+            "y": 18,
+            "coordinate": "Q18"
+          }
+        ],
+        "coordinateRange": "N15:Q18"
+      }
+    ],
+    "lanes": [
+      {
+        "id": "manual-conveyor-1785797826588-5d49a5a621aa38",
+        "name": "Centering Conveyor",
+        "conveyor": "Centering Conveyor",
+        "x": 3,
+        "y": 4,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "east",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "C4",
+        "bottomRight": "D5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 3,
+            "y": 4,
+            "coordinate": "C4"
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "coordinate": "D4"
+          },
+          {
+            "x": 3,
+            "y": 5,
+            "coordinate": "C5"
+          },
+          {
+            "x": 4,
+            "y": 5,
+            "coordinate": "D5"
+          }
+        ],
+        "coordinateRange": "C4:D5"
+      },
+      {
+        "id": "manual-conveyor-1785797830637-fe90e3285ca13",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 1,
+        "y": 4,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "east",
+        "speed": 18,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "A4",
+        "bottomRight": "B5",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 1,
+            "y": 4,
+            "coordinate": "A4"
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "coordinate": "B4"
+          },
+          {
+            "x": 1,
+            "y": 5,
+            "coordinate": "A5"
+          },
+          {
+            "x": 2,
+            "y": 5,
+            "coordinate": "B5"
+          }
+        ],
+        "coordinateRange": "A4:B5"
+      },
+      {
+        "id": "manual-conveyor-1785798717896-30a3d0529f7c1",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 11,
+        "y": 5,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "north",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "K5",
+        "bottomRight": "K5",
+        "facing": "north",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 11,
+            "y": 5,
+            "coordinate": "K5"
+          }
+        ],
+        "coordinateRange": "K5"
+      },
+      {
+        "id": "manual-conveyor-1785798720015-bb4162026f42e",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 11,
+        "y": 4,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "east",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "K4",
+        "bottomRight": "K4",
+        "facing": "east",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 11,
+            "y": 4,
+            "coordinate": "K4"
+          }
+        ],
+        "coordinateRange": "K4"
+      },
+      {
+        "id": "manual-conveyor-1785798771908-815816c05e2398",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 29,
+        "y": 6,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AC6",
+        "bottomRight": "AC6",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 29,
+            "y": 6,
+            "coordinate": "AC6"
+          }
+        ],
+        "coordinateRange": "AC6"
+      },
+      {
+        "id": "manual-conveyor-1785798774933-d7337c86f9f988",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 29,
+        "y": 4,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AC4",
+        "bottomRight": "AC4",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 29,
+            "y": 4,
+            "coordinate": "AC4"
+          }
+        ],
+        "coordinateRange": "AC4"
+      },
+      {
+        "id": "manual-conveyor-1785798775774-bf0711cd97c1b",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 29,
+        "y": 5,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AC5",
+        "bottomRight": "AC5",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 29,
+            "y": 5,
+            "coordinate": "AC5"
+          }
+        ],
+        "coordinateRange": "AC5"
+      },
+      {
+        "id": "manual-conveyor-1785800198145-c00247d40db968",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 29,
+        "y": 29,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "west",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AC29",
+        "bottomRight": "AC29",
+        "facing": "west",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 29,
+            "y": 29,
+            "coordinate": "AC29"
+          }
+        ],
+        "coordinateRange": "AC29"
+      },
+      {
+        "id": "manual-conveyor-1785800200709-38df88092dde8",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 28,
+        "y": 29,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "west",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AB29",
+        "bottomRight": "AB29",
+        "facing": "west",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 28,
+            "y": 29,
+            "coordinate": "AB29"
+          }
+        ],
+        "coordinateRange": "AB29"
+      },
+      {
+        "id": "manual-conveyor-1785800255959-51dc40c133e8a8",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 29,
+        "y": 13,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "west",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AC13",
+        "bottomRight": "AC13",
+        "facing": "west",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 29,
+            "y": 13,
+            "coordinate": "AC13"
+          }
+        ],
+        "coordinateRange": "AC13"
+      },
+      {
+        "id": "manual-conveyor-1785800257613-6befca960b4e78",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 28,
+        "y": 13,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AB13",
+        "bottomRight": "AB13",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 28,
+            "y": 13,
+            "coordinate": "AB13"
+          }
+        ],
+        "coordinateRange": "AB13"
+      },
+      {
+        "id": "manual-conveyor-1785800293437-394fa44d340288",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 27,
+        "y": 29,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "west",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AA29",
+        "bottomRight": "AA29",
+        "facing": "west",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 27,
+            "y": 29,
+            "coordinate": "AA29"
+          }
+        ],
+        "coordinateRange": "AA29"
+      },
+      {
+        "id": "manual-conveyor-1785800380520-3209541354f7e",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 3,
+        "y": 27,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "north",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "C27",
+        "bottomRight": "C27",
+        "facing": "north",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 3,
+            "y": 27,
+            "coordinate": "C27"
+          }
+        ],
+        "coordinateRange": "C27"
+      },
+      {
+        "id": "manual-conveyor-1785800540078-a6e7504daeec28",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 5,
+        "y": 10,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "east",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "E10",
+        "bottomRight": "E10",
+        "facing": "east",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 5,
+            "y": 10,
+            "coordinate": "E10"
+          }
+        ],
+        "coordinateRange": "E10"
+      },
+      {
+        "id": "manual-conveyor-1785800540784-a1034e41cb94",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 6,
+        "y": 10,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "east",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "F10",
+        "bottomRight": "F10",
+        "facing": "east",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 6,
+            "y": 10,
+            "coordinate": "F10"
+          }
+        ],
+        "coordinateRange": "F10"
+      },
+      {
+        "id": "manual-conveyor-1785800675993-0e9e3c187d3aa",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 23,
+        "y": 22,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "west",
+        "speed": 18,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "W22",
+        "bottomRight": "X23",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 23,
+            "y": 22,
+            "coordinate": "W22"
+          },
+          {
+            "x": 24,
+            "y": 22,
+            "coordinate": "X22"
+          },
+          {
+            "x": 23,
+            "y": 23,
+            "coordinate": "W23"
+          },
+          {
+            "x": 24,
+            "y": 23,
+            "coordinate": "X23"
+          }
+        ],
+        "coordinateRange": "W22:X23"
+      },
+      {
+        "id": "manual-conveyor-1785800684518-06d0a8ffc479d",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 23,
+        "y": 10,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "W10",
+        "bottomRight": "W10",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 23,
+            "y": 10,
+            "coordinate": "W10"
+          }
+        ],
+        "coordinateRange": "W10"
+      },
+      {
+        "id": "manual-conveyor-1785800685854-34c99c893bc658",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 23,
+        "y": 11,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "W11",
+        "bottomRight": "W11",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 23,
+            "y": 11,
+            "coordinate": "W11"
+          }
+        ],
+        "coordinateRange": "W11"
+      },
+      {
+        "id": "manual-conveyor-1785800686424-39b571f7f8974",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 23,
+        "y": 12,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "W12",
+        "bottomRight": "W12",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 23,
+            "y": 12,
+            "coordinate": "W12"
+          }
+        ],
+        "coordinateRange": "W12"
+      },
+      {
+        "id": "manual-conveyor-1785801109509-c9e15e6993db28",
+        "name": "Conveyor Wall",
+        "conveyor": "Conveyor Wall",
+        "x": 24,
+        "y": 10,
+        "itemWidth": 1,
+        "itemLength": 2,
+        "width": 1,
+        "height": 2,
+        "direction": "south",
+        "speed": null,
+        "wall": true,
+        "nonTransport": true,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "X10",
+        "bottomRight": "X11",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 24,
+            "y": 10,
+            "coordinate": "X10"
+          },
+          {
+            "x": 24,
+            "y": 11,
+            "coordinate": "X11"
+          }
+        ],
+        "coordinateRange": "X10:X11"
+      },
+      {
+        "id": "manual-conveyor-1785801113364-d0dead38887818",
+        "name": "Conveyor Wall",
+        "conveyor": "Conveyor Wall",
+        "x": 22,
+        "y": 24,
+        "itemWidth": 1,
+        "itemLength": 2,
+        "width": 2,
+        "height": 1,
+        "direction": "west",
+        "speed": null,
+        "wall": true,
+        "nonTransport": true,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "V24",
+        "bottomRight": "W24",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 22,
+            "y": 24,
+            "coordinate": "V24"
+          },
+          {
+            "x": 23,
+            "y": 24,
+            "coordinate": "W24"
+          }
+        ],
+        "coordinateRange": "V24:W24"
+      },
+      {
+        "id": "manual-conveyor-1785804131286-a865422d4b6bb",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 28,
+        "y": 23,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "south",
+        "speed": 18,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AB23",
+        "bottomRight": "AC24",
+        "facing": "south",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 28,
+            "y": 23,
+            "coordinate": "AB23"
+          },
+          {
+            "x": 29,
+            "y": 23,
+            "coordinate": "AC23"
+          },
+          {
+            "x": 28,
+            "y": 24,
+            "coordinate": "AB24"
+          },
+          {
+            "x": 29,
+            "y": 24,
+            "coordinate": "AC24"
+          }
+        ],
+        "coordinateRange": "AB23:AC24"
+      },
+      {
+        "id": "manual-conveyor-1785804133088-55ca8a4ae3d59",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 28,
+        "y": 25,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "south",
+        "speed": 18,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AB25",
+        "bottomRight": "AC26",
+        "facing": "south",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 28,
+            "y": 25,
+            "coordinate": "AB25"
+          },
+          {
+            "x": 29,
+            "y": 25,
+            "coordinate": "AC25"
+          },
+          {
+            "x": 28,
+            "y": 26,
+            "coordinate": "AB26"
+          },
+          {
+            "x": 29,
+            "y": 26,
+            "coordinate": "AC26"
+          }
+        ],
+        "coordinateRange": "AB25:AC26"
+      },
+      {
+        "id": "manual-conveyor-1785804136420-9d61e2c929e008",
+        "name": "Normal Conveyor",
+        "conveyor": "Normal Conveyor",
+        "x": 28,
+        "y": 27,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AB27",
+        "bottomRight": "AC28",
+        "facing": "south",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 28,
+            "y": 27,
+            "coordinate": "AB27"
+          },
+          {
+            "x": 29,
+            "y": 27,
+            "coordinate": "AC27"
+          },
+          {
+            "x": 28,
+            "y": 28,
+            "coordinate": "AB28"
+          },
+          {
+            "x": 29,
+            "y": 28,
+            "coordinate": "AC28"
+          }
+        ],
+        "coordinateRange": "AB27:AC28"
+      },
+      {
+        "id": "manual-conveyor-1785804140847-3cd5078cf4b5d",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 25,
+        "y": 28,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "west",
+        "speed": 18,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "Y28",
+        "bottomRight": "Z29",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 25,
+            "y": 28,
+            "coordinate": "Y28"
+          },
+          {
+            "x": 26,
+            "y": 28,
+            "coordinate": "Z28"
+          },
+          {
+            "x": 25,
+            "y": 29,
+            "coordinate": "Y29"
+          },
+          {
+            "x": 26,
+            "y": 29,
+            "coordinate": "Z29"
+          }
+        ],
+        "coordinateRange": "Y28:Z29"
+      },
+      {
+        "id": "manual-conveyor-1785804143446-76b3fd5a990d8",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 23,
+        "y": 28,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "west",
+        "speed": 18,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "W28",
+        "bottomRight": "X29",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 23,
+            "y": 28,
+            "coordinate": "W28"
+          },
+          {
+            "x": 24,
+            "y": 28,
+            "coordinate": "X28"
+          },
+          {
+            "x": 23,
+            "y": 29,
+            "coordinate": "W29"
+          },
+          {
+            "x": 24,
+            "y": 29,
+            "coordinate": "X29"
+          }
+        ],
+        "coordinateRange": "W28:X29"
+      },
+      {
+        "id": "manual-conveyor-1785804144755-b36dcd35d266e",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 21,
+        "y": 28,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "west",
+        "speed": 18,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "U28",
+        "bottomRight": "V29",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 21,
+            "y": 28,
+            "coordinate": "U28"
+          },
+          {
+            "x": 22,
+            "y": 28,
+            "coordinate": "V28"
+          },
+          {
+            "x": 21,
+            "y": 29,
+            "coordinate": "U29"
+          },
+          {
+            "x": 22,
+            "y": 29,
+            "coordinate": "V29"
+          }
+        ],
+        "coordinateRange": "U28:V29"
+      },
+      {
+        "id": "manual-conveyor-1785804145811-258a5bee9f2c58",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 19,
+        "y": 28,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "west",
+        "speed": 18,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "S28",
+        "bottomRight": "T29",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 19,
+            "y": 28,
+            "coordinate": "S28"
+          },
+          {
+            "x": 20,
+            "y": 28,
+            "coordinate": "T28"
+          },
+          {
+            "x": 19,
+            "y": 29,
+            "coordinate": "S29"
+          },
+          {
+            "x": 20,
+            "y": 29,
+            "coordinate": "T29"
+          }
+        ],
+        "coordinateRange": "S28:T29"
+      },
+      {
+        "id": "manual-conveyor-1785804150149-635a75218bca8",
+        "name": "Half Conveyor",
+        "conveyor": "Half Conveyor",
+        "x": 18,
+        "y": 28,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "width": 1,
+        "height": 2,
+        "direction": "west",
+        "speed": 12,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "R28",
+        "bottomRight": "R29",
+        "facing": "west",
+        "footprint": {
+          "width": 1,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 18,
+            "y": 28,
+            "coordinate": "R28"
+          },
+          {
+            "x": 18,
+            "y": 29,
+            "coordinate": "R29"
+          }
+        ],
+        "coordinateRange": "R28:R29"
+      },
+      {
+        "id": "manual-conveyor-1785804175118-f90e01eec590f",
+        "name": "Supercharged Conveyor",
+        "conveyor": "Supercharged Conveyor",
+        "x": 28,
+        "y": 21,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "south",
+        "speed": 18,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AB21",
+        "bottomRight": "AC22",
+        "facing": "south",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 28,
+            "y": 21,
+            "coordinate": "AB21"
+          },
+          {
+            "x": 29,
+            "y": 21,
+            "coordinate": "AC21"
+          },
+          {
+            "x": 28,
+            "y": 22,
+            "coordinate": "AB22"
+          },
+          {
+            "x": 29,
+            "y": 22,
+            "coordinate": "AC22"
+          }
+        ],
+        "coordinateRange": "AB21:AC22"
+      },
+      {
+        "id": "manual-conveyor-1785804178182-0cea95edcf96f8",
+        "name": "Half Conveyor",
+        "conveyor": "Half Conveyor",
+        "x": 28,
+        "y": 20,
+        "itemWidth": 2,
+        "itemLength": 1,
+        "width": 2,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "AB20",
+        "bottomRight": "AC20",
+        "facing": "south",
+        "footprint": {
+          "width": 2,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 28,
+            "y": 20,
+            "coordinate": "AB20"
+          },
+          {
+            "x": 29,
+            "y": 20,
+            "coordinate": "AC20"
+          }
+        ],
+        "coordinateRange": "AB20:AC20"
+      },
+      {
+        "id": "manual-conveyor-1785807970266-5d050fdb0d40c",
+        "name": "Centering Conveyor",
+        "conveyor": "Centering Conveyor",
+        "x": 21,
+        "y": 22,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "west",
+        "speed": 12,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "U22",
+        "bottomRight": "V23",
+        "facing": "west",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 21,
+            "y": 22,
+            "coordinate": "U22"
+          },
+          {
+            "x": 22,
+            "y": 22,
+            "coordinate": "V22"
+          },
+          {
+            "x": 21,
+            "y": 23,
+            "coordinate": "U23"
+          },
+          {
+            "x": 22,
+            "y": 23,
+            "coordinate": "V23"
+          }
+        ],
+        "coordinateRange": "U22:V23"
+      },
+      {
+        "id": "manual-conveyor-1785816323596-2b33da218840d8",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 24,
+        "y": 9,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "west",
+        "speed": 12,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "X9",
+        "bottomRight": "X9",
+        "facing": "west",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 24,
+            "y": 9,
+            "coordinate": "X9"
+          }
+        ],
+        "coordinateRange": "X9"
+      },
+      {
+        "id": "manual-conveyor-1785816326328-851ec925215fd8",
+        "name": "Quarter Conveyor",
+        "conveyor": "Quarter Conveyor",
+        "x": 23,
+        "y": 9,
+        "itemWidth": 1,
+        "itemLength": 1,
+        "width": 1,
+        "height": 1,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": null,
+        "teleporterRole": null,
+        "topLeft": "W9",
+        "bottomRight": "W9",
+        "facing": "south",
+        "footprint": {
+          "width": 1,
+          "height": 1
+        },
+        "occupiedCells": [
+          {
+            "x": 23,
+            "y": 9,
+            "coordinate": "W9"
+          }
+        ],
+        "coordinateRange": "W9"
+      },
+      {
+        "id": "manual-conveyor-1785816353570-add106c24d37a8",
+        "name": "Red Teleporter Sender",
+        "conveyor": "Red Teleporter Sender",
+        "x": 12,
+        "y": 16,
+        "itemWidth": 2,
+        "itemLength": 2,
+        "width": 2,
+        "height": 2,
+        "direction": "east",
+        "speed": null,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": "red",
+        "teleporterRole": "sender",
+        "topLeft": "L16",
+        "bottomRight": "M17",
+        "facing": "east",
+        "footprint": {
+          "width": 2,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 12,
+            "y": 16,
+            "coordinate": "L16"
+          },
+          {
+            "x": 13,
+            "y": 16,
+            "coordinate": "M16"
+          },
+          {
+            "x": 12,
+            "y": 17,
+            "coordinate": "L17"
+          },
+          {
+            "x": 13,
+            "y": 17,
+            "coordinate": "M17"
+          }
+        ],
+        "coordinateRange": "L16:M17"
+      },
+      {
+        "id": "manual-conveyor-1785816358065-e8d432e0443968",
+        "name": "Red Teleporter Receiver",
+        "conveyor": "Red Teleporter Receiver",
+        "x": 22,
+        "y": 7,
+        "itemWidth": 4,
+        "itemLength": 2,
+        "width": 4,
+        "height": 2,
+        "direction": "south",
+        "speed": 12,
+        "wall": false,
+        "nonTransport": false,
+        "teleporterColor": "red",
+        "teleporterRole": "receiver",
+        "topLeft": "V7",
+        "bottomRight": "Y8",
+        "facing": "south",
+        "footprint": {
+          "width": 4,
+          "height": 2
+        },
+        "occupiedCells": [
+          {
+            "x": 22,
+            "y": 7,
+            "coordinate": "V7"
+          },
+          {
+            "x": 23,
+            "y": 7,
+            "coordinate": "W7"
+          },
+          {
+            "x": 24,
+            "y": 7,
+            "coordinate": "X7"
+          },
+          {
+            "x": 25,
+            "y": 7,
+            "coordinate": "Y7"
+          },
+          {
+            "x": 22,
+            "y": 8,
+            "coordinate": "V8"
+          },
+          {
+            "x": 23,
+            "y": 8,
+            "coordinate": "W8"
+          },
+          {
+            "x": 24,
+            "y": 8,
+            "coordinate": "X8"
+          },
+          {
+            "x": 25,
+            "y": 8,
+            "coordinate": "Y8"
+          }
+        ],
+        "coordinateRange": "V7:Y8"
+      }
+    ]
+  },
+  "stats": {
+    "expectedCashPerMinute": 96226048451203620,
+    "rebirth": 5,
+    "lastRebirthItem": "Red Teleporter Sender",
+    "plotSize": 30,
+    "highestCrate": "Periastron",
+    "payment": "P2W",
+    "specialItems": {
+      "merchant": [],
+      "secret": [],
+      "achievement": [],
+      "premium": [
+        "MVP (Shiny)",
+        "Sword Heights (Shiny)",
+        "Cat Upgrader (Shiny)",
+        "Dog Upgrader (Shiny)"
+      ]
+    },
+    "oreLimit": 100,
+    "activeOres": 100,
+    "projectedActiveOres": 115.63203463203463,
+    "limitedByOreCap": true,
+    "destroyedOresPerMinute": 151.80424266482314,
+    "survivalToFurnace": 0.41488555182971276,
+    "furnaceEntriesPerMinute": 107.63943222567141,
+    "longestRouteSeconds": 27.771103896103895,
+    "routesTotal": 3,
+    "routesReachingFurnace": 3,
+    "reservedTiles": 616,
+    "remainingTiles": 284,
+    "itemCount": 63,
+    "conveyorCount": 36,
+    "diagnosticCount": 0,
+    "simulationValid": true
+  },
+  "diagnostics": []
+}

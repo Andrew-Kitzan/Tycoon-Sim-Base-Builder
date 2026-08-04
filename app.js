@@ -39,8 +39,23 @@ const libraryFilterReset = document.querySelector('#library-filter-reset');
 const buildModeHint = document.querySelector('#build-mode-hint');
 const plannerModeToggle = document.querySelector('#planner-mode-toggle');
 const simulateBaseButton = document.querySelector('#simulate-base');
+const saveBaseButton = document.querySelector('#save-base');
+const loadBasesButton = document.querySelector('#load-bases');
 const clearWorkspaceButton = document.querySelector('#clear-workspace');
 const keybindGuide = document.querySelector('#keybind-guide');
+const saveBaseDialog = document.querySelector('#save-base-dialog');
+const saveBaseForm = document.querySelector('#save-base-form');
+const savedBaseName = document.querySelector('#saved-base-name');
+const saveBaseMetadata = document.querySelector('#save-base-metadata');
+const saveBaseStatus = document.querySelector('#save-base-status');
+const loadBaseDialog = document.querySelector('#load-base-dialog');
+const savedBaseList = document.querySelector('#saved-base-list');
+const savedBaseDetails = document.querySelector('#saved-base-details');
+const savedBasePreview = document.querySelector('#saved-base-preview');
+const loadBaseStatus = document.querySelector('#load-base-status');
+const savedLoadoutFolderInput = document.querySelector('#saved-loadout-folder-input');
+const savedLoadoutFileInput = document.querySelector('#saved-loadout-file-input');
+const confirmLoadBaseDialog = document.querySelector('#confirm-load-base-dialog');
 
 const workflow = [
   '1. Legal item list',
@@ -59,6 +74,10 @@ const workspaceStorageKey = 'tycoon-sim-2:benchmark-workspace:v1';
 const plannerModeStorageKey = 'tycoon-sim-2:planner-mode:v1';
 const generationBaselineStorageKey = 'tycoon-sim-2:generation-baseline:v1';
 const viewPreferencesStorageKey = 'tycoon-sim-2:view-preferences:v1';
+const savedLoadoutsStorageKey = 'tycoon-sim-2:saved-loadouts:v1';
+const loadoutFileType = 'tycoon-sim-2-loadout';
+const crateProgression = ['Basic', 'Advanced', 'Factory', 'Quarry', 'Futuristic', 'Toxic',
+  'Desert', 'Fantasy', 'Space', 'Candy', 'Periastron', 'Ancient', 'Alien', 'Tropical', 'Ocean', 'Trinket', 'Toy'];
 const portableItemPattern = /Portable Upgrader|Portable Spinner|Ore Glazer|Derp Blaster|Dragon/i;
 const conveyorCatalog = [
   { key: 'conveyor::quarter', name: 'Quarter Conveyor', type: 'conveyor', size: { width: 1, length: 1 }, speed: 12 },
@@ -83,6 +102,10 @@ let massMoveInteraction = null;
 const massSelectedIds = new Set();
 let plannerMode = 'build';
 let tooltipHideTimer = null;
+let selectedSavedBaseId = null;
+let pendingLoadBaseId = null;
+let savedLoadoutDirectoryHandle = null;
+let pendingSaveSnapshot = null;
 const libraryTierOrder = ['Standard', 'Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Secret', 'Unknown'];
 const libraryVariantOrder = ['Base', 'Shiny', 'Mythic', 'Shiny Mythic', 'Standard'];
 
@@ -884,6 +907,471 @@ function browserStorage() {
   }
 }
 
+function cloneLoadoutValue(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function loadSavedLoadouts() {
+  const storage = browserStorage();
+  if (!storage) return [];
+  try {
+    const saved = JSON.parse(storage.getItem(savedLoadoutsStorageKey));
+    return saved?.version === 1 && Array.isArray(saved.loadouts) ? saved.loadouts : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeSavedLoadouts(loadouts) {
+  const storage = browserStorage();
+  if (!storage) throw new Error('Browser storage is unavailable.');
+  storage.setItem(savedLoadoutsStorageKey, JSON.stringify({ version: 1, loadouts }));
+}
+
+function upsertSavedLoadout(record) {
+  const loadouts = loadSavedLoadouts();
+  const nameKey = record.name.trim().toLowerCase();
+  const existingIndex = loadouts.findIndex((candidate) => (
+    candidate.id === record.id || candidate.name?.trim().toLowerCase() === nameKey
+  ));
+  if (existingIndex >= 0) {
+    record.id = loadouts[existingIndex].id;
+    record.createdAt = loadouts[existingIndex].createdAt ?? record.createdAt;
+    loadouts.splice(existingIndex, 1, record);
+  } else {
+    loadouts.push(record);
+  }
+  storeSavedLoadouts(loadouts);
+  return record;
+}
+
+function removeSavedLoadout(id) {
+  const loadouts = loadSavedLoadouts().filter((record) => record.id !== id);
+  storeSavedLoadouts(loadouts);
+  return loadouts;
+}
+
+function acquisitionRecordsForPlacement(item) {
+  if (isConveyorPlacement(item)) return [];
+  const name = String(item.name ?? '').toLowerCase();
+  const variant = String(item.stats?.Variant ?? item.variant ?? 'Base').toLowerCase();
+  const all = globalThis.TycoonDatabase?.records ?? [];
+  const exact = all.filter((record) => (
+    String(record.name).toLowerCase() === name && String(record.variant ?? 'Base').toLowerCase() === variant
+  ));
+  return exact.length ? exact : all.filter((record) => String(record.name).toLowerCase() === name);
+}
+
+function rebirthRequirementForPlacement(placement) {
+  if (isConveyorPlacement(placement) && placement.teleporterRole) return 5;
+  const name = String(placement.name ?? '').toLowerCase();
+  const related = (globalThis.TycoonDatabase?.records ?? []).filter((record) => (
+    String(record.name).toLowerCase() === name
+  ));
+  const values = related.flatMap((record) => [record.source, ...(record.sources ?? []),
+    ...(record.sourceSheets ?? []).map((source) => source.source)])
+    .map((source) => String(source ?? '').match(/reb(?:irth|rith)\s*(\d+)/i))
+    .filter(Boolean)
+    .map((match) => Number(match[1]));
+  return values.length ? Math.max(...values) : 0;
+}
+
+function crateRequirementForPlacement(placement) {
+  const sources = acquisitionRecordsForPlacement(placement)
+    .flatMap((record) => [record.source, ...(record.sources ?? []),
+      ...(record.sourceSheets ?? []).map((source) => source.source)]);
+  let highest = null;
+  for (const source of sources) {
+    const text = String(source ?? '').toLowerCase();
+    crateProgression.forEach((crate, index) => {
+      if (text.includes(`${crate.toLowerCase()} crate`) && (!highest || index > highest.index)) {
+        highest = { name: crate, index };
+      }
+    });
+  }
+  return highest;
+}
+
+function automaticBaseMetadata(items, lanes, simulation, plotSize) {
+  const placements = [...items, ...lanes];
+  const rebirthItems = placements
+    .map((placement) => ({ name: placement.name ?? placement.conveyor, level: rebirthRequirementForPlacement(placement) }))
+    .filter((entry) => entry.level > 0)
+    .sort((left, right) => right.level - left.level);
+  const crateEntries = placements.map(crateRequirementForPlacement).filter(Boolean);
+  const highestCrate = crateEntries.sort((left, right) => right.index - left.index)[0]?.name ?? 'None';
+  const special = { merchant: [], secret: [], achievement: [], premium: [] };
+  items.forEach((item) => {
+    const records = acquisitionRecordsForPlacement(item);
+    const acquisitions = new Set(records
+      .flatMap((record) => [record.acquisition, ...(record.acquisitions ?? [])])
+      .filter(Boolean));
+    const acquisitionText = records.map((record) => `${record.sheet ?? ''} ${record.source ?? ''} ${record.effects ?? ''}`).join(' ');
+    if (/traveling merchant|\bmerchant\b/i.test(acquisitionText)) acquisitions.add('merchant');
+    if (/achievement/i.test(acquisitionText)) acquisitions.add('achievement');
+    if (/premium|p2w|gamepass|robux/i.test(acquisitionText)) acquisitions.add('premium');
+    if (records.some((record) => String(record.rarity).toLowerCase() === 'secret') || /\bsecret\b/i.test(acquisitionText)) acquisitions.add('secret');
+    Object.keys(special).forEach((category) => {
+      if (acquisitions.has(category)) special[category].push(`${item.name} (${item.stats?.Variant ?? item.variant ?? 'Base'})`);
+    });
+  });
+  Object.keys(special).forEach((category) => { special[category] = [...new Set(special[category])]; });
+  const metrics = simulation?.metrics ?? {};
+  const routes = simulation?.routes ?? [];
+  return {
+    expectedCashPerMinute: Number(metrics.expectedCashPerMinute ?? 0),
+    rebirth: rebirthItems[0]?.level ?? 0,
+    lastRebirthItem: rebirthItems[0]?.name ?? 'None',
+    plotSize: Number(plotSize),
+    highestCrate,
+    payment: special.premium.length ? 'P2W' : 'F2P',
+    specialItems: special,
+    oreLimit: Number(metrics.oreCap ?? 100),
+    activeOres: Number(metrics.cappedActiveOres ?? 0),
+    projectedActiveOres: Number(metrics.projectedActiveOres ?? 0),
+    limitedByOreCap: Boolean(metrics.limitedByOreCap),
+    destroyedOresPerMinute: Number(metrics.destroyedOresPerMinute ?? 0),
+    survivalToFurnace: Number(metrics.survivalToFurnace ?? 0),
+    furnaceEntriesPerMinute: Number(metrics.furnaceEntriesPerMinute ?? 0),
+    longestRouteSeconds: Number(metrics.routeTimeSeconds ?? 0),
+    routesTotal: routes.length,
+    routesReachingFurnace: routes.filter((route) => route.reachedFurnace).length,
+    reservedTiles: Number(metrics.reservedTiles ?? 0),
+    remainingTiles: Number(metrics.remainingTiles ?? Math.max(0, Number(plotSize) ** 2)),
+    itemCount: items.length,
+    conveyorCount: lanes.length,
+    diagnosticCount: simulation?.diagnostics?.length ?? 0,
+    simulationValid: Boolean(simulation?.valid),
+  };
+}
+
+function simulateBaseSnapshot(items = activePlan?.items ?? [], lanes = activePlan?.lanes ?? [], plotSize = Number(sizeSlider.value)) {
+  return globalThis.TycoonPlanner.simulateManualBase({
+    items,
+    conveyors: lanes,
+    database: globalThis.TycoonDatabase,
+    plotSize,
+    oreCap: 100,
+  });
+}
+
+function createSavedLoadout(name, simulation = simulateBaseSnapshot()) {
+  const now = new Date().toISOString();
+  const items = cloneLoadoutValue(activePlan?.items ?? []);
+  const lanes = cloneLoadoutValue(activePlan?.lanes ?? []);
+  const plotSize = Number(sizeSlider.value);
+  return {
+    fileType: loadoutFileType,
+    version: 1,
+    id: `loadout-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name: name.trim(),
+    createdAt: now,
+    updatedAt: now,
+    databaseHash: globalThis.TycoonDatabase?.sourceHash ?? null,
+    plan: { plotSize, items, lanes },
+    stats: automaticBaseMetadata(items, lanes, simulation, plotSize),
+    diagnostics: (simulation?.diagnostics ?? []).map(({ code, message }) => ({ code, message })),
+  };
+}
+
+function normalizeSavedLoadout(payload) {
+  const record = payload?.loadout ?? payload;
+  if (!record || record.fileType !== loadoutFileType || record.version !== 1) {
+    throw new Error('This is not a Tycoon Sim 2 saved loadout file.');
+  }
+  if (!record.name?.trim() || !Array.isArray(record.plan?.items) || !Array.isArray(record.plan?.lanes)) {
+    throw new Error('The loadout file is missing its name or grid placements.');
+  }
+  const plotSize = Number(record.plan.plotSize);
+  if (!Number.isInteger(plotSize) || plotSize < Number(sizeSlider.min) || plotSize > Number(sizeSlider.max)) {
+    throw new Error(`The loadout plot size must be between ${sizeSlider.min} and ${sizeSlider.max}.`);
+  }
+  return cloneLoadoutValue({
+    ...record,
+    id: record.id ?? `loadout-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name: record.name.trim(),
+    createdAt: record.createdAt ?? new Date().toISOString(),
+    updatedAt: record.updatedAt ?? new Date().toISOString(),
+  });
+}
+
+function loadoutFilename(name) {
+  const safe = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'saved-base';
+  return `${safe}.tycoon-loadout.json`;
+}
+
+function downloadLoadoutFile(record) {
+  const blob = new Blob([JSON.stringify(record, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = loadoutFilename(record.name);
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+async function writeLoadoutFile(record) {
+  if (typeof globalThis.showDirectoryPicker === 'function') {
+    try {
+      savedLoadoutDirectoryHandle ??= await globalThis.showDirectoryPicker({
+        id: 'tycoon-sim-2-saved-loadouts',
+        mode: 'readwrite',
+        startIn: 'documents',
+      });
+      const file = await savedLoadoutDirectoryHandle.getFileHandle(loadoutFilename(record.name), { create: true });
+      const writable = await file.createWritable();
+      await writable.write(JSON.stringify(record, null, 2));
+      await writable.close();
+      return 'folder';
+    } catch {
+      // Cancelling or an unsupported folder falls back to a normal shareable download.
+    }
+  }
+  downloadLoadoutFile(record);
+  return 'download';
+}
+
+function metadataRows(metadata) {
+  const rebirth = metadata.rebirth ? `Rebirth ${metadata.rebirth} · ${metadata.lastRebirthItem}` : 'Rebirth 0 · no rebirth items';
+  const destructionPercent = (1 - Number(metadata.survivalToFurnace ?? 0)) * 100;
+  return [
+    ['Expected cash/min', abbreviatedRate(metadata.expectedCashPerMinute ?? 0)],
+    ['Required rebirth', rebirth],
+    ['Plot size', `${metadata.plotSize} × ${metadata.plotSize}`],
+    ['Highest crate', metadata.highestCrate],
+    ['Access type', metadata.payment],
+    ['Ore limit', `${Number(metadata.activeOres ?? 0).toFixed(2)} / ${metadata.oreLimit}${metadata.limitedByOreCap ? ' · cap limited' : ''}`],
+    ['Ore destruction', `${Number(metadata.destroyedOresPerMinute ?? 0).toFixed(2)}/min · ${destructionPercent.toFixed(2)}% before furnace`],
+    ['Routes reaching furnace', `${metadata.routesReachingFurnace}/${metadata.routesTotal}`],
+    ['Longest route', `${Number(metadata.longestRouteSeconds ?? 0).toFixed(3)}s`],
+    ['Furnace throughput', `${Number(metadata.furnaceEntriesPerMinute ?? 0).toFixed(2)} ores/min`],
+    ['Space', `${metadata.reservedTiles} used · ${metadata.remainingTiles} free`],
+    ['Placements', `${metadata.itemCount} items · ${metadata.conveyorCount} conveyors`],
+    ['Merchant items', metadata.specialItems?.merchant?.join(', ') || 'None', true],
+    ['Secret items', metadata.specialItems?.secret?.join(', ') || 'None', true],
+    ['Achievement items', metadata.specialItems?.achievement?.join(', ') || 'None', true],
+    ['Premium items', metadata.specialItems?.premium?.join(', ') || 'None', true],
+  ];
+}
+
+function savedBaseMetadataHtml(metadata) {
+  return metadataRows(metadata).map(([label, value, wide]) => `
+    <div class="saved-base-stat${wide ? ' is-wide' : ''}">
+      <span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>
+    </div>`).join('');
+}
+
+function updateSavedBaseButton() {
+  const ready = plannerMode === 'build' && validation?.kind === 'manual-simulation';
+  saveBaseButton.disabled = !ready;
+  saveBaseButton.title = ready
+    ? 'Save the current simulated base'
+    : 'Simulate the current base before saving';
+}
+
+function selectedSavedLoadout() {
+  return loadSavedLoadouts().find((record) => record.id === selectedSavedBaseId) ?? null;
+}
+
+function setLoadoutActionButtons(enabled) {
+  loadBaseDialog.querySelectorAll('[data-load-base-action="preview"], [data-load-base-action="load"], [data-load-base-action="delete"]')
+    .forEach((button) => { button.disabled = !enabled; });
+}
+
+function renderSavedBaseDetails(record) {
+  savedBasePreview.hidden = true;
+  savedBasePreview.replaceChildren();
+  setLoadoutActionButtons(Boolean(record));
+  if (!record) {
+    savedBaseDetails.innerHTML = '<p>Select a saved base to see its benchmark stats.</p>';
+    return;
+  }
+  const databaseChanged = record.databaseHash && globalThis.TycoonDatabase?.sourceHash
+    && record.databaseHash !== globalThis.TycoonDatabase.sourceHash;
+  savedBaseDetails.innerHTML = `
+    <h3>${escapeHtml(record.name)}</h3>
+    ${databaseChanged ? '<p class="item-editor-error">This file was saved with a different item database version. It will be revalidated before loading.</p>' : ''}
+    <div class="saved-base-metadata">${savedBaseMetadataHtml(record.stats)}</div>
+    <p><strong>${record.stats?.simulationValid ? 'Simulation passed' : 'Simulation saved with issues'}</strong> · ${record.stats?.diagnosticCount ?? record.diagnostics?.length ?? 0} diagnostic(s)</p>`;
+}
+
+function renderSavedBaseList() {
+  const loadouts = loadSavedLoadouts().sort((left, right) => String(right.updatedAt).localeCompare(String(left.updatedAt)));
+  if (selectedSavedBaseId && !loadouts.some((record) => record.id === selectedSavedBaseId)) selectedSavedBaseId = null;
+  savedBaseList.replaceChildren();
+  if (!loadouts.length) {
+    const empty = document.createElement('p');
+    empty.className = 'saved-base-list-empty';
+    empty.textContent = 'No saved bases yet. Save the current grid or import a loadout file.';
+    savedBaseList.append(empty);
+  } else {
+    loadouts.forEach((record) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.savedBaseId = record.id;
+      button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', String(record.id === selectedSavedBaseId));
+      button.innerHTML = `<strong>${escapeHtml(record.name)}</strong><small>${escapeHtml(record.stats?.payment ?? 'Unknown')} · ${record.stats?.plotSize ?? record.plan?.plotSize}×${record.stats?.plotSize ?? record.plan?.plotSize} · ${abbreviatedRate(record.stats?.expectedCashPerMinute ?? 0)}</small>`;
+      savedBaseList.append(button);
+    });
+  }
+  renderSavedBaseDetails(loadouts.find((record) => record.id === selectedSavedBaseId) ?? null);
+}
+
+function openSaveBaseMenu() {
+  if (plannerMode !== 'build' || validation?.kind !== 'manual-simulation') return;
+  const placements = (activePlan?.items?.length ?? 0) + (activePlan?.lanes?.length ?? 0);
+  saveBaseStatus.hidden = true;
+  saveBaseStatus.classList.remove('is-success');
+  savedBaseName.value = activePlan?.title && !/workspace|benchmark/i.test(activePlan.title) ? activePlan.title : '';
+  const submit = saveBaseForm.querySelector('[type="submit"]');
+  submit.disabled = placements === 0;
+  if (!placements) {
+    pendingSaveSnapshot = null;
+    saveBaseMetadata.innerHTML = '<p>Place at least one item or conveyor before saving a base.</p>';
+  } else {
+    pendingSaveSnapshot = validation;
+    saveBaseMetadata.innerHTML = savedBaseMetadataHtml(automaticBaseMetadata(
+      activePlan.items,
+      activePlan.lanes,
+      pendingSaveSnapshot,
+      Number(sizeSlider.value),
+    ));
+  }
+  saveBaseDialog.showModal();
+  if (placements) savedBaseName.focus();
+}
+
+async function submitSavedBase(event) {
+  event.preventDefault();
+  const name = savedBaseName.value.trim();
+  if (!name || !pendingSaveSnapshot) return;
+  const submit = saveBaseForm.querySelector('[type="submit"]');
+  submit.disabled = true;
+  submit.textContent = 'Saving…';
+  try {
+    const record = upsertSavedLoadout(createSavedLoadout(name, pendingSaveSnapshot));
+    const destination = await writeLoadoutFile(record);
+    editNotice = destination === 'folder'
+      ? `Saved “${record.name}” to the local library and your saved-loadouts folder.`
+      : `Saved “${record.name}” to the local library and downloaded its shareable loadout file.`;
+    saveBaseDialog.close();
+    renderGrid(Number(sizeSlider.value));
+  } catch (error) {
+    saveBaseStatus.textContent = error.message;
+    saveBaseStatus.hidden = false;
+  } finally {
+    submit.disabled = false;
+    submit.textContent = 'Save Base';
+  }
+}
+
+function openLoadBaseMenu() {
+  selectedSavedBaseId = selectedSavedBaseId && loadSavedLoadouts().some((record) => record.id === selectedSavedBaseId)
+    ? selectedSavedBaseId
+    : null;
+  loadBaseStatus.textContent = `${loadSavedLoadouts().length} saved base${loadSavedLoadouts().length === 1 ? '' : 's'} available.`;
+  renderSavedBaseList();
+  loadBaseDialog.showModal();
+}
+
+function renderSavedLoadoutPreview(record) {
+  const size = Number(record.plan.plotSize);
+  const previewGrid = document.createElement('div');
+  previewGrid.className = 'saved-base-preview-grid';
+  previewGrid.style.setProperty('--preview-size', String(size));
+  [...record.plan.lanes, ...record.plan.items].forEach((placement) => {
+    const element = document.createElement('div');
+    const isLane = isConveyorPlacement(placement);
+    const type = isLane ? 'routing' : (placement.type ?? itemType(placement.name));
+    element.className = `saved-base-preview-placement ${type}`;
+    element.style.left = `${(placement.x - 1) / size * 100}%`;
+    element.style.top = `${(placement.y - 1) / size * 100}%`;
+    element.style.width = `${placement.width / size * 100}%`;
+    element.style.height = `${placement.height / size * 100}%`;
+    element.textContent = isLane ? '' : shortLabel(placement.name);
+    element.title = `${placement.name ?? placement.conveyor} · facing ${placement.direction}`;
+    previewGrid.append(element);
+  });
+  savedBasePreview.replaceChildren();
+  const heading = document.createElement('h3');
+  heading.textContent = `${record.name} · non-destructive preview`;
+  savedBasePreview.append(heading, previewGrid);
+  savedBasePreview.hidden = false;
+  savedBasePreview.scrollIntoView?.({ block: 'nearest' });
+}
+
+async function importSavedLoadoutFiles(files) {
+  let imported = 0;
+  const errors = [];
+  for (const file of [...files].slice(0, 250)) {
+    if (!file.name.toLowerCase().endsWith('.json')) continue;
+    try {
+      const record = normalizeSavedLoadout(JSON.parse(await file.text()));
+      upsertSavedLoadout(record);
+      imported += 1;
+    } catch (error) {
+      errors.push(`${file.name}: ${error.message}`);
+    }
+  }
+  loadBaseStatus.textContent = `${imported} loadout${imported === 1 ? '' : 's'} imported.${errors.length ? ` ${errors.length} file${errors.length === 1 ? '' : 's'} skipped.` : ''}`;
+  renderSavedBaseList();
+}
+
+function requestSavedBaseLoad(record) {
+  if (!record) return;
+  pendingLoadBaseId = record.id;
+  loadBaseDialog.close();
+  confirmLoadBaseDialog.showModal();
+}
+
+function preparedSavedBasePlan(record) {
+  const size = Number(record.plan.plotSize);
+  const items = record.plan.items.map((item) => mapPlacementCoordinates(refreshPlacementMetadata(item)));
+  const lanes = record.plan.lanes.map((lane) => mapPlacementCoordinates(updateConveyorGeometry(lane)));
+  validateCoordinateMap(items, size);
+  validateRouteSegments(lanes, items, size);
+  return { size, items, lanes };
+}
+
+function loadSavedBaseIntoGrid(record) {
+  let prepared;
+  try {
+    prepared = preparedSavedBasePlan(record);
+  } catch (error) {
+    confirmLoadBaseDialog.close();
+    openLoadBaseMenu();
+    loadBaseStatus.textContent = `Could not load “${record.name}”: ${error.message}`;
+    return false;
+  }
+  confirmLoadBaseDialog.close();
+  if (itemEditor.open) itemEditor.close();
+  if (massSelectionDialog.open) massSelectionDialog.close();
+  clearPlanner();
+  plannerMode = 'build';
+  sizeSlider.value = prepared.size;
+  coordinateMap.push(...prepared.items);
+  routeSegments.push(...prepared.lanes);
+  activePlan = {
+    title: record.name,
+    minimumSize: prepared.size,
+    items: coordinateMap,
+    lanes: routeSegments,
+  };
+  workflowStage = 2;
+  editNotice = `Loaded “${record.name}”. Run Simulate base to refresh its stats against the current database.`;
+  selectedSavedBaseId = null;
+  pendingLoadBaseId = null;
+  applyPlannerModeUi();
+  savePlannerMode();
+  saveWorkspace();
+  saveViewPreferences();
+  renderWorkflow();
+  renderItemLibrary();
+  renderGrid(prepared.size);
+  return true;
+}
+
 function saveViewPreferences() {
   const storage = browserStorage();
   if (!storage) return false;
@@ -1237,6 +1725,7 @@ const conveyorAbbreviations = {
 
 function renderGrid(size) {
   renderKeybindGuide();
+  updateSavedBaseButton();
   const tiles = size * size;
   grid.replaceChildren();
   grid.style.gridTemplateColumns = `repeat(${size}, var(--tile))`;
@@ -1290,6 +1779,7 @@ function columnName(number) {
 }
 
 function renderWorkflow() {
+  updateSavedBaseButton();
   const listedItems = activePlan?.items ?? coordinateMap;
   const buildSimulationVisible = plannerMode !== 'build' || validation?.kind === 'manual-simulation';
   workflowSteps.replaceChildren(...workflow.map((label, index) => {
@@ -3018,6 +3508,59 @@ plannerModeToggle.addEventListener('click', (event) => {
   setPlannerMode(button.dataset.plannerMode);
 });
 simulateBaseButton.addEventListener('click', runManualSimulation);
+saveBaseButton.addEventListener('click', openSaveBaseMenu);
+loadBasesButton.addEventListener('click', openLoadBaseMenu);
+saveBaseForm.addEventListener('submit', submitSavedBase);
+saveBaseDialog.addEventListener('click', (event) => {
+  if (event.target.closest('[data-save-base-action="close"]')) saveBaseDialog.close();
+});
+saveBaseDialog.addEventListener('close', () => {
+  pendingSaveSnapshot = null;
+  saveBaseStatus.hidden = true;
+});
+loadBaseDialog.addEventListener('click', (event) => {
+  const savedBaseButtonTarget = event.target.closest('[data-saved-base-id]');
+  if (savedBaseButtonTarget) {
+    selectedSavedBaseId = savedBaseButtonTarget.dataset.savedBaseId;
+    renderSavedBaseList();
+    return;
+  }
+  const action = event.target.closest('[data-load-base-action]')?.dataset.loadBaseAction;
+  if (!action) return;
+  if (action === 'close') loadBaseDialog.close();
+  if (action === 'import-folder') savedLoadoutFolderInput.click();
+  if (action === 'import-files') savedLoadoutFileInput.click();
+  if (action === 'preview') renderSavedLoadoutPreview(selectedSavedLoadout());
+  if (action === 'load') requestSavedBaseLoad(selectedSavedLoadout());
+  if (action === 'delete') {
+    const record = selectedSavedLoadout();
+    if (!record) return;
+    removeSavedLoadout(record.id);
+    selectedSavedBaseId = null;
+    loadBaseStatus.textContent = `Deleted “${record.name}” from the saved-base library.`;
+    renderSavedBaseList();
+  }
+});
+savedLoadoutFolderInput.addEventListener('change', async () => {
+  await importSavedLoadoutFiles(savedLoadoutFolderInput.files ?? []);
+  savedLoadoutFolderInput.value = '';
+});
+savedLoadoutFileInput.addEventListener('change', async () => {
+  await importSavedLoadoutFiles(savedLoadoutFileInput.files ?? []);
+  savedLoadoutFileInput.value = '';
+});
+confirmLoadBaseDialog.addEventListener('click', (event) => {
+  const action = event.target.closest('[data-confirm-load-action]')?.dataset.confirmLoadAction;
+  if (action === 'cancel') {
+    pendingLoadBaseId = null;
+    confirmLoadBaseDialog.close();
+  }
+  if (action === 'load') {
+    const record = loadSavedLoadouts().find((candidate) => candidate.id === pendingLoadBaseId);
+    if (record) loadSavedBaseIntoGrid(record);
+    else confirmLoadBaseDialog.close();
+  }
+});
 clearWorkspaceButton.addEventListener('click', () => {
   const modeLabel = plannerMode === 'build' ? 'Build Mode at Stage 3' : 'Generation Mode at Stage 1';
   if (!globalThis.confirm(`Clear the grid and restart ${modeLabel}?`)) return;

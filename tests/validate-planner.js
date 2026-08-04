@@ -66,6 +66,15 @@ assert.match(indexSource, /data-planner-mode="build"/);
 assert.match(indexSource, /data-planner-mode="generation"/);
 assert.match(indexSource, /id="clear-workspace"/);
 assert.match(indexSource, /id="simulate-base"/);
+assert.match(indexSource, /id="save-base"/);
+assert.match(indexSource, /id="load-bases"/);
+assert.match(indexSource, /planner-loadout-actions[\s\S]+id="load-bases"[\s\S]+id="save-base"[^>]+disabled/);
+assert.match(indexSource, /id="save-base-dialog"/);
+assert.match(indexSource, /id="load-base-dialog"/);
+assert.match(indexSource, /id="confirm-load-base-dialog"/);
+assert.match(indexSource, /id="saved-loadout-folder-input"[^>]+webkitdirectory/);
+assert.match(indexSource, /Load anyway/);
+assert.match(indexSource, /Never mind/);
 assert.match(indexSource, /id="size-out"/);
 assert.match(indexSource, /id="size-in"/);
 assert.match(appSource, /function applyBaseSize/);
@@ -79,6 +88,19 @@ assert.match(appSource, /sizeOut\.addEventListener\('click'/);
 assert.match(appSource, /sizeIn\.addEventListener\('click'/);
 assert.match(stylesSource, /::-webkit-slider-thumb/);
 assert.match(stylesSource, /::-moz-range-thumb/);
+assert.match(stylesSource, /\.saved-base-browser/);
+assert.match(stylesSource, /\.saved-base-button:disabled/);
+assert.match(stylesSource, /\.saved-base-preview-grid/);
+assert.match(stylesSource, /\.saved-base-list[^}]+overflow-y: auto/);
+assert.match(appSource, /savedLoadoutsStorageKey = 'tycoon-sim-2:saved-loadouts:v1'/);
+assert.match(appSource, /loadoutFileType = 'tycoon-sim-2-loadout'/);
+assert.match(appSource, /showDirectoryPicker/);
+assert.match(appSource, /function writeLoadoutFile/);
+assert.match(appSource, /function importSavedLoadoutFiles/);
+assert.match(appSource, /function renderSavedLoadoutPreview/);
+assert.match(appSource, /function loadSavedBaseIntoGrid/);
+assert.match(appSource, /function updateSavedBaseButton/);
+assert.match(appSource, /validation\?\.kind === 'manual-simulation'/);
 assert.match(appSource, /Red Teleporter Sender/);
 assert.match(appSource, /Red Teleporter Receiver/);
 assert.match(appSource, /Blue Teleporter Sender/);
@@ -171,6 +193,7 @@ this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, co
   furnaceProcessingZoneGeometry, completedStageForPlan, categorizedManualSimulationHtml,
   libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
   selectionRectangle, placementIntersectsRectangle, massSelectionBounds,
+  automaticBaseMetadata, crateRequirementForPlacement, loadoutFilename, normalizeSavedLoadout,
   recordStats, recordDescription, displayItemDescription, statsSectionsHtml,
   setValidation: (next) => { validation = next; }, workflowStage, workflowProgress, plannerMode };`, appSandbox);
 const app = appSandbox.api;
@@ -213,6 +236,38 @@ assert.deepEqual(
 );
 assert.match(appSource, /ROTATES TOGETHER/);
 assert.match(appSource, /pointerdown', startBoxSelectionDrag/);
+const savedMetadata = app.automaticBaseMetadata([
+  { name: 'Bling Dropper', stats: { Variant: 'Base' } },
+  { name: 'Star Scanner', stats: { Variant: 'Base' } },
+  { name: 'Godly Stone Dropper', stats: { Variant: 'Base' } },
+  { name: 'King Dropper', stats: { Variant: 'Base' } },
+  { name: 'Meltdown Dropper', stats: { Variant: 'Base' } },
+], [], {
+  valid: true,
+  diagnostics: [],
+  routes: [{ reachedFurnace: true }],
+  metrics: {
+    expectedCashPerMinute: 123456,
+    oreCap: 100,
+    cappedActiveOres: 80,
+    projectedActiveOres: 80,
+    destroyedOresPerMinute: 4,
+    survivalToFurnace: .8,
+    furnaceEntriesPerMinute: 16,
+    routeTimeSeconds: 12,
+    reservedTiles: 120,
+    remainingTiles: 1105,
+  },
+}, 35);
+assert.equal(savedMetadata.rebirth, 7);
+assert.equal(savedMetadata.lastRebirthItem, 'Meltdown Dropper');
+assert.equal(savedMetadata.payment, 'P2W');
+assert.ok(savedMetadata.specialItems.premium.some((name) => name.includes('Bling Dropper')));
+assert.ok(savedMetadata.specialItems.merchant.some((name) => name.includes('Star Scanner')));
+assert.ok(savedMetadata.specialItems.secret.some((name) => name.includes('Godly Stone Dropper')));
+assert.ok(savedMetadata.specialItems.achievement.some((name) => name.includes('King Dropper')));
+assert.equal(app.crateRequirementForPlacement({ name: 'Iron Dropper', stats: { Variant: 'Base' } }).name, 'Advanced');
+assert.equal(app.loadoutFilename('  Azure / Scanner Base  '), 'azure-scanner-base.tycoon-loadout.json');
 const sortedLibrary = app.filteredAndSortedLibraryRecords([
   { name: 'Zulu', type: 'upgrader', variant: 'Base', rarity: 'Epic' },
   { name: 'Beta', type: 'upgrader', variant: 'Base', rarity: 'Common' },
