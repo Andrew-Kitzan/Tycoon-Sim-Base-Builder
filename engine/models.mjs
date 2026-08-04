@@ -84,6 +84,19 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
   } else if (item.name === 'Incremental Upgrader') {
     appliedMultiplier = incrementalMultiplier(item, useNumber, rules);
     value = before * appliedMultiplier;
+  } else if (item.name === "Dragon's Breath") {
+    value = before * Number(item.mainStat ?? 1);
+    if (useNumber === 2) {
+      survival *= 0.7;
+      outcomeModel = {
+        kind: 'dragon-repeat',
+        expectedSurvivorValue: value,
+        outcomes: [
+          { label: 'Destroyed on second use', probability: 0.3, destroyed: true },
+          { label: `${item.mainStat}x + Fire`, probability: 0.7, value },
+        ],
+      };
+    }
   } else if (item.name === 'Lambda Upgrader') {
     const shinyScale = /shiny/i.test(item.variant) ? 1.1 : 1;
     const intrinsic = useNumber <= 1 ? 1 : 1.5 / useNumber;

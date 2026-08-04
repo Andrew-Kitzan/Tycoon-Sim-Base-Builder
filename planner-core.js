@@ -83,6 +83,18 @@
     return [...new Map(output.map((cell) => [`${cell.x},${cell.y}`, cell])).values()];
   }
 
+  function portableZoneEntryIndices(path, zoneCells) {
+    const zoneKeys = new Set(zoneCells.map((cell) => `${cell.x},${cell.y}`));
+    const entries = [];
+    let wasInside = false;
+    path.forEach((component, index) => {
+      const inside = cellsInRect(component.path).some((cell) => zoneKeys.has(`${cell.x},${cell.y}`));
+      if (inside && !wasInside) entries.push(index);
+      wasInside = inside;
+    });
+    return entries;
+  }
+
   function turnOutsideCells(before, after) {
     if (!before || !after || before.direction === after.direction) return [];
     const beforeRect = before.path ?? before;
@@ -738,6 +750,19 @@
           : [1.1, 1.25, 1.75];
         appliedMultiplier = incrementalMultipliers[Math.max(0, useNumber - 1)] ?? 1;
         value = before * appliedMultiplier;
+      } else if (definition.name === "Dragon's Breath") {
+        value = before * Number(definition.mainStat ?? 1);
+        if (useNumber === 2) {
+          survival *= .7;
+          outcomeModel = {
+            kind: 'dragon-repeat',
+            expectedSurvivorValue: value,
+            outcomes: [
+              { label: 'Destroyed on second use', probability: .3, destroyed: true },
+              { label: `${definition.mainStat}x + Fire`, probability: .7, value },
+            ],
+          };
+        }
       } else if (definition.name === 'Lambda Upgrader') {
         const shinyScale = /shiny/i.test(definition.variant) ? 1.1 : 1;
         const intrinsic = useNumber <= 1 ? 1 : 1.5 / useNumber;
@@ -870,11 +895,9 @@
       const useCounts = new Map();
       let oreSizeDiagnosticIssued = false;
       const stages = [];
-      const portableHits = portables.map((portable) => {
-        const beam = new Set(portableUpgradeCells(portable).map(key));
-        const index = path.findIndex((component) => cellsInRect(component.path).some((cell) => beam.has(key(cell))));
-        return { portable, index };
-      }).filter((entry) => entry.index >= 0);
+      const portableHits = portables.flatMap((portable) => (
+        portableZoneEntryIndices(path, portableUpgradeCells(portable)).map((index) => ({ portable, index }))
+      ));
       for (let index = 1; index < path.length; index += 1) {
         if (path[index - 1].direction !== path[index].direction
           && path[index - 1].speed > 16.8
@@ -1283,6 +1306,7 @@
     simulateManualBase,
     traceManualDropper,
     portableUpgradeCells,
+    portableZoneEntryIndices,
     createPlanner,
   });
 }(globalThis));

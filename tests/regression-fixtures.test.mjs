@@ -10,7 +10,7 @@ import { crimsonPhantomZoneEstimate } from '../engine/crimson.mjs';
 import { connectTeleporterPairs } from '../engine/teleporters.mjs';
 import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
 import { internalTransportProfile, internalTransportRect } from '../engine/internal-transport.mjs';
-import { portableUpgradeCells } from '../engine/coordinate-map.mjs';
+import { portableUpgradeCells, portableZoneEntryIndices } from '../engine/coordinate-map.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const directory = path.join(root, 'tests', 'fixtures', 'regressions');
@@ -63,6 +63,10 @@ for (const fixture of fixtures) {
       assert.equal(keys.length, testCase.cellCount);
       assert.deepEqual(keys, testCase.cells);
     }
+  } else if (fixture.id === 'portable-zone-reentry') {
+    const entries = portableZoneEntryIndices(fixture.input.path, fixture.input.zoneCells);
+    assert.deepEqual(entries, fixture.assert.entryIndices);
+    assert.equal(entries.length, fixture.assert.uses);
   } else if (fixture.id === 'formatted-xlsx-memory') {
     const xml = `<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Value</t></is></c></row><row r="${fixture.input.formattedRow}"><c r="Z${fixture.input.formattedRow}" s="9"/></row></sheetData></worksheet>`;
     const values = parseWorksheetXml(xml);
@@ -149,6 +153,17 @@ for (const fixture of fixtures) {
     assert.equal(tikiAfter.destructionChance, fixture.assert.tikiDestructionChance);
     assert.equal(tikiAfter.value, fixture.assert.tikiExpectedSurvivorValue);
     assert.equal(tikiAfter.outcomeModel.outcomes.length, fixture.assert.tikiOutcomeCount);
+  } else if (fixture.id === 'dragon-second-use-destruction') {
+    const dragon = findItem(database, fixture.input.item, fixture.input.variant);
+    const before = { value: fixture.input.startingValue, survival: 1, replication: 1, oreSize: 1, effects: [], timeSeconds: 0, area: 0 };
+    const firstUse = applyDeterministicItem(dragon, before, 1, {}, rules);
+    const secondUse = applyDeterministicItem(dragon, before, 2, {}, rules);
+    assert.equal(firstUse.itemSurvival, fixture.assert.firstUseSurvival);
+    assert.equal(secondUse.itemSurvival, fixture.assert.secondUseSurvival);
+    assert.equal(secondUse.destructionChance, fixture.assert.secondUseDestruction);
+    assert.equal(secondUse.outcomeModel?.kind, fixture.assert.outcomeModel);
+    assert.equal(secondUse.outcomeModel.outcomes.length, fixture.assert.outcomeCount);
+    assert.equal(secondUse.value, fixture.assert.secondUseValue);
   } else if (fixture.id === 'manual-effect-timer-route') {
     const source = findItem(database, fixture.input.effectSource, 'Base');
     const remover = findItem(database, fixture.input.remover, 'Base');

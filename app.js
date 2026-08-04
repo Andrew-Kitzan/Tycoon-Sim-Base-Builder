@@ -740,6 +740,7 @@ function categorizedManualSimulationHtml(item) {
 
   const hasRng = routeStages.some(({ stage }) => stage.outcomeModel?.outcomes?.length);
   const isIncremental = item.name === 'Incremental Upgrader';
+  const showsRepeatedUses = !isIncremental && routeStages.some(({ stage }) => Number(stage.useNumber ?? 1) > 1);
   const changesValue = routeStages.some(({ stage }) => Math.abs(stage.afterValue - stage.beforeValue) > .000001);
   const changesSize = routeStages.some(({ stage }) => Math.abs(stage.afterOreSize - stage.beforeOreSize) > .000001);
   const changesReplication = routeStages.some(({ stage }) => Math.abs(stage.replicationAfter - stage.replicationBefore) > .000001);
@@ -774,9 +775,9 @@ function categorizedManualSimulationHtml(item) {
     <section class="item-stat-section value-tracking simulation-item-tracking">
       <h3>${hasRng ? 'Expected value & RNG' : 'Ore value'}</h3>
       <table class="simulation-hover-table">
-        <thead><tr><th>Dropper</th>${isIncremental ? '<th>Use</th><th>Multiplier</th>' : ''}<th>Before</th><th>${hasRng ? 'Expected after (survivors)' : 'After'}</th>${hasRng ? '<th>Expected per input</th>' : ''}</tr></thead>
+        <thead><tr><th>Dropper</th>${isIncremental ? '<th>Use</th><th>Multiplier</th>' : (showsRepeatedUses ? '<th>Use</th>' : '')}<th>Before</th><th>${hasRng ? 'Expected after (survivors)' : 'After'}</th>${hasRng ? '<th>Expected per input</th>' : ''}</tr></thead>
         <tbody>${routeStages.map(({ route, stage }) => `<tr>
-          <td>#${route.dropperOrder}</td>${isIncremental ? `<td>${stage.useNumber} of ${stage.useLimit}</td><td>${Number(stage.appliedMultiplier ?? 1).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}&times;</td>` : ''}<td>${simulationMoney(stage.beforeValue)}</td><td>${simulationMoney(stage.afterValue)}</td>${hasRng ? `<td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>` : ''}
+          <td>#${route.dropperOrder}</td>${isIncremental ? `<td>${stage.useNumber} of ${stage.useLimit}</td><td>${Number(stage.appliedMultiplier ?? 1).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}&times;</td>` : (showsRepeatedUses ? `<td>${stage.useNumber} of ${stage.useLimit}</td>` : '')}<td>${simulationMoney(stage.beforeValue)}</td><td>${simulationMoney(stage.afterValue)}</td>${hasRng ? `<td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>` : ''}
         </tr>`).join('')}</tbody>
       </table>
       ${survivingOutcomes.length ? `<div class="simulation-outcome-list"><h4>Surviving outcomes</h4>${survivingOutcomes.map((outcome) => `<div><span>${escapeHtml(outcome.label)}</span><strong>${(outcome.probability * 100).toFixed(2)}%</strong></div>`).join('')}</div>` : ''}
@@ -786,11 +787,11 @@ function categorizedManualSimulationHtml(item) {
     <section class="item-stat-section destruction-tracking simulation-item-tracking">
       <h3>Ore destruction</h3>
       ${hasImmediateDestruction ? `<table class="simulation-hover-table">
-        <thead><tr><th>Dropper</th><th>Reaches item</th><th>Still alive after</th><th>Destroyed here</th><th>Destroyed/min</th></tr></thead>
+        <thead><tr><th>Dropper</th>${showsRepeatedUses ? '<th>Use</th>' : ''}<th>Reaches item</th><th>Still alive after</th><th>Chance destroyed</th><th>Destroyed/min</th></tr></thead>
         <tbody>${routeStages.map(({ route, stage }) => `<tr>
-          <td>#${route.dropperOrder}</td><td>${(stage.survivalBefore * 100).toFixed(2)}%</td><td>${(stage.survivalAfter * 100).toFixed(2)}%</td><td>${((stage.survivalBefore - stage.survivalAfter) * 100).toFixed(2)}%</td><td>${(stage.destroyedOresPerMinute ?? 0).toFixed(2)}</td>
+          <td>#${route.dropperOrder}</td>${showsRepeatedUses ? `<td>${stage.useNumber} of ${stage.useLimit}</td>` : ''}<td>${(stage.survivalBefore * 100).toFixed(2)}%</td><td>${(stage.survivalAfter * 100).toFixed(2)}%</td><td>${((stage.destructionChance ?? 0) * 100).toFixed(2)}%</td><td>${(stage.destroyedOresPerMinute ?? 0).toFixed(2)}</td>
         </tr>`).join('')}</tbody>
-      </table><p class="simulation-card-note">Percentages compare against the dropper's original ore output.</p>` : ''}
+      </table><p class="simulation-card-note">Reaches item and still alive after are cumulative from the dropper. Chance destroyed applies to this use.</p>` : ''}
       ${unsafeEffectEntries.length ? `<table class="simulation-hover-table effect-destruction-table">
         <thead><tr><th>Dropper</th><th>Effect</th><th>Destroyed when timer ends</th><th>Destroyed/min</th></tr></thead>
         <tbody>${unsafeEffectEntries.map(({ route, effect }) => `<tr><td>#${route.dropperOrder}</td><td>${escapeHtml(effect.effect)}</td><td>${(effect.destroyedOriginalFraction * 100).toFixed(2)}%</td><td>${effect.destroyedOresPerMinute.toFixed(2)}</td></tr>`).join('')}</tbody>

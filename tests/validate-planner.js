@@ -387,9 +387,9 @@ assert.match(categorizedLambdaHtml, /Expected value & RNG/);
 assert.match(categorizedLambdaHtml, /Ore destruction/);
 assert.match(categorizedLambdaHtml, /Reaches item/);
 assert.match(categorizedLambdaHtml, /Still alive after/);
-assert.match(categorizedLambdaHtml, /Destroyed here/);
+assert.match(categorizedLambdaHtml, /Chance destroyed/);
 assert.match(categorizedLambdaHtml, /Survives this item/);
-assert.match(categorizedLambdaHtml, /dropper's original ore output/);
+assert.match(categorizedLambdaHtml, /Chance destroyed applies to this use/);
 assert.doesNotMatch(categorizedLambdaHtml, /Original entering|Survive this use|Original after|Original lost here/);
 assert.doesNotMatch(categorizedLambdaHtml, /<h3>Ore size<\/h3>/);
 assert.doesNotMatch(categorizedLambdaHtml, /<h3>Ore replication<\/h3>/);
@@ -520,6 +520,18 @@ assert.deepEqual(
   JSON.parse(JSON.stringify(planner.portableUpgradeCells({ name: 'Derp Blaster', x: 5, y: 5, width: 2, height: 2, direction: 'north', beamLength: 2 }))),
   [{ x: 5, y: 4 }, { x: 5, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 3 }],
 );
+assert.deepEqual(
+  JSON.parse(JSON.stringify(planner.portableZoneEntryIndices([
+    { path: { x: 5, y: 5, width: 1, height: 1 } },
+    { path: { x: 5, y: 6, width: 1, height: 1 } },
+    { path: { x: 7, y: 6, width: 1, height: 1 } },
+    { path: { x: 6, y: 5, width: 1, height: 1 } },
+  ], [{ x: 5, y: 5 }, { x: 5, y: 6 }, { x: 6, y: 5 }]))),
+  [0, 3],
+);
+assert.match(coreSource, /definition\.name === "Dragon's Breath"[\s\S]+useNumber === 2[\s\S]+probability: \.3, destroyed: true/);
+assert.match(appSource, /Chance destroyed/);
+assert.match(appSource, /stage\.destructionChance/);
 
 const manualSimulation = planner.simulateManualBase({
   plotSize: 14,

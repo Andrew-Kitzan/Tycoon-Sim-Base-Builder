@@ -1,0 +1,15 @@
+{
+  "id": "dragon-second-use-destruction",
+  "kind": "expected-value-and-survival",
+  "observed": "A looped Dragon's Breath applied its multiplier twice but reported no ore destruction on the second zone entry.",
+  "expected": "The first use has no intrinsic destruction; the second use has a 30% destruction outcome and 70% item survival using the shared RNG destruction model.",
+  "input": { "item": "Dragon's Breath", "variant": "Shiny Mythic", "startingValue": 100 },
+  "assert": {
+    "firstUseSurvival": 1,
+    "secondUseSurvival": 0.7,
+    "secondUseDestruction": 0.30000000000000004,
+    "outcomeModel": "dragon-repeat",
+    "outcomeCount": 2,
+    "secondUseValue": 450
+  }
+}

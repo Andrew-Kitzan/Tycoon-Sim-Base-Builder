@@ -347,6 +347,18 @@ export function portableUpgradeCells(item, rules) {
   return [...new Map(result.map((cell) => [key(cell), cell])).values()];
 }
 
+export function portableZoneEntryIndices(path, zoneCells) {
+  const zoneKeys = new Set(zoneCells.map(key));
+  const entries = [];
+  let wasInside = false;
+  path.forEach((component, index) => {
+    const inside = cells(component.path).some((cell) => zoneKeys.has(key(cell)));
+    if (inside && !wasInside) entries.push(index);
+    wasInside = inside;
+  });
+  return entries;
+}
+
 function firstPortableUpgradeCells(item, rules) {
   if (item.name === 'Portable Spinner') return portableUpgradeCells(item, rules);
   return portableUpgradeCells(item, { ...rules, defaultPortableBeamLength: 1 });
@@ -373,7 +385,8 @@ function routeValue(path, portables, dropper, profile, rules) {
     component.kind === 'item' && (component.item.section === 'capgrader' || parseRange(component.item.definition.range)) ? index : last
   ), -1);
   const portableHits = portables
-    .map((portable) => ({ portable, index: path.findIndex((component) => portableUpgradeCells(portable, rules).some((cell) => cells(component.path).some((routeCell) => key(routeCell) === key(cell)))) }))
+    .flatMap((portable) => portableZoneEntryIndices(path, portableUpgradeCells(portable, rules))
+      .map((index) => ({ portable, index })))
     .filter((entry) => entry.index > finalCapIndex)
     .sort((left, right) => left.index - right.index || left.portable.order - right.portable.order);
   for (let index = 0; index < path.length; index += 1) {
@@ -395,7 +408,7 @@ function routeValue(path, portables, dropper, profile, rules) {
       stages.push({ item: portable, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, range: null, useNumber, useLimit: itemUseLimit(portable.definition) });
     }
   }
-  return { ...state, stages };
+  return { ...state, stages, portableUses: portableHits.length };
 }
 
 export function validateCoordinateMap({ map, database, rules, profile }) {
@@ -512,6 +525,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       unsafeTurns,
       teleporterJumps: teleporterJumps(path),
       phantomZones,
+      portableUses: simulated.portableUses,
       valueBeforeFurnace: simulated.value,
       finalCapgrader: finalCapStage ? {
         name: finalCapStage.item.name,
@@ -597,6 +611,6 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       remainingTiles: Math.max(0, map.plotSize ** 2 - reservedTiles),
     },
     furnaceZone: zone,
-    portableUsesPerOre: portables.length,
+    portableUsesPerOre: routes.length ? Math.max(...routes.map((route) => route.portableUses ?? 0)) : 0,
   };
 }

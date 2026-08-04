@@ -513,6 +513,9 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   overlap other upgrade beams.
 - A single portable may upgrade the same ore again only after the ore completely
   leaves its upgrade zone and later re-enters it.
+- Dragon's Breath has no intrinsic destruction on its first use. Its second
+  upgrade-zone entry has a 30% chance to destroy the ore and 70% survival; report
+  that loss through the same per-use RNG destruction model used by Lambda.
 - Normal built-in conveyor upgraders cannot reverse direction internally, so
   multi-pass reuse is generally a portable routing technique.
 
