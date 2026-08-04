@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "crateProgression": [
     "Basic", "Advanced", "Factory", "Quarry", "Futuristic", "Toxic",
     "Desert", "Fantasy", "Space", "Candy", "Periastron", "Ancient",
@@ -24,6 +24,7 @@
     "finalizationRequires": ["optimizationComplete", "finalVerificationComplete"]
   },
   "defaultPortableBeamLength": 2,
+  "defaultPortableBeamWidth": 1,
   "portableSpinnerBeamRadius": 1,
   "portableRequirements": { "phase": "post-cap", "beamMustTouchRoute": true },
   "internalTransportOverrides": {

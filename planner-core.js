@@ -51,6 +51,38 @@
     return cells;
   }
 
+  function portableUpgradeCells(item, spinnerRadius = 1) {
+    if (/Portable Spinner/i.test(item.name)) {
+      const output = [];
+      for (let y = item.y - spinnerRadius; y < item.y + item.height + spinnerRadius; y += 1) {
+        for (let x = item.x - spinnerRadius; x < item.x + item.width + spinnerRadius; x += 1) {
+          const insideFootprint = x >= item.x && x < item.x + item.width
+            && y >= item.y && y < item.y + item.height;
+          if (!insideFootprint) output.push({ x, y });
+        }
+      }
+      return output;
+    }
+    const length = Number(item.beamLength ?? 2);
+    const horizontal = item.direction === 'east' || item.direction === 'west';
+    const across = horizontal ? item.height : item.width;
+    const beamWidth = /Ore Replicator/i.test(item.name) ? across : 1;
+    const centerStart = Math.max(0, (across - beamWidth) / 2);
+    const centerEnd = Math.min(across, centerStart + beamWidth);
+    const impactedOffsets = Array.from({ length: across }, (_, offset) => offset)
+      .filter((offset) => offset < centerEnd && offset + 1 > centerStart);
+    const output = [];
+    for (const offset of impactedOffsets) {
+      for (let distance = 1; distance <= length; distance += 1) {
+        if (item.direction === 'east') output.push({ x: item.x + item.width - 1 + distance, y: item.y + offset });
+        if (item.direction === 'west') output.push({ x: item.x - distance, y: item.y + offset });
+        if (item.direction === 'south') output.push({ x: item.x + offset, y: item.y + item.height - 1 + distance });
+        if (item.direction === 'north') output.push({ x: item.x + offset, y: item.y - distance });
+      }
+    }
+    return [...new Map(output.map((cell) => [`${cell.x},${cell.y}`, cell])).values()];
+  }
+
   function turnOutsideCells(before, after) {
     if (!before || !after || before.direction === after.direction) return [];
     const beforeRect = before.path ?? before;
@@ -666,19 +698,6 @@
       starts.forEach((component) => visit(component, [component], new Set([component.id])));
       return longest;
     };
-    const portableBeamCells = (item) => {
-      const length = /Portable Spinner/i.test(item.name) ? 1 : Number(item.beamLength ?? 2);
-      const output = [];
-      for (const footprint of cellsInRect(item)) {
-        for (let distance = 1; distance <= length; distance += 1) {
-          if (item.direction === 'east') output.push({ x: item.x + item.width - 1 + distance, y: footprint.y });
-          if (item.direction === 'west') output.push({ x: item.x - distance, y: footprint.y });
-          if (item.direction === 'south') output.push({ x: footprint.x, y: item.y + item.height - 1 + distance });
-          if (item.direction === 'north') output.push({ x: footprint.x, y: item.y - distance });
-        }
-      }
-      return new Set(output.map(key));
-    };
     const parseRange = (value) => {
       if (!value || /^n\/a$/i.test(String(value).trim())) return null;
       const powers = { '': 1, k: 1e3, m: 1e6, b: 1e9, t: 1e12, qd: 1e15, qn: 1e18, sx: 1e21, sp: 1e24, oc: 1e27, no: 1e30 };
@@ -852,7 +871,7 @@
       let oreSizeDiagnosticIssued = false;
       const stages = [];
       const portableHits = portables.map((portable) => {
-        const beam = portableBeamCells(portable);
+        const beam = new Set(portableUpgradeCells(portable).map(key));
         const index = path.findIndex((component) => cellsInRect(component.path).some((cell) => beam.has(key(cell))));
         return { portable, index };
       }).filter((entry) => entry.index >= 0);
@@ -1263,6 +1282,7 @@
     isFastTurnBlocked,
     simulateManualBase,
     traceManualDropper,
+    portableUpgradeCells,
     createPlanner,
   });
 }(globalThis));

@@ -499,10 +499,13 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 - Portables do not contain conveyors. Place them beside an external conveyor.
 - A standard 2×1 portable occupies 2×1 when facing east/west and 1×2 when
   facing north/south.
-- All normal portable upgrade beams are two tiles long. This includes standard
-  Portables, Derp Blaster, Dragon, and Ore Glazer.
-- Portable Spinner is the only documented exception: its upgrade zone extends
+- All normal directional portable upgrade beams are two tiles long and one tile
+  wide, centered on the portable. This includes standard Portables, Derp
+  Blaster, Dragon, and Ore Glazer.
+- Portable Spinner is the surrounding-zone exception: its upgrade zone extends
   one tile around it instead of using a two-tile-long beam.
+- Ore Replicator is excluded from the default beam-width rule until its distinct
+  upgrade-zone behavior is documented.
 - Portable upgrade beams may pass through walls/decorations and may overlap other
   portable beams.
 - Portable physical footprints cannot overlap another item or an external

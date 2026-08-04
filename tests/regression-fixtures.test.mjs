@@ -10,6 +10,7 @@ import { crimsonPhantomZoneEstimate } from '../engine/crimson.mjs';
 import { connectTeleporterPairs } from '../engine/teleporters.mjs';
 import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
 import { internalTransportProfile, internalTransportRect } from '../engine/internal-transport.mjs';
+import { portableUpgradeCells } from '../engine/coordinate-map.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const directory = path.join(root, 'tests', 'fixtures', 'regressions');
@@ -31,6 +32,37 @@ for (const fixture of fixtures) {
   } else if (fixture.id === 'portable-after-cap') {
     assert.equal(rules.portableRequirements.phase, 'post-cap');
     assert(rules.validationCodes[fixture.assert.diagnostic]);
+  } else if (fixture.id === 'portable-spinner-radius-zone') {
+    let reference;
+    for (const direction of fixture.input.directions) {
+      const item = { ...fixture.input.item, direction };
+      const cells = portableUpgradeCells(item, { ...rules, portableSpinnerBeamRadius: fixture.input.radius });
+      const keys = cells
+        .sort((left, right) => left.y - right.y || left.x - right.x)
+        .map((cell) => `${cell.x},${cell.y}`);
+      assert.equal(keys.length, fixture.assert.cellCount);
+      assert.deepEqual(keys, fixture.assert.cells);
+      const footprintKeys = new Set();
+      for (let y = item.y; y < item.y + item.height; y += 1) {
+        for (let x = item.x; x < item.x + item.width; x += 1) footprintKeys.add(`${x},${y}`);
+      }
+      assert.equal(keys.some((key) => footprintKeys.has(key)), !fixture.assert.excludesFootprint);
+      if (!reference) reference = keys;
+      else assert.deepEqual(keys, reference, 'Portable Spinner radius must not rotate with facing');
+    }
+  } else if (fixture.id === 'portable-centered-beam-width') {
+    for (const testCase of fixture.input.cases) {
+      const cells = portableUpgradeCells(testCase.item, {
+        ...rules,
+        defaultPortableBeamLength: fixture.input.beamLength,
+        defaultPortableBeamWidth: fixture.input.beamWidth,
+      });
+      const keys = cells
+        .sort((left, right) => left.y - right.y || left.x - right.x)
+        .map((cell) => `${cell.x},${cell.y}`);
+      assert.equal(keys.length, testCase.cellCount);
+      assert.deepEqual(keys, testCase.cells);
+    }
   } else if (fixture.id === 'formatted-xlsx-memory') {
     const xml = `<worksheet><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Value</t></is></c></row><row r="${fixture.input.formattedRow}"><c r="Z${fixture.input.formattedRow}" s="9"/></row></sheetData></worksheet>`;
     const values = parseWorksheetXml(xml);

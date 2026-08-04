@@ -1,0 +1,24 @@
+{
+  "id": "portable-centered-beam-width",
+  "kind": "portable-zone-regression",
+  "observed": "Directional portable beams expanded across the portable's entire footprint width.",
+  "expected": "Directional portable beams are two tiles long and one tile wide on the portable's centerline; Portable Spinner and Ore Replicator are exceptions.",
+  "input": {
+    "beamLength": 2,
+    "beamWidth": 1,
+    "cases": [
+      {
+        "item": { "name": "Dragon's Breath", "x": 5, "y": 5, "width": 3, "height": 3, "direction": "east" },
+        "cells": ["8,6", "9,6"],
+        "cellCount": 2
+      },
+      {
+        "item": { "name": "Derp Blaster", "x": 5, "y": 5, "width": 2, "height": 2, "direction": "north" },
+        "cells": ["5,3", "6,3", "5,4", "6,4"],
+        "cellCount": 4,
+        "visualCenterOffset": 0.5
+      }
+    ]
+  },
+  "assert": { "beamWidth": 1, "centered": true }
+}

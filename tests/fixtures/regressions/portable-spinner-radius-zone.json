@@ -1,0 +1,17 @@
+{
+  "id": "portable-spinner-radius-zone",
+  "kind": "portable-zone-regression",
+  "observed": "Portable Spinner was treated as a one-tile directional beam.",
+  "expected": "Portable Spinner upgrades every tile in the one-tile ring around its footprint, regardless of facing.",
+  "input": {
+    "item": { "name": "Portable Spinner", "x": 5, "y": 5, "width": 2, "height": 2, "direction": "east" },
+    "radius": 1,
+    "directions": ["north", "east", "south", "west"]
+  },
+  "assert": {
+    "cellCount": 12,
+    "cells": ["4,4", "5,4", "6,4", "7,4", "4,5", "7,5", "4,6", "7,6", "4,7", "5,7", "6,7", "7,7"],
+    "directionInvariant": true,
+    "excludesFootprint": true
+  }
+}

@@ -311,29 +311,45 @@ function findDirectedPath(starts, graph, zone) {
   return null;
 }
 
-function portableBeamCells(item, rules) {
-  const length = item.name === 'Portable Spinner' ? rules.portableSpinnerBeamRadius : rules.defaultPortableBeamLength;
+export function portableUpgradeCells(item, rules) {
+  if (item.name === 'Portable Spinner') {
+    const radius = Number(rules.portableSpinnerBeamRadius ?? 1);
+    const result = [];
+    for (let y = item.y - radius; y < item.y + item.height + radius; y += 1) {
+      for (let x = item.x - radius; x < item.x + item.width + radius; x += 1) {
+        const insideFootprint = x >= item.x && x < item.x + item.width
+          && y >= item.y && y < item.y + item.height;
+        if (!insideFootprint) result.push({ x, y });
+      }
+    }
+    return result;
+  }
+  const length = rules.defaultPortableBeamLength;
+  const preserveFullWidth = item.name === 'Ore Replicator';
+  const beamWidth = preserveFullWidth
+    ? (item.direction === 'east' || item.direction === 'west' ? item.height : item.width)
+    : Math.max(1, Number(rules.defaultPortableBeamWidth ?? 1));
+  const horizontal = item.direction === 'east' || item.direction === 'west';
+  const across = horizontal ? item.height : item.width;
+  const centerStart = Math.max(0, (across - beamWidth) / 2);
+  const centerEnd = Math.min(across, centerStart + beamWidth);
+  const impactedOffsets = Array.from({ length: across }, (_, offset) => offset)
+    .filter((offset) => offset < centerEnd && offset + 1 > centerStart);
   const result = [];
-  for (const footprintCell of cells(item)) {
+  for (const offset of impactedOffsets) {
     for (let distance = 1; distance <= length; distance += 1) {
-      if (item.direction === 'east') result.push({ x: item.x + item.width - 1 + distance, y: footprintCell.y });
-      if (item.direction === 'west') result.push({ x: item.x - distance, y: footprintCell.y });
-      if (item.direction === 'south') result.push({ x: footprintCell.x, y: item.y + item.height - 1 + distance });
-      if (item.direction === 'north') result.push({ x: footprintCell.x, y: item.y - distance });
+      if (item.direction === 'east') result.push({ x: item.x + item.width - 1 + distance, y: item.y + offset });
+      if (item.direction === 'west') result.push({ x: item.x - distance, y: item.y + offset });
+      if (item.direction === 'south') result.push({ x: item.x + offset, y: item.y + item.height - 1 + distance });
+      if (item.direction === 'north') result.push({ x: item.x + offset, y: item.y - distance });
     }
   }
   return [...new Map(result.map((cell) => [key(cell), cell])).values()];
 }
 
-function firstPortableBeamCells(item) {
-  const result = [];
-  for (const footprintCell of cells(item)) {
-    if (item.direction === 'east') result.push({ x: item.x + item.width, y: footprintCell.y });
-    if (item.direction === 'west') result.push({ x: item.x - 1, y: footprintCell.y });
-    if (item.direction === 'south') result.push({ x: footprintCell.x, y: item.y + item.height });
-    if (item.direction === 'north') result.push({ x: footprintCell.x, y: item.y - 1 });
-  }
-  return [...new Map(result.map((cell) => [key(cell), cell])).values()];
+function firstPortableUpgradeCells(item, rules) {
+  if (item.name === 'Portable Spinner') return portableUpgradeCells(item, rules);
+  return portableUpgradeCells(item, { ...rules, defaultPortableBeamLength: 1 });
 }
 
 function movePortableForward(item) {
@@ -357,7 +373,7 @@ function routeValue(path, portables, dropper, profile, rules) {
     component.kind === 'item' && (component.item.section === 'capgrader' || parseRange(component.item.definition.range)) ? index : last
   ), -1);
   const portableHits = portables
-    .map((portable) => ({ portable, index: path.findIndex((component) => portableBeamCells(portable, rules).some((cell) => cells(component.path).some((routeCell) => key(routeCell) === key(cell)))) }))
+    .map((portable) => ({ portable, index: path.findIndex((component) => portableUpgradeCells(portable, rules).some((cell) => cells(component.path).some((routeCell) => key(routeCell) === key(cell)))) }))
     .filter((entry) => entry.index > finalCapIndex)
     .sort((left, right) => left.index - right.index || left.portable.order - right.portable.order);
   for (let index = 0; index < path.length; index += 1) {
@@ -510,7 +526,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
   const routeCellKeys = new Set(routePaths.flatMap(({ path }) => path.flatMap((component) => cells(component.path).map(key))));
   const occupiedItemCells = new Set(items.flatMap((item) => cells(item).map(key)));
   for (const portable of portables) {
-    const beamHits = portableBeamCells(portable, rules).some((cell) => routeCellKeys.has(key(cell)));
+    const beamHits = portableUpgradeCells(portable, rules).some((cell) => routeCellKeys.has(key(cell)));
     if (!beamHits) {
       diagnostics.push({ code: 'PORTABLE_UNREACHABLE', message: `${portable.variant} ${portable.name} ${portable.order} does not face or reach the ore route.` });
       continue;
@@ -520,10 +536,10 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
         component.kind === 'item' && (component.item.section === 'capgrader' || parseRange(component.item.definition.range)) ? index : last
       ), -1);
       return path.some((component, index) => index > finalCapIndex
-        && portableBeamCells(portable, rules).some((cell) => cells(component.path).some((routeCell) => key(routeCell) === key(cell))));
+        && portableUpgradeCells(portable, rules).some((cell) => cells(component.path).some((routeCell) => key(routeCell) === key(cell))));
     });
     if (!legalPostCapHit) diagnostics.push({ code: 'PORTABLE_BEFORE_CAP', message: `${portable.variant} ${portable.name} ${portable.order} touches ore before the final capgrader.` });
-    if (!firstPortableBeamCells(portable).some((cell) => routeCellKeys.has(key(cell)))) {
+    if (!firstPortableUpgradeCells(portable, rules).some((cell) => routeCellKeys.has(key(cell)))) {
       const moved = movePortableForward(portable);
       const originalCells = new Set(cells(portable).map(key));
       const canMoveCloser = cells(moved).every((cell) => (

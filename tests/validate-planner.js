@@ -33,12 +33,13 @@ assert.match(indexSource, /id="live-ore-content"/);
 assert.match(stylesSource, /\.board-layout \{[^}]*grid-template-columns: minmax\(0, 1fr\) 330px;/s);
 assert.match(stylesSource, /\.board-layout:has\(\.live-ore-tracker\[hidden\]\) \{[^}]*grid-template-columns: minmax\(0, 1fr\);/s);
 assert.match(stylesSource, /\.live-ore-tracker/);
-assert.match(indexSource, /class="board-layout"[\s\S]+id="keybind-guide"[\s\S]+id="live-ore-tracker"/);
-assert.match(stylesSource, /\.keybind-guide \{[^}]*position: absolute;[^}]*right: 346px;[^}]*bottom: 16px;[^}]*width: 214px;/s);
-assert.match(stylesSource, /\.live-ore-tracker \{[^}]*grid-template-rows: auto auto minmax\(0, 1fr\);[^}]*height: calc\(100vh - 190px\);/s);
+assert.match(indexSource, /id="live-ore-tracker"[\s\S]+id="live-ore-content"[\s\S]+id="keybind-guide"[\s\S]+<\/aside>/);
+assert.match(stylesSource, /\.keybind-guide \{[^}]*position: static;[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[^}]*width: auto;/s);
+assert.match(stylesSource, /\.keybind-row \{[^}]*grid-template-columns: 52px minmax\(0, 1fr\);/s);
+assert.match(stylesSource, /\.live-ore-tracker \{[^}]*grid-template-rows: auto auto minmax\(0, 1fr\) auto;[^}]*height: calc\(100vh - 190px\);/s);
 assert.match(stylesSource, /\.live-ore-content \{[^}]*overflow-y: auto;[^}]*scrollbar-gutter: stable;/s);
 assert.match(appSource, /function renderKeybindGuide/);
-assert.match(appSource, /<kbd>Backspace \/ Del<\/kbd><span>Delete<\/span>/);
+assert.match(appSource, /<kbd aria-label="Backspace or Delete">&larr; \/ Del<\/kbd><span>Delete<\/span>/);
 assert.match(appSource, /<kbd>R<\/kbd><span>Rotate 90°<\/span>/);
 assert.match(appSource, /<kbd>Esc<\/kbd><span>Cancel<\/span>/);
 assert.match(indexSource, /data\/workflow-state\.js/);
@@ -65,6 +66,8 @@ assert.match(stylesSource, /\.mass-selection-facing/);
 assert.match(stylesSource, /\.has-mass-selection/);
 assert.match(stylesSource, /\.game-grid\.has-mass-selection \.portable-beam:not\(\.is-box-selected\)/);
 assert.match(appSource, /portable-beam\$\{massSelectedIds\.has\(item\.id\) \? ' is-box-selected' : ''\}/);
+assert.match(appSource, /Portable Spinner[\s\S]+?one-tile surrounding upgrade zone/);
+assert.match(appSource, /function previewPortableBeams/);
 assert.doesNotMatch(stylesSource, /mass-selection-dialog \[data-mass-action="rotate"\]/);
 assert.match(stylesSource, /\.mass-selection-dialog \{[^}]*position: fixed;/s);
 assert.match(stylesSource, /\.mass-selection-dialog::backdrop \{[^}]*background: transparent;/s);
@@ -72,7 +75,7 @@ assert.match(appSource, /massSelectionDialog\.show\(\)/);
 assert.doesNotMatch(appSource, /massSelectionDialog\.showModal\(\)/);
 assert.match(appSource, /massSelectionDialog\.style\.top = '16px'/);
 assert.match(appSource, /<h2>Group selection<\/h2>/);
-assert.match(appSource, /<kbd>Backspace \/ Del<\/kbd><span>Delete selection<\/span>/);
+assert.match(appSource, /<kbd aria-label="Backspace or Delete">&larr; \/ Del<\/kbd><span>Delete selection<\/span>/);
 assert.match(appSource, /massSelectionDialog\.open && massSelectedIds\.size[\s\S]+event\.key === 'Backspace' \|\| event\.key === 'Delete'[\s\S]+deleteMassSelection\(\)/);
 assert.match(appSource, /massSelectionDialog\.open && massSelectedIds\.size[\s\S]+key === 'r'[\s\S]+rotateMassSelection\(\)[\s\S]+key === 'm'[\s\S]+startMassMove\(\)[\s\S]+event\.key === 'Escape'[\s\S]+clearMassSelection\(\)/);
 assert.match(indexSource, /data-planner-mode="build"/);
@@ -217,7 +220,7 @@ vm.createContext(appSandbox);
 vm.runInContext(`${appSource.slice(0, appEnd)}
 this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, conveyorCatalog,
   parseCoordinate, rotateDirection, updateConveyorGeometry, databaseRenderType, uniqueDatabaseRecords, mapPlacementCoordinates, placementFromRecord,
-  furnaceProcessingZoneGeometry, itemTransportGeometry, updateItemGeometry, completedStageForPlan, categorizedManualSimulationHtml,
+  furnaceProcessingZoneGeometry, itemTransportGeometry, updateItemGeometry, portableBeamGeometry, completedStageForPlan, categorizedManualSimulationHtml,
   shouldShowLiveOreTracker,
   libraryTier, compareLibraryRecords, filteredAndSortedLibraryRecords, axisLockedLineCoordinates,
   selectionRectangle, placementIntersectsRectangle, placementContainsCoordinate, massSelectionBounds,
@@ -237,6 +240,21 @@ assert.equal(app.plannerMode, 'build');
 assert.equal(app.shouldShowLiveOreTracker('build', null), true);
 assert.equal(app.shouldShowLiveOreTracker('build', { kind: 'manual-simulation' }), false);
 assert.equal(app.shouldShowLiveOreTracker('generation', null), false);
+const spinnerZones = app.portableBeamGeometry({ name: 'Portable Spinner', type: 'portable', x: 5, y: 5, width: 2, height: 2, direction: 'east', beamLength: 1 });
+assert.deepEqual(JSON.parse(JSON.stringify(spinnerZones)), [
+  { x: 4, y: 4, width: 4, height: 1 },
+  { x: 4, y: 7, width: 4, height: 1 },
+  { x: 4, y: 5, width: 1, height: 2 },
+  { x: 7, y: 5, width: 1, height: 2 },
+]);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(app.portableBeamGeometry({ name: "Dragon's Breath", type: 'portable', x: 5, y: 5, width: 3, height: 3, direction: 'east', beamLength: 2 }))),
+  [{ x: 8, y: 6, width: 2, height: 1 }],
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(app.portableBeamGeometry({ name: 'Derp Blaster', type: 'portable', x: 5, y: 5, width: 2, height: 2, direction: 'north', beamLength: 2 }))),
+  [{ x: 5.5, y: 3, width: 1, height: 2 }],
+);
 const uiGumball = app.placeItem(1, 'Gumball Enhancer', 10, 10, 5, 3, 'north', 'upgrader');
 assert.equal(uiGumball.conveyorWidth, 2);
 assert.equal(uiGumball.conveyorOffset, 1);
@@ -482,6 +500,20 @@ vm.createContext(coreSandbox);
 vm.runInContext(coreSource, coreSandbox);
 const planner = coreSandbox.TycoonPlanner;
 assert.ok(planner);
+const spinnerCells = planner.portableUpgradeCells({ name: 'Portable Spinner', x: 5, y: 5, width: 2, height: 2, direction: 'north' });
+assert.equal(spinnerCells.length, 12);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(spinnerCells.map((cell) => `${cell.x},${cell.y}`).sort())),
+  ['4,4', '4,5', '4,6', '4,7', '5,4', '5,7', '6,4', '6,7', '7,4', '7,5', '7,6', '7,7'],
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(planner.portableUpgradeCells({ name: "Dragon's Breath", x: 5, y: 5, width: 3, height: 3, direction: 'east', beamLength: 2 }))),
+  [{ x: 8, y: 6 }, { x: 9, y: 6 }],
+);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(planner.portableUpgradeCells({ name: 'Derp Blaster', x: 5, y: 5, width: 2, height: 2, direction: 'north', beamLength: 2 }))),
+  [{ x: 5, y: 4 }, { x: 5, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 3 }],
+);
 
 const manualSimulation = planner.simulateManualBase({
   plotSize: 14,

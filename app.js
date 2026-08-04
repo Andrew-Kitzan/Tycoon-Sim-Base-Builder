@@ -958,17 +958,30 @@ function updateConveyorGeometry(conveyor, {
 }
 
 function portableBeamGeometry(item) {
-  if (item.type !== 'portable' || !item.beamLength) return null;
+  if (item.type !== 'portable' || !item.beamLength) return [];
+  if (/Portable Spinner/i.test(item.name)) {
+    const radius = 1;
+    return [
+      { x: item.x - radius, y: item.y - radius, width: item.width + radius * 2, height: radius },
+      { x: item.x - radius, y: item.y + item.height, width: item.width + radius * 2, height: radius },
+      { x: item.x - radius, y: item.y, width: radius, height: item.height },
+      { x: item.x + item.width, y: item.y, width: radius, height: item.height },
+    ];
+  }
+  const horizontal = item.direction === 'east' || item.direction === 'west';
+  const across = horizontal ? item.height : item.width;
+  const beamWidth = /Ore Replicator/i.test(item.name) ? across : 1;
+  const centerOffset = Math.max(0, (across - beamWidth) / 2);
   if (item.direction === 'north') {
-    return { x: item.x, y: item.y - item.beamLength, width: item.width, height: item.beamLength };
+    return [{ x: item.x + centerOffset, y: item.y - item.beamLength, width: beamWidth, height: item.beamLength }];
   }
   if (item.direction === 'south') {
-    return { x: item.x, y: item.y + item.height, width: item.width, height: item.beamLength };
+    return [{ x: item.x + centerOffset, y: item.y + item.height, width: beamWidth, height: item.beamLength }];
   }
   if (item.direction === 'west') {
-    return { x: item.x - item.beamLength, y: item.y, width: item.beamLength, height: item.height };
+    return [{ x: item.x - item.beamLength, y: item.y + centerOffset, width: item.beamLength, height: beamWidth }];
   }
-  return { x: item.x + item.width, y: item.y, width: item.beamLength, height: item.height };
+  return [{ x: item.x + item.width, y: item.y + centerOffset, width: item.beamLength, height: beamWidth }];
 }
 
 function itemTransportGeometry(item) {
@@ -2621,7 +2634,7 @@ function renderKeybindGuide() {
       <h2>Group selection</h2>
       <div class="keybind-row"><kbd>R</kbd><span>Rotate all 90Â°</span></div>
       <div class="keybind-row"><kbd>M</kbd><span>Move selection</span></div>
-      <div class="keybind-row"><kbd>Backspace / Del</kbd><span>Delete selection</span></div>
+      <div class="keybind-row"><kbd aria-label="Backspace or Delete">&larr; / Del</kbd><span>Delete selection</span></div>
       <div class="keybind-row"><kbd>Esc</kbd><span>Cancel selection</span></div>`;
     return;
   }
@@ -2640,7 +2653,7 @@ function renderKeybindGuide() {
     <div class="keybind-row"><kbd>Drag</kbd><span>Box select</span></div>
     <div class="keybind-row"><kbd>M</kbd><span>Move</span></div>
     <div class="keybind-row"><kbd>C</kbd><span>Copy</span></div>
-    <div class="keybind-row"><kbd>Backspace / Del</kbd><span>Delete</span></div>`;
+    <div class="keybind-row"><kbd aria-label="Backspace or Delete">&larr; / Del</kbd><span>Delete</span></div>`;
 }
 
 function startPlacingRecord(record, direction = 'east') {
@@ -3335,18 +3348,20 @@ function previewItemClass(item) {
   return 'upgrader';
 }
 
-function previewPortableBeam(rectangle, facing, size) {
-  let beam;
-  if (facing === 'east') beam = { x: rectangle.x + rectangle.width, y: rectangle.y, width: 2, height: rectangle.height };
-  if (facing === 'west') beam = { x: rectangle.x - 2, y: rectangle.y, width: 2, height: rectangle.height };
-  if (facing === 'south') beam = { x: rectangle.x, y: rectangle.y + rectangle.height, width: rectangle.width, height: 2 };
-  if (facing === 'north') beam = { x: rectangle.x, y: rectangle.y - 2, width: rectangle.width, height: 2 };
-  if (!beam) return null;
-  const x = Math.max(1, beam.x);
-  const y = Math.max(1, beam.y);
-  const right = Math.min(size, beam.x + beam.width - 1);
-  const bottom = Math.min(size, beam.y + beam.height - 1);
-  return right >= x && bottom >= y ? { x, y, width: right - x + 1, height: bottom - y + 1 } : null;
+function previewPortableBeams(rectangle, facing, size, name) {
+  return portableBeamGeometry({
+    ...rectangle,
+    name,
+    type: 'portable',
+    direction: facing,
+    beamLength: /Portable Spinner/i.test(name) ? 1 : 2,
+  }).map((beam) => {
+    const x = Math.max(1, beam.x);
+    const y = Math.max(1, beam.y);
+    const right = Math.min(size, beam.x + beam.width - 1);
+    const bottom = Math.min(size, beam.y + beam.height - 1);
+    return right >= x && bottom >= y ? { x, y, width: right - x + 1, height: bottom - y + 1 } : null;
+  }).filter(Boolean);
 }
 
 function renderPlanningPreview(size) {
@@ -3408,11 +3423,13 @@ function renderPlanningPreview(size) {
     positionPreviewElement(element, rectangle);
     grid.append(element);
     if (previewItemClass(item) === 'portable') {
-      const beamRectangle = previewPortableBeam(rectangle, item.facing, size);
-      if (beamRectangle) {
+      const beamRectangles = previewPortableBeams(rectangle, item.facing, size, item.name);
+      for (const beamRectangle of beamRectangles) {
         const beam = document.createElement('div');
         beam.className = `planning-preview-beam${validated ? ' is-validated' : ''}`;
-        beam.title = `${item.name} upgrade beam · facing ${item.facing}`;
+        beam.title = /Portable Spinner/i.test(item.name)
+          ? `${item.name} one-tile surrounding upgrade zone`
+          : `${item.name} centered 2×1 upgrade beam · facing ${item.facing}`;
         positionPreviewElement(beam, beamRectangle);
         grid.append(beam);
       }
@@ -3555,11 +3572,13 @@ function renderPlan(size) {
       openItemEditor(item);
     });
 
-    const beam = portableBeamGeometry(item);
-    if (beam) {
+    const beams = portableBeamGeometry(item);
+    for (const beam of beams) {
       const beamElement = document.createElement('div');
       beamElement.className = `portable-beam${massSelectedIds.has(item.id) ? ' is-box-selected' : ''}`;
-      beamElement.title = `${item.name} two-tile upgrade beam`;
+      beamElement.title = /Portable Spinner/i.test(item.name)
+        ? `${item.name} one-tile surrounding upgrade zone`
+        : `${item.name} centered 2×1 upgrade beam`;
       beamElement.style.left = `calc(${beam.x - 1} * var(--tile))`;
       beamElement.style.top = `calc(${beam.y - 1} * var(--tile))`;
       beamElement.style.width = `calc(${beam.width} * var(--tile))`;
