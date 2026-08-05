@@ -1,0 +1,19 @@
+{
+  "id": "exact-furnace-outcomes",
+  "kind": "exact-furnace-value-distribution",
+  "observed": "The furnace hover displayed one probability-weighted ore value and payout that no individual ore actually had.",
+  "expected": "The furnace keeps every exact incoming value branch, applies its multiplier to each branch, and identifies the first branch as most common when probabilities tie.",
+  "input": {
+    "startingValue": 100,
+    "tikiMultiplier": 3,
+    "tikiAdditive": 30000,
+    "furnaceMultiplier": 2
+  },
+  "assert": {
+    "beforeValues": [300, 30100],
+    "cashValues": [600, 60200],
+    "probabilities": [0.5, 0.5],
+    "mostCommonBefore": 300,
+    "averagedBeforeIsNotOutcome": 15200
+  }
+}

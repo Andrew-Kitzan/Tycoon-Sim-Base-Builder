@@ -6,7 +6,7 @@ import { itemKey, normalize, parseRange } from './utils.mjs';
 import { validatePlan } from './validate.mjs';
 import { isFastTurnBlocked } from './routing.mjs';
 import { exceedsItemUseLimit, firstOreSizeViolation, itemUseLimit, maximumAcceptedOreSize } from './item-constraints.mjs';
-import { crimsonPhantomZoneEstimate, isCrimsonPillars, isCrimsonWallLandingCell } from './crimson.mjs';
+import { crimsonMarkDestructionChance, crimsonMarkSurvivalAtElapsed, crimsonPhantomZoneEstimate, isCrimsonPillars, isCrimsonWallLandingCell } from './crimson.mjs';
 import { connectTeleporterPairs, teleporterJumps } from './teleporters.mjs';
 import { furnaceMultiplierForOre } from './furnaces.mjs';
 import { expectedRouteOccupancySeconds } from './destruction.mjs';
@@ -374,8 +374,35 @@ function movePortableForward(item) {
 }
 
 function routeValue(path, portables, dropper, profile, rules) {
-  let state = { value: dropper.definition.mainStat, survival: 1, replication: 1, oreSize: dropper.definition.oreSize ?? 1, effects: appliedEffectsForItem(dropper.definition, rules), timeSeconds: 0, area: 0 };
+  let state = { value: dropper.definition.mainStat, valueDistribution: [{ value: dropper.definition.mainStat, probability: 1 }], survival: 1, replication: 1, oreSize: dropper.definition.oreSize ?? 1, effects: appliedEffectsForItem(dropper.definition, rules), timeSeconds: 0, area: 0 };
   const stages = [];
+  const occupancySegments = [];
+  let crimsonMark = null;
+  const advanceTime = (seconds) => {
+    const targetTime = state.timeSeconds + Math.max(0, Number(seconds ?? 0));
+    const boundaries = [targetTime];
+    if (crimsonMark) {
+      for (const boundary of [
+        crimsonMark.startTime + crimsonMark.minimumDelaySeconds,
+        crimsonMark.startTime + crimsonMark.windowSeconds,
+      ]) if (boundary > state.timeSeconds && boundary < targetTime) boundaries.push(boundary);
+    }
+    boundaries.sort((left, right) => left - right);
+    for (const endTime of boundaries) {
+      const startTime = state.timeSeconds;
+      const startFactor = crimsonMark ? crimsonMarkSurvivalAtElapsed(startTime - crimsonMark.startTime, crimsonMark) : 1;
+      const endFactor = crimsonMark ? crimsonMarkSurvivalAtElapsed(endTime - crimsonMark.startTime, crimsonMark) : 1;
+      const survivalWithoutCrimson = startFactor > 1e-12 ? state.survival / startFactor : 0;
+      const endSurvival = survivalWithoutCrimson * endFactor;
+      occupancySegments.push({
+        startTime,
+        endTime,
+        startMass: state.survival * state.replication,
+        endMass: endSurvival * state.replication,
+      });
+      state = { ...state, survival: endSurvival, timeSeconds: endTime };
+    }
+  };
   const useCounts = new Map();
   const nextUseNumber = (item) => {
     const useKey = normalize(item.name);
@@ -393,7 +420,8 @@ function routeValue(path, portables, dropper, profile, rules) {
     .sort((left, right) => left.index - right.index || left.portable.order - right.portable.order);
   for (let index = 0; index < path.length; index += 1) {
     const component = path[index];
-    if (component.kind === 'item') {
+    if (component.kind !== 'item') advanceTime(component.seconds);
+    if (component.kind === 'item' && state.survival > 1e-12) {
       const before = state.value;
       const beforeOreSize = state.oreSize;
       const beforeSurvival = state.survival;
@@ -402,9 +430,18 @@ function routeValue(path, portables, dropper, profile, rules) {
       const range = parseRange(component.item.definition.range);
       const useNumber = nextUseNumber(component.item.definition);
       state = applyDeterministicItem(component.item.definition, state, useNumber, profile, rules);
+      if (isCrimsonPillars(component.item.definition)) {
+        const minimumDelaySeconds = Number(rules.crimsonPillars?.minimumTriggerSeconds ?? 1);
+        const windowSeconds = Number(rules.crimsonPillars?.markWindowSeconds ?? 15);
+        const destructionChance = crimsonMarkDestructionChance(path, index, {
+          minimumDelaySeconds,
+          windowSeconds,
+        });
+        crimsonMark ??= { startTime: state.timeSeconds, minimumDelaySeconds, windowSeconds, item: component.item };
+      }
       stages.push({ item: component.item, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, survivalBefore: beforeSurvival, survivalAfter: state.survival, replicationBefore: beforeReplication, replicationAfter: state.replication, effectsBefore, effectsAfter: [...(state.effects ?? [])], arrivalSeconds: state.timeSeconds, range, useNumber, useLimit: itemUseLimit(component.item.definition) });
-    } else state.timeSeconds += component.seconds;
-    for (const { portable } of portableHits.filter((entry) => entry.index === index)) {
+    }
+    for (const { portable } of portableHits.filter((entry) => entry.index === index && state.survival > 1e-12)) {
       const before = state.value;
       const beforeOreSize = state.oreSize;
       const beforeSurvival = state.survival;
@@ -415,7 +452,7 @@ function routeValue(path, portables, dropper, profile, rules) {
       stages.push({ item: portable, componentIndex: index, before, after: state.value, beforeOreSize, afterOreSize: state.oreSize, survivalBefore: beforeSurvival, survivalAfter: state.survival, replicationBefore: beforeReplication, replicationAfter: state.replication, effectsBefore, effectsAfter: [...(state.effects ?? [])], arrivalSeconds: state.timeSeconds, range: null, useNumber, useLimit: itemUseLimit(portable.definition) });
     }
   }
-  return { ...state, stages, portableUses: portableHits.length };
+  return { ...state, stages, portableUses: portableHits.length, occupancySegments, crimsonMark };
 }
 
 export function validateCoordinateMap({ map, database, rules, profile }) {
@@ -486,6 +523,14 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       if (requirements.outputLane) lane = requirements.outputLane;
     }
     const simulated = routeValue(path, portables, dropper, profile, rules);
+    if (simulated.survival <= 1e-12) {
+      const destructionStage = simulated.stages.find((stage) => stage.survivalBefore > 1e-12 && stage.survivalAfter <= 1e-12);
+      const destructionItem = destructionStage?.item ?? simulated.crimsonMark?.item;
+      diagnostics.push({
+        code: 'ORE_DESTROYED',
+        message: `${dropper.name} ${dropper.order} has a physical route to the furnace, but all of its ore is destroyed${destructionItem ? ` by ${destructionItem.name} ${destructionItem.order}` : ' before arriving'}.`,
+      });
+    }
     const fireApplicationTimes = [
       ...(appliedEffectsForItem(dropper.definition, rules).includes('Fire') ? [0] : []),
       ...simulated.stages
@@ -523,7 +568,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
         path,
         stage.componentIndex,
         {
-          dropRate: dropRate * Number(stage.survivalAfter ?? 1),
+          dropRate: dropRate * Number(stage.survivalBefore ?? 1),
           minimumDelaySeconds: Number(rules.crimsonPillars?.minimumTriggerSeconds ?? 1),
           windowSeconds: Number(rules.crimsonPillars?.markWindowSeconds ?? 15),
           zoneLifetimeSeconds: Number(rules.crimsonPillars?.phantomZoneLifetimeSeconds ?? 30),
@@ -555,11 +600,13 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
       occupancySeconds: expectedRouteOccupancySeconds({
         routeTimeSeconds: simulated.timeSeconds,
         stages: simulated.stages,
+        occupancySegments: simulated.occupancySegments,
         finalSurvival: simulated.survival,
         finalReplication: simulated.replication,
       }),
       furnaceMultiplier: furnaceRate.multiplier,
       furnaceCondition: furnaceRate.condition,
+      reachedFurnace: simulated.survival > 1e-12,
       finalCapgrader: finalCapStage ? {
         name: finalCapStage.item.name,
         input: finalCapStage.before,
@@ -632,7 +679,7 @@ export function validateCoordinateMap({ map, database, rules, profile }) {
   }, 0);
   const reservedTiles = items.reduce((total, item) => total + item.width * item.height, 0)
     + conveyors.reduce((total, conveyor) => total + conveyor.width * conveyor.height, 0);
-  const blockingCodes = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'TELEPORTER_PAIR', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'PORTABLE_SPACING', 'USE_LIMIT', 'ORE_SIZE', 'WRONG_LANE', 'TURN_SPEED', 'CAP_RANGE']);
+  const blockingCodes = new Set(['SCHEMA', 'OUT_OF_BOUNDS', 'COLLISION', 'ROUTE_GAP', 'FURNACE_MISSED', 'TELEPORTER_PAIR', 'PORTABLE_UNREACHABLE', 'PORTABLE_BEFORE_CAP', 'PORTABLE_SPACING', 'USE_LIMIT', 'ORE_SIZE', 'WRONG_LANE', 'TURN_SPEED', 'CAP_RANGE', 'ORE_DESTROYED']);
   return {
     valid: routes.length === droppers.length && !uniqueDiagnostics.some((entry) => blockingCodes.has(entry.code)),
     diagnostics: uniqueDiagnostics,

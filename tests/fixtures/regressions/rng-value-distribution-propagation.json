@@ -1,0 +1,25 @@
+{
+  "id": "rng-value-distribution-propagation",
+  "kind": "correlated-value-distribution",
+  "observed": "Upgraders after Tiki and repeated Lambdas consumed one averaged ore value that no ore actually had.",
+  "expected": "Tiki cycle branches remain separate through later upgraders, and Lambda expands each incoming branch into its real surviving outcomes.",
+  "input": {
+    "startingValue": 181570000000,
+    "tiki": "Tiki Evaluator",
+    "tikiVariant": "Shiny Mythic",
+    "downstream": "Minefield Refiner",
+    "downstreamVariant": "Shiny",
+    "lambda": "Lambda Upgrader",
+    "lambdaVariant": "Shiny"
+  },
+  "assert": {
+    "tikiBranches": 2,
+    "downstreamBranches": 2,
+    "downstreamGreen": 8088943500000,
+    "downstreamYellow": 399454198000,
+    "lambdaBranches": 10,
+    "lambdaSetToOneBranches": 2,
+    "probabilityTotal": 1,
+    "lambdaOutcomeLabels": ["2.42x", "3.52x", "6.6x + Sparkles"]
+  }
+}

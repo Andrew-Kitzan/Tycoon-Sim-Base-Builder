@@ -26,10 +26,92 @@
   const CRIMSON_PHANTOM_WINDOW_SECONDS = 15;
   const KRAKATOA_FIRE_WINDOW_SECONDS = 3;
 
+  function distributionLabelNumber(value, places = 4) {
+    const factor = 10 ** places;
+    return String(Math.trunc((Number(value) + Number.EPSILON) * factor) / factor);
+  }
+
+  function withDistributionOutcome(entry, outcome) {
+    return { ...entry, outcome, history: [...(entry.history ?? []), outcome] };
+  }
+
   function itemDestructionChance(item) {
     const text = `${item?.effects ?? ''}\n${item?.description ?? ''}`;
     const match = text.match(/destroys?\s+([\d.]+)%\s+of (?:the )?ore/i);
     return match ? Math.min(1, Math.max(0, Number(match[1]) / 100)) : 0;
+  }
+
+  function normalizeValueDistribution(entries, maximumBranches = 1024) {
+    const combined = new Map();
+    entries.filter((entry) => entry.probability > 0 && Number.isFinite(entry.value)).forEach((entry) => {
+      const key = `${entry.tikiPhase ?? ''}|${(entry.history ?? []).join('>')}|${entry.outcome ?? ''}|${Number(entry.value).toPrecision(12)}`;
+      const prior = combined.get(key);
+      if (prior) prior.probability += entry.probability;
+      else combined.set(key, { ...entry });
+    });
+    let output = [...combined.values()];
+    const total = output.reduce((sum, entry) => sum + entry.probability, 0) || 1;
+    output = output.map((entry) => ({ ...entry, probability: entry.probability / total }));
+    if (output.length <= maximumBranches) return output;
+    const sorted = output.sort((left, right) => left.value - right.value);
+    const groupSize = Math.ceil(sorted.length / maximumBranches);
+    const grouped = [];
+    for (let index = 0; index < sorted.length; index += groupSize) {
+      const group = sorted.slice(index, index + groupSize);
+      const probability = group.reduce((sum, entry) => sum + entry.probability, 0);
+      grouped.push({ value: group.reduce((sum, entry) => sum + entry.value * entry.probability, 0) / probability, probability, outcome: 'Grouped low-probability outcomes' });
+    }
+    return grouped;
+  }
+
+  function expectedDistributionValue(distribution) {
+    return distribution.reduce((sum, entry) => sum + entry.value * entry.probability, 0);
+  }
+
+  function applyItemValueDistribution(definition, state, useNumber, scannerHitChance, activated) {
+    const input = state.valueDistribution?.length ? state.valueDistribution : [{ value: state.value, probability: 1 }];
+    if (!activated) return input;
+    const additiveByVariant = { Base: 30000, Shiny: 33000, Mythic: 37500, 'Shiny Mythic': 45000 };
+    const type = String(definition.mainStatType ?? '').toLowerCase();
+    let output;
+    if (definition.name === 'Tiki Evaluator') {
+      const sharesPhase = useNumber > 1 && input.some((entry) => entry.tikiPhase);
+      output = input.flatMap((entry) => {
+        if (sharesPhase && entry.tikiPhase === 'green') return [{ ...withDistributionOutcome(entry, `Green phase: ${definition.mainStat}x`), value: entry.value * Number(definition.mainStat ?? 1) }];
+        if (sharesPhase && entry.tikiPhase === 'yellow') return [{ ...withDistributionOutcome(entry, `Yellow phase: +${additiveByVariant[definition.variant] ?? 30000}`), value: entry.value + (additiveByVariant[definition.variant] ?? 30000) }];
+        return [
+          { ...withDistributionOutcome(entry, `Green phase: ${definition.mainStat}x`), value: entry.value * Number(definition.mainStat ?? 1), probability: entry.probability / 2, tikiPhase: 'green' },
+          { ...withDistributionOutcome(entry, `Yellow phase: +${additiveByVariant[definition.variant] ?? 30000}`), value: entry.value + (additiveByVariant[definition.variant] ?? 30000), probability: entry.probability / 2, tikiPhase: 'yellow' },
+        ];
+      });
+    } else if (definition.name === 'Lambda Upgrader') {
+      const shinyScale = /shiny/i.test(definition.variant ?? '') ? 1.1 : 1;
+      output = input.flatMap((entry) => [
+        { ...withDistributionOutcome(entry, `${distributionLabelNumber(3.2 * shinyScale)}x`), value: entry.value * 3.2 * shinyScale, probability: entry.probability / 17 },
+        { ...withDistributionOutcome(entry, `+${1000 * shinyScale}`), value: entry.value + 1000 * shinyScale, probability: entry.probability / 17 },
+        { ...withDistributionOutcome(entry, 'Set to 1'), value: 1, probability: entry.probability / 17 },
+        { ...withDistributionOutcome(entry, `${distributionLabelNumber(6 * shinyScale)}x + Sparkles`), value: entry.value * 6 * shinyScale, probability: entry.probability / 17 },
+        { ...withDistributionOutcome(entry, `${distributionLabelNumber(2.2 * shinyScale)}x`), value: entry.value * 2.2 * shinyScale, probability: entry.probability * 13 / 17 },
+      ]);
+    } else if (scannerHitChance != null && Number.isFinite(definition.mainStat)) {
+      output = input.flatMap((entry) => [
+        { ...withDistributionOutcome(entry, `Scanner hit: ${definition.mainStat}x`), value: entry.value * definition.mainStat, probability: entry.probability * scannerHitChance },
+        { ...withDistributionOutcome(entry, 'Scanner miss'), probability: entry.probability * (1 - scannerHitChance) },
+      ]);
+    } else {
+      output = input.map((entry) => {
+        let branchValue = entry.value;
+        if (definition.name === 'Incremental Upgrader') {
+          const multipliers = /shiny/i.test(definition.variant ?? '') ? [1.21, 1.375, 1.925] : [1.1, 1.25, 1.75];
+          branchValue *= multipliers[Math.max(0, useNumber - 1)] ?? 1;
+        } else if (definition.name === 'Crimson Pillars') branchValue = entry.value;
+        else if (definition.name === 'Runic Array') branchValue *= Number(definition.mainStat ?? 1) * 3 ** (state.timeSeconds / 120);
+        else if (type.includes('additive')) branchValue += Number(definition.mainStat ?? 0);
+        else if (Number.isFinite(definition.mainStat)) branchValue *= definition.mainStat;
+        return { ...entry, value: branchValue };
+      });
+    }
+    return normalizeValueDistribution(output);
   }
 
   function expectedRouteOccupancySeconds(route) {
@@ -37,6 +119,21 @@
       .filter((effect) => (effect.destroyedOriginalFraction ?? 0) > 0)
       .sort((left, right) => left.deadlineSeconds - right.deadlineSeconds)[0] ?? null;
     const cutoff = fatalEffect ? Math.min(route.seconds, fatalEffect.deadlineSeconds) : route.seconds;
+    if ((route.occupancySegments ?? []).length) {
+      return route.occupancySegments.reduce((oreSeconds, segment) => {
+        const startTime = Math.max(0, Number(segment.startTime ?? 0));
+        const endTime = Math.min(cutoff, Number(segment.endTime ?? startTime));
+        if (endTime <= startTime) return oreSeconds;
+        const fullDuration = Math.max(0, Number(segment.endTime ?? startTime) - startTime);
+        const usedDuration = endTime - startTime;
+        const startMass = Number(segment.startMass ?? 0);
+        const fullEndMass = Number(segment.endMass ?? startMass);
+        const endMass = fullDuration > 0
+          ? startMass + (fullEndMass - startMass) * usedDuration / fullDuration
+          : startMass;
+        return oreSeconds + usedDuration * (startMass + endMass) / 2;
+      }, 0);
+    }
     const events = (route.stages ?? [])
       .filter((stage) => stage.arrivalSeconds <= cutoff)
       .map((stage) => ({
@@ -879,6 +976,7 @@
       let oreSize = state.oreSize;
       let outcomeModel = null;
       let appliedMultiplier = null;
+      let tikiPhaseValues = definition.name === 'Tiki Evaluator' ? (state.tikiPhaseValues ?? null) : null;
       const effectsBefore = [...(state.effects ?? [])];
       const requiresNoEffects = definition.name === 'Acid Plant';
       const activated = !requiresNoEffects || effectsBefore.every((effect) => effect === 'Neon');
@@ -927,18 +1025,25 @@
         };
       } else if (definition.name === 'Tiki Evaluator') {
         const additiveByVariant = { Base: 30000, Shiny: 33000, Mythic: 37500, 'Shiny Mythic': 45000 };
-        const multipliedValue = before * Number(definition.mainStat ?? 1);
-        const additiveValue = before + (additiveByVariant[definition.variant] ?? 30000);
+        const sharesPriorTikiPhase = useNumber > 1 && tikiPhaseValues != null;
+        const multipliedValue = (sharesPriorTikiPhase ? tikiPhaseValues.green : before) * Number(definition.mainStat ?? 1);
+        const additiveValue = (sharesPriorTikiPhase ? tikiPhaseValues.yellow : before) + (additiveByVariant[definition.variant] ?? 30000);
+        tikiPhaseValues = { green: multipliedValue, yellow: additiveValue };
         value = (multipliedValue + additiveValue) / 2;
-        survival *= 2 / 3;
+        if (!sharesPriorTikiPhase) survival *= 2 / 3;
         outcomeModel = {
-          kind: 'tiki-phase',
+          kind: sharesPriorTikiPhase ? 'tiki-shared-phase' : 'tiki-phase',
           expectedSurvivorValue: value,
-          outcomes: [
-            { label: 'Red phase: destroyed', probability: 1 / 3, destroyed: true },
-            { label: `Green phase: ${definition.mainStat}x`, probability: 1 / 3, value: multipliedValue },
-            { label: `Yellow phase: +${additiveByVariant[definition.variant] ?? 30000}`, probability: 1 / 3, value: additiveValue },
-          ],
+          outcomes: sharesPriorTikiPhase
+            ? [
+              { label: `Shared green phase: ${definition.mainStat}x`, probability: 1 / 2, value: multipliedValue },
+              { label: `Shared yellow phase: +${additiveByVariant[definition.variant] ?? 30000}`, probability: 1 / 2, value: additiveValue },
+            ]
+            : [
+              { label: 'Red phase: destroyed', probability: 1 / 3, destroyed: true },
+              { label: `Green phase: ${definition.mainStat}x`, probability: 1 / 3, value: multipliedValue },
+              { label: `Yellow phase: +${additiveByVariant[definition.variant] ?? 30000}`, probability: 1 / 3, value: additiveValue },
+            ],
         };
       } else if (definition.name === 'Runic Array') {
         value = before * Number(definition.mainStat ?? 1) * 3 ** (state.timeSeconds / 120);
@@ -968,6 +1073,20 @@
             { label: 'Survives this item', probability: 1 - intrinsicDestructionChance, value },
           ],
         };
+      }
+      const valueDistribution = applyItemValueDistribution(definition, state, useNumber, scannerHitChance, activated);
+      value = expectedDistributionValue(valueDistribution);
+      if (definition.name === 'Tiki Evaluator' && outcomeModel) {
+        for (const phase of ['green', 'yellow']) {
+          const branches = valueDistribution.filter((entry) => entry.tikiPhase === phase);
+          const probability = branches.reduce((sum, entry) => sum + entry.probability, 0);
+          const phaseValue = probability > 0
+            ? branches.reduce((sum, entry) => sum + entry.value * entry.probability, 0) / probability
+            : null;
+          const outcome = outcomeModel.outcomes.find((entry) => new RegExp(`${phase} phase`, 'i').test(entry.label));
+          if (outcome && phaseValue != null) outcome.value = phaseValue;
+        }
+        outcomeModel.expectedSurvivorValue = value;
       }
       if (definition.name === 'Ore Expander') oreSize *= 1.55;
       if (definition.name === 'Ore Shrinker') oreSize *= .85;
@@ -1000,6 +1119,8 @@
         itemSurvival,
         destructionChance: 1 - itemSurvival,
         outcomeModel,
+        valueDistribution,
+        tikiPhaseValues,
         appliedMultiplier,
         effects: [...effects],
         effectsBefore,
@@ -1071,6 +1192,7 @@
       const definition = dropper.definition;
       let state = {
         value: Number(definition?.mainStat ?? 0),
+        valueDistribution: [{ value: Number(definition?.mainStat ?? 0), probability: 1 }],
         survival: 1,
         replication: 1,
         oreSize: Number(definition?.oreSize ?? 1),
@@ -1083,6 +1205,43 @@
       const portableHits = portables.flatMap((portable) => (
         portableZoneEntryIndices(path, portableUpgradeCells(portable)).map((index) => ({ portable, index }))
       ));
+      let crimsonMark = null;
+      const occupancySegments = [];
+      const crimsonSurvivalFactor = (time) => {
+        if (!crimsonMark) return 1;
+        const minimumTime = crimsonMark.startTime + crimsonMark.minimumDelaySeconds;
+        const endTime = crimsonMark.startTime + crimsonMark.windowSeconds;
+        if (time <= minimumTime) return 1;
+        if (time >= endTime) return 0;
+        return 1 - (time - minimumTime) / (endTime - minimumTime);
+      };
+      const advanceRouteTime = (seconds) => {
+        const targetTime = state.timeSeconds + Math.max(0, Number(seconds ?? 0));
+        const boundaries = [targetTime];
+        if (crimsonMark) {
+          for (const boundary of [
+            crimsonMark.startTime + crimsonMark.minimumDelaySeconds,
+            crimsonMark.startTime + crimsonMark.windowSeconds,
+          ]) {
+            if (boundary > state.timeSeconds && boundary < targetTime) boundaries.push(boundary);
+          }
+        }
+        boundaries.sort((left, right) => left - right);
+        for (const endTime of boundaries) {
+          const startTime = state.timeSeconds;
+          const startFactor = crimsonSurvivalFactor(startTime);
+          const endFactor = crimsonSurvivalFactor(endTime);
+          const survivalWithoutCrimson = startFactor > 1e-12 ? state.survival / startFactor : 0;
+          const endSurvival = survivalWithoutCrimson * endFactor;
+          occupancySegments.push({
+            startTime,
+            endTime,
+            startMass: state.survival * state.replication,
+            endMass: endSurvival * state.replication,
+          });
+          state = { ...state, survival: endSurvival, timeSeconds: endTime };
+        }
+      };
       for (let index = 1; index < path.length; index += 1) {
         if (path[index - 1].direction !== path[index].direction
           && path[index - 1].speed > 16.8
@@ -1095,8 +1254,8 @@
       }
       for (let index = 0; index < path.length; index += 1) {
         const component = path[index];
-        state.timeSeconds += component.seconds;
-        if (component.kind === 'item') {
+        advanceRouteTime(component.seconds);
+        if (component.kind === 'item' && state.survival > 1e-12) {
           const itemDefinition = component.item.definition;
           const range = parseRange(itemDefinition?.range);
           if (range && (state.value < range.minimum || state.value > range.maximum)) diagnostics.push({
@@ -1127,6 +1286,27 @@
             });
           }
           state = applyItem(itemDefinition, state, uses);
+          let crimsonDestructionChance = 0;
+          let crimsonOutcomeModel = state.outcomeModel;
+          if (itemDefinition.name === 'Crimson Pillars') {
+            crimsonDestructionChance = crimsonPhantomZoneCorridor(path, index).spawnBeforeFurnaceProbability;
+            crimsonMark ??= {
+              startTime: state.timeSeconds,
+              minimumDelaySeconds: 1,
+              windowSeconds: CRIMSON_PHANTOM_WINDOW_SECONDS,
+              itemId: component.item.id,
+              itemOrder: component.item.order,
+              item: component.item.name,
+            };
+            crimsonOutcomeModel = {
+              kind: 'crimson-mark',
+              expectedSurvivorValue: state.value,
+              outcomes: [
+                { label: 'Combusts before furnace', probability: crimsonDestructionChance, destroyed: true },
+                { label: 'Reaches furnace before combustion', probability: 1 - crimsonDestructionChance, value: state.value },
+              ].filter((outcome) => outcome.probability > 0),
+            };
+          }
           stages.push({
             itemId: component.item.id,
             itemOrder: component.item.order,
@@ -1135,15 +1315,19 @@
             portable: false,
             beforeValue: before.value,
             afterValue: state.value,
+            beforeDistribution: before.valueDistribution,
+            afterDistribution: state.valueDistribution,
             beforeOreSize: before.oreSize,
             afterOreSize: state.oreSize,
             survivalBefore: before.survival,
             survivalAfter: state.survival,
             replicationBefore: before.replication,
             replicationAfter: state.replication,
-            itemSurvival: state.itemSurvival,
+            itemSurvival: itemDefinition.name === 'Crimson Pillars' ? 1 - crimsonDestructionChance : state.itemSurvival,
             destructionChance: state.destructionChance,
-            outcomeModel: state.outcomeModel,
+            crimsonDestructionChance,
+            projectedSurvivalAfterMark: before.survival * (1 - crimsonDestructionChance),
+            outcomeModel: crimsonOutcomeModel,
             appliedMultiplier: state.appliedMultiplier,
             effectsBefore: state.effectsBefore,
             effectsAfter: state.effects,
@@ -1159,7 +1343,7 @@
             oreSizeLimit,
           });
         }
-        for (const { portable } of portableHits.filter((entry) => entry.index === index)) {
+        for (const { portable } of portableHits.filter((entry) => entry.index === index && state.survival > 1e-12)) {
           const useKey = String(portable.definition?.name ?? portable.definition?.key ?? '').toLowerCase();
           const uses = (useCounts.get(useKey) ?? 0) + 1;
           useCounts.set(useKey, uses);
@@ -1190,6 +1374,8 @@
             portable: true,
             beforeValue: before.value,
             afterValue: state.value,
+            beforeDistribution: before.valueDistribution,
+            afterDistribution: state.valueDistribution,
             beforeOreSize: before.oreSize,
             afterOreSize: state.oreSize,
             survivalBefore: before.survival,
@@ -1277,6 +1463,17 @@
           message: `${dropper.name} #${dropper.order}'s ${firstUnsafeEffect.effect} effect from ${firstUnsafeEffect.appliedBy} reaches ${firstUnsafeEffect.removedBy} in ${firstUnsafeEffect.exposureSeconds.toFixed(3)}s; its ${firstUnsafeEffect.timerSeconds.toFixed(3)}s timer destroys the ore first.`,
         });
       }
+      const oreReachesFurnace = reachedFurnace && state.survival > 1e-12;
+      if (reachedFurnace && !oreReachesFurnace) {
+        const destructionStage = stages.find((stage) => stage.survivalBefore > 1e-12 && stage.survivalAfter <= 1e-12);
+        const destructionSource = destructionStage ?? crimsonMark;
+        diagnostics.push({
+          code: 'ORE_DESTROYED',
+          dropperId: dropper.id,
+          itemId: destructionSource?.itemId ?? firstUnsafeEffect?.sourceItemId ?? dropper.id,
+          message: `${dropper.name} #${dropper.order} has a physical route to the furnace, but all of its ore is destroyed${destructionSource ? ` by ${destructionSource.item} #${destructionSource.itemOrder}` : ' before arriving'}.`,
+        });
+      }
       const fireApplicationTimes = [
         ...(effectsAppliedBy(definition?.name).includes('Fire') ? [0] : []),
         ...stages
@@ -1289,10 +1486,23 @@
         state.effects,
         state.timeSeconds - lastFireApplication,
       );
+      const finalValueDistribution = state.valueDistribution?.length
+        ? state.valueDistribution
+        : [{ value: state.value, probability: 1, outcome: 'Exact route value', history: [] }];
+      const furnaceOutcomes = oreReachesFurnace ? finalValueDistribution.map((branch) => ({
+        beforeValue: Number(branch.value),
+        cashPerOre: Number(branch.value) * furnaceRate.multiplier,
+        probability: Number(branch.probability ?? 1),
+        outcome: branch.outcome ?? 'Exact route value',
+        history: [...(branch.history ?? [])],
+        tikiPhase: branch.tikiPhase ?? null,
+        furnaceMultiplier: furnaceRate.multiplier,
+        furnaceCondition: furnaceRate.condition,
+      })) : [];
       const dropRate = Number(definition?.dropSpeed ?? 0);
       const phantomZones = stages.filter((stage) => stage.item === 'Crimson Pillars' && !stage.portable).map((stage) => {
         const sourceItem = normalizedItems.find((item) => item.id === stage.itemId);
-        const effectiveDropRate = dropRate * Number(stage.survivalAfter ?? 1);
+        const effectiveDropRate = dropRate * Number(stage.survivalBefore ?? 1);
         const estimate = crimsonPhantomZoneEstimate(path, stage.componentIndex, effectiveDropRate);
         return {
           sourceItemId: stage.itemId,
@@ -1309,13 +1519,16 @@
         dropperOrder: dropper.order,
         dropper: `${definition?.variant ?? 'Base'} ${dropper.name}`,
         startingValue: Number(definition?.mainStat ?? 0),
-        reachedFurnace,
+        reachedFurnace: oreReachesFurnace,
+        physicalRouteToFurnace: reachedFurnace,
         seconds: state.timeSeconds,
         currentValue: state.value,
-        valueBeforeFurnace: reachedFurnace ? state.value : null,
-        cashPerOre: reachedFurnace ? state.value * furnaceRate.multiplier : null,
-        furnaceMultiplier: reachedFurnace ? furnaceRate.multiplier : null,
-        furnaceCondition: reachedFurnace ? furnaceRate.condition : null,
+        valueBeforeFurnace: oreReachesFurnace ? state.value : null,
+        cashPerOre: oreReachesFurnace ? state.value * furnaceRate.multiplier : null,
+        furnaceMultiplier: oreReachesFurnace ? furnaceRate.multiplier : null,
+        furnaceCondition: oreReachesFurnace ? furnaceRate.condition : null,
+        valueDistribution: oreReachesFurnace ? finalValueDistribution : [],
+        furnaceOutcomes,
         oresPerSecond: Number(definition?.dropSpeed ?? 0),
         survival: state.survival,
         replication: state.replication,
@@ -1324,11 +1537,12 @@
         componentCount: path.length,
         effectSafety,
         phantomZones,
+        occupancySegments,
         teleporterJumps: routeTeleporterJumps(path),
         stages,
-        routeStatus: reachedFurnace
+        routeStatus: oreReachesFurnace
           ? 'furnace'
-          : (path.some((component) => (graph.get(component.id) ?? []).length > 1) ? 'ambiguous' : 'incomplete'),
+          : (reachedFurnace ? 'destroyed' : (path.some((component) => (graph.get(component.id) ?? []).length > 1) ? 'ambiguous' : 'incomplete')),
         falloffCells,
         failureKind: failure?.kind ?? null,
         failureReason: failure?.message ?? null,
@@ -1336,14 +1550,15 @@
       });
     }
     const successful = routes.filter((route) => route.reachedFurnace);
-    successful.forEach((route) => { route.occupancySeconds = expectedRouteOccupancySeconds(route); });
-    const projectedActiveOres = successful.reduce((sum, route) => sum + route.oresPerSecond * route.occupancySeconds, 0);
+    const physicalRoutes = routes.filter((route) => route.physicalRouteToFurnace || route.reachedFurnace);
+    physicalRoutes.forEach((route) => { route.occupancySeconds = expectedRouteOccupancySeconds(route); });
+    const projectedActiveOres = physicalRoutes.reduce((sum, route) => sum + route.oresPerSecond * route.occupancySeconds, 0);
     const throughputScale = projectedActiveOres > 0 ? Math.min(1, oreCap / projectedActiveOres) : 1;
-    const sourceOresPerMinute = successful.reduce((sum, route) => sum + route.oresPerSecond * throughputScale * 60, 0);
-    const destroyedOresPerMinute = successful.reduce((sum, route) => (
+    const sourceOresPerMinute = physicalRoutes.reduce((sum, route) => sum + route.oresPerSecond * throughputScale * 60, 0);
+    const destroyedOresPerMinute = physicalRoutes.reduce((sum, route) => (
       sum + route.oresPerSecond * (1 - route.survival) * throughputScale * 60
     ), 0);
-    for (const route of successful) {
+    for (const route of physicalRoutes) {
       const routeSourceOresPerMinute = route.oresPerSecond * throughputScale * 60;
       for (const zone of route.phantomZones ?? []) {
         zone.throughputScale = throughputScale;
@@ -1359,8 +1574,11 @@
       route.sourceOresPerMinute = routeSourceOresPerMinute;
       route.destroyedOresPerMinute = routeSourceOresPerMinute * (1 - route.survival);
       route.stages.forEach((stage) => {
+        const destroyedFraction = stage.crimsonDestructionChance > 0
+          ? stage.survivalBefore * stage.crimsonDestructionChance
+          : Math.max(0, stage.survivalBefore - stage.survivalAfter);
         stage.destroyedOresPerMinute = routeSourceOresPerMinute
-          * Math.max(0, stage.survivalBefore - stage.survivalAfter)
+          * destroyedFraction
           * stage.replicationBefore;
       });
       (route.effectSafety ?? []).forEach((effect) => {
@@ -1381,7 +1599,7 @@
     ), 0);
     const reservedTiles = items.reduce((sum, item) => sum + item.width * item.height, 0)
       + conveyors.reduce((sum, item) => sum + item.width * item.height, 0);
-    const blockingCodes = new Set(['DATABASE_MISSING', 'NO_DROPPERS', 'FURNACE_MISSED', 'TELEPORTER_PAIR', 'PHYSICAL', 'ROUTE_GAP', 'CAP_RANGE', 'USE_LIMIT', 'ORE_SIZE', 'TURN_SPEED', 'EFFECT_TIMER']);
+    const blockingCodes = new Set(['DATABASE_MISSING', 'NO_DROPPERS', 'FURNACE_MISSED', 'TELEPORTER_PAIR', 'PHYSICAL', 'ROUTE_GAP', 'CAP_RANGE', 'USE_LIMIT', 'ORE_SIZE', 'TURN_SPEED', 'EFFECT_TIMER', 'ORE_DESTROYED']);
     return {
       valid: successful.length === droppers.length && !diagnostics.some((entry) => blockingCodes.has(entry.code)),
       diagnostics,

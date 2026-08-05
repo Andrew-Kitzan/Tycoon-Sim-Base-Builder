@@ -59,6 +59,11 @@ const confirmLoadBaseDialog = document.querySelector('#confirm-load-base-dialog'
 const liveOreTracker = document.querySelector('#live-ore-tracker');
 const liveDropperSelect = document.querySelector('#live-dropper-select');
 const liveOreContent = document.querySelector('#live-ore-content');
+const simulationInfoToggle = document.querySelector('#simulation-info-toggle');
+const liveTrackerLabel = document.querySelector('#live-tracker-label');
+const liveTrackerTitle = document.querySelector('#live-ore-tracker-title');
+const liveTrackerBadge = document.querySelector('#live-tracker-badge');
+const liveDropperControl = document.querySelector('.live-dropper-control');
 
 const workflow = [
   '1. Legal item list',
@@ -77,6 +82,7 @@ const workspaceStorageKey = 'tycoon-sim-2:benchmark-workspace:v1';
 const plannerModeStorageKey = 'tycoon-sim-2:planner-mode:v1';
 const generationBaselineStorageKey = 'tycoon-sim-2:generation-baseline:v1';
 const viewPreferencesStorageKey = 'tycoon-sim-2:view-preferences:v1';
+const simulationInfoModeStorageKey = 'tycoon-sim-2:simulation-info-mode:v1';
 const savedLoadoutsStorageKey = 'tycoon-sim-2:saved-loadouts:v1';
 const loadoutFileType = 'tycoon-sim-2-loadout';
 const crateProgression = ['Basic', 'Advanced', 'Factory', 'Quarry', 'Futuristic', 'Toxic',
@@ -111,6 +117,7 @@ let pendingLoadBaseId = null;
 let savedLoadoutDirectoryHandle = null;
 let pendingSaveSnapshot = null;
 let selectedLiveDropperId = null;
+let simulationInfoMode = 'simple';
 const libraryTierOrder = ['Standard', 'Common', 'Uncommon', 'Rare', 'Epic', 'Legendary', 'Secret', 'Unknown'];
 const libraryVariantOrder = ['Base', 'Shiny', 'Mythic', 'Shiny Mythic', 'Standard'];
 
@@ -503,6 +510,7 @@ function liveRangePresentation(stage) {
 function liveRouteStatus(route) {
   if (!route) return { className: 'is-error', text: 'The selected dropper is not connected to a route yet.' };
   if (route.routeStatus === 'furnace') return { className: 'is-complete', text: 'Route reaches the furnace.' };
+  if (route.routeStatus === 'destroyed') return { className: 'is-error', text: 'The physical route reaches the furnace, but no ore survives long enough to enter it.' };
   if (route.failureReason) return { className: 'is-error', text: `Route cannot reach the furnace: ${String(route.failureReason).replace(/[.]+$/, '')}.` };
   if (route.routeStatus === 'ambiguous') return { className: 'is-error', text: 'The connected route branches. Showing the longest reachable branch.' };
   if (route.routeStatus === 'disconnected') return { className: 'is-error', text: 'No conveyor or upgrader is connected to this dropper output.' };
@@ -539,12 +547,64 @@ function liveStageHtml(stage, routeDiagnostics) {
   </article>`;
 }
 
+function renderSimulationFurnaceOutcomeTracker() {
+  const successful = (validation?.routes ?? []).filter((route) => route.reachedFurnace);
+  liveTrackerLabel.textContent = 'Simulation results';
+  liveTrackerTitle.textContent = 'Furnace outcomes';
+  liveTrackerBadge.textContent = 'Exact';
+  liveDropperControl.hidden = false;
+  liveDropperSelect.replaceChildren();
+  if (!successful.length) {
+    liveDropperSelect.disabled = true;
+    const option = document.createElement('option');
+    option.textContent = 'No dropper reaches the furnace';
+    liveDropperSelect.append(option);
+    liveOreContent.innerHTML = '<p class="live-empty">No ore reached a furnace, so there are no furnace outcomes to show.</p>';
+    return;
+  }
+  if (!successful.some((route) => route.dropperId === selectedLiveDropperId)) selectedLiveDropperId = successful[0].dropperId;
+  liveDropperSelect.disabled = false;
+  successful.forEach((route) => {
+    const option = document.createElement('option');
+    option.value = route.dropperId;
+    option.textContent = `${route.dropper} #${route.dropperOrder}`;
+    option.selected = route.dropperId === selectedLiveDropperId;
+    liveDropperSelect.append(option);
+  });
+  const selectedRoute = successful.find((route) => route.dropperId === selectedLiveDropperId);
+  const allOutcomes = furnaceOutcomeRows([selectedRoute]);
+  if (simulationInfoMode === 'simple') {
+    const common = mostCommonFurnaceOutcomes([selectedRoute]);
+    liveOreContent.innerHTML = `
+      <p class="simulation-panel-intro">The most common exact payout for each dropper. Switch to Advanced to inspect every outcome.</p>
+      <div class="furnace-common-outcomes">${common.map((outcome) => `
+        <article class="furnace-outcome-card">
+          <div><strong>Dropper #${outcome.dropperOrder}</strong><span>${(outcome.probability * 100).toFixed(2)}% of surviving ore</span></div>
+          <p>${escapeHtml(conciseOutcomePath(outcome))}</p>
+          <dl><div><dt>Before</dt><dd>${simulationMoney(outcome.beforeValue)}</dd></div><div><dt>Rate</dt><dd>${outcome.furnaceMultiplier}×</dd></div><div><dt>Cash</dt><dd>${simulationMoney(outcome.cashPerOre)}</dd></div></dl>
+        </article>`).join('')}</div>`;
+    return;
+  }
+  const families = exactOutcomeFamilies(allOutcomes, { valueKey: 'beforeValue', secondaryValueKey: 'cashPerOre' });
+  liveOreContent.innerHTML = `
+    <p class="simulation-panel-intro">${allOutcomes.length} exact outcomes, grouped by RNG path and sorted from most common to rarest.</p>
+    ${exactOutcomeFamiliesHtml(families, { furnace: true })}`;
+}
+
 function renderLiveOreTracker() {
   if (!liveOreTracker || !liveDropperSelect || !liveOreContent) return;
   const trackerContentVisible = shouldShowLiveOreTracker(plannerMode, validation);
   const simulationResultsActive = plannerMode === 'build' && validation?.kind === 'manual-simulation';
   liveOreTracker.hidden = plannerMode !== 'build';
-  liveOreTracker.classList.toggle('is-simulation-hidden', simulationResultsActive);
+  liveOreTracker.classList.toggle('is-simulation-results', simulationResultsActive);
+  if (simulationResultsActive) {
+    renderSimulationFurnaceOutcomeTracker();
+    return;
+  }
+  liveTrackerLabel.textContent = 'Build preview';
+  liveTrackerTitle.textContent = 'Live ore tracker';
+  liveTrackerBadge.textContent = 'Live';
+  liveDropperControl.hidden = false;
   if (!trackerContentVisible) return;
   const droppers = reconcileLiveDropperSelection({ persist: true });
   liveDropperSelect.replaceChildren();
@@ -621,32 +681,37 @@ function manualSimulationItemHtml(item) {
   let rows = '';
   if (item.type === 'dropper') {
     const route = validation.routes.find((entry) => entry.dropperId === item.id);
+    const commonFurnaceOutcome = route ? mostCommonFurnaceOutcomes([route])[0] : null;
     rows = route ? `
       <div class="item-stat-row"><span class="item-stat-label">Route</span><span class="item-stat-value">Dropper #${route.dropperOrder}</span></div>
       <div class="item-stat-row"><span class="item-stat-label">Starting ore value</span><span class="item-stat-value">${route.startingValue == null ? 'N/A' : simulationMoney(route.startingValue)}</span></div>
       <div class="item-stat-row"><span class="item-stat-label">Reaches furnace</span><span class="item-stat-value">${route.reachedFurnace ? 'Yes' : 'No'}</span></div>
       <div class="item-stat-row"><span class="item-stat-label">Route time</span><span class="item-stat-value">${route.seconds == null ? 'N/A' : `${route.seconds.toFixed(3)}s`}</span></div>
-      <div class="item-stat-row"><span class="item-stat-label">Value before furnace</span><span class="item-stat-value">${route.valueBeforeFurnace == null ? 'N/A' : simulationMoney(route.valueBeforeFurnace)}</span></div>
+      <div class="item-stat-row"><span class="item-stat-label">Most common value before furnace</span><span class="item-stat-value">${commonFurnaceOutcome == null ? 'N/A' : simulationMoney(commonFurnaceOutcome.beforeValue)}</span></div>
       <div class="item-stat-row"><span class="item-stat-label">Survival to furnace</span><span class="item-stat-value">${((route.survival ?? 0) * 100).toFixed(2)}%</span></div>
       <div class="item-stat-row"><span class="item-stat-label">Destroyed ore</span><span class="item-stat-value">${(route.destroyedOresPerMinute ?? 0).toFixed(2)}/min</span></div>` : '<p>This dropper was not included in the last simulation.</p>';
   } else if (item.type === 'furnace') {
     const successful = validation.routes.filter((route) => route.reachedFurnace);
-    rows = successful.length ? `<table class="simulation-hover-table">
+    const commonOutcomes = mostCommonFurnaceOutcomes(successful);
+    rows = commonOutcomes.length ? `<table class="simulation-hover-table">
       <thead><tr><th>Dropper</th><th>Before furnace</th><th>Furnace rate</th><th>After furnace</th><th>Survival</th></tr></thead>
-      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${route.furnaceMultiplier}&times; &middot; ${escapeHtml(route.furnaceCondition)}</td><td>${simulationMoney(route.cashPerOre)}</td><td>${((route.survival ?? 0) * 100).toFixed(2)}%</td></tr>`).join('')}</tbody>
+      <tbody>${commonOutcomes.map((outcome) => `<tr><td>#${outcome.dropperOrder}</td><td>${simulationMoney(outcome.beforeValue)}</td><td>${outcome.furnaceMultiplier}&times; &middot; ${escapeHtml(outcome.furnaceCondition)}</td><td>${simulationMoney(outcome.cashPerOre)}</td><td>${((outcome.route.survival ?? 0) * 100).toFixed(2)}%</td></tr>`).join('')}</tbody>
     </table>` : '<p>No simulated ore reaches this furnace.</p>';
   } else if (routeStages.length) {
     rows = `<table class="simulation-hover-table">
-      <thead><tr><th>Dropper</th><th>Before</th><th>Expected after (survivors)</th><th>Expected per input</th><th>Destroyed here</th><th>Ore size</th><th>Time after</th></tr></thead>
-      <tbody>${routeStages.map(({ route, stage }) => `<tr>
-        <td>#${route.dropperOrder}</td>
-        <td>${simulationMoney(stage.beforeValue)}</td>
-        <td>${simulationMoney(stage.afterValue)}</td>
-        <td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>
-        <td>${((stage.destructionChance ?? 0) * 100).toFixed(2)}%</td>
-        <td>${stage.beforeOreSize.toFixed(3)} &rarr; ${stage.afterOreSize.toFixed(3)}</td>
-        <td>${stage.arrivalSeconds.toFixed(3)}s</td>
-      </tr>`).join('')}</tbody>
+      <thead><tr><th>Dropper</th><th>Before</th><th>After</th><th>Destroyed here</th><th>Ore size</th><th>Time after</th></tr></thead>
+      <tbody>${routeStages.map(({ route, stage }) => {
+        const beforeBranch = mostLikelyValueBranch(stage, 'before');
+        const afterBranch = mostLikelyValueBranch(stage, 'after');
+        return `<tr>
+          <td>#${route.dropperOrder}</td>
+          <td>${simulationMoney(beforeBranch.value)}</td>
+          <td>${simulationMoney(afterBranch.value)}</td>
+          <td>${((stage.destructionChance ?? 0) * 100).toFixed(2)}%</td>
+          <td>${stage.beforeOreSize.toFixed(3)} &rarr; ${stage.afterOreSize.toFixed(3)}</td>
+          <td>${stage.arrivalSeconds.toFixed(3)}s</td>
+        </tr>`;
+      }).join('')}</tbody>
     </table>
     <div class="simulation-secondary-stats">${routeStages.map(({ route, stage }) => (
       `<span>#${route.dropperOrder}: cumulative survival ${(stage.survivalBefore * 100).toFixed(2)}% &rarr; ${(stage.survivalAfter * 100).toFixed(2)}% &middot; ${(stage.destroyedOresPerMinute ?? 0).toFixed(2)} ore destroyed/min &middot; replication ${stage.replicationBefore.toFixed(2)}&times; &rarr; ${stage.replicationAfter.toFixed(2)}&times;</span>`
@@ -662,6 +727,139 @@ function manualSimulationItemHtml(item) {
       ${rows}
       ${relevantDiagnostics.length ? `<div class="simulation-item-errors">${relevantDiagnostics.map((entry) => `<p><strong>${escapeHtml(entry.code)}</strong> ${escapeHtml(abbreviateDiagnosticMoney(entry.message))}</p>`).join('')}</div>` : ''}
     </section>`;
+}
+
+function truncateDecimal(value, places = 4) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return numeric;
+  const factor = 10 ** places;
+  return Math.trunc((numeric + Number.EPSILON) * factor) / factor;
+}
+
+function truncatedDecimalText(value, places = 4) {
+  return String(truncateDecimal(value, places));
+}
+
+function mostLikelyValueBranch(stage, side = 'after') {
+  const distribution = side === 'before' ? stage.beforeDistribution : stage.afterDistribution;
+  const modeledOutcomes = side === 'after'
+    ? (stage.outcomeModel?.outcomes ?? []).filter((outcome) => !outcome.destroyed && Number.isFinite(Number(outcome.value)))
+    : [];
+  const candidates = Array.isArray(distribution) && distribution.length ? distribution : modeledOutcomes;
+  if (!candidates.length) {
+    return { value: side === 'before' ? stage.beforeValue : stage.afterValue, probability: 1, outcome: 'Exact route value' };
+  }
+  return candidates.reduce((best, candidate) => (
+    !best || Number(candidate.probability ?? 0) > Number(best.probability ?? 0) ? candidate : best
+  ), null);
+}
+
+function conciseOutcomeStep(label) {
+  const text = String(label ?? 'Exact route').trim();
+  const green = text.match(/^Green phase:\s*([\d.]+)x$/i);
+  if (green) return `Green ${truncatedDecimalText(green[1])}×`;
+  const yellow = text.match(/^Yellow phase:\s*\+([\d.]+)$/i);
+  if (yellow) return `Yellow +${simulationMoney(Number(yellow[1]))}`;
+  const scanner = text.match(/^Scanner hit:\s*([\d.]+)x$/i);
+  if (scanner) return `Scanner hit ${truncatedDecimalText(scanner[1])}×`;
+  if (/^Scanner miss$/i.test(text)) return 'Scanner miss';
+  const lambdaMultiplier = text.match(/^([\d.]+)x(\s*\+\s*Sparkles)?$/i);
+  if (lambdaMultiplier) return `Lambda ${truncatedDecimalText(lambdaMultiplier[1])}×${lambdaMultiplier[2] ? ' + Sparkles' : ''}`;
+  const lambdaAdditive = text.match(/^\+([\d.]+)$/);
+  if (lambdaAdditive) return `Lambda +${simulationMoney(Number(lambdaAdditive[1]))}`;
+  return text.replaceAll('x', '×');
+}
+
+function conciseOutcomePath(branch) {
+  const rawSteps = branch.history?.length
+    ? branch.history
+    : [branch.outcome ?? branch.label ?? 'Exact route'];
+  const steps = rawSteps.map(conciseOutcomeStep);
+  const compressed = [];
+  for (const step of steps) {
+    const last = compressed.at(-1);
+    if (last?.step === step) last.count += 1;
+    else compressed.push({ step, count: 1 });
+  }
+  return compressed.map(({ step, count }) => count > 1 ? `${step} ×${count}` : step).join(' → ');
+}
+
+function exactOutcomeFamilies(branches, { valueKey = 'value', secondaryValueKey = null } = {}) {
+  const families = new Map();
+  for (const branch of branches) {
+    const dropperOrder = branch.route?.dropperOrder ?? branch.dropperOrder ?? '?';
+    const useNumber = branch.useNumber ?? null;
+    const label = conciseOutcomePath(branch);
+    const familyKey = `${dropperOrder}|${useNumber ?? ''}|${label}`;
+    const family = families.get(familyKey) ?? { dropperOrder, useNumber, label, probability: 0, oresPerMinute: 0, expectedOutputPerMinute: 0, entries: new Map() };
+    const value = Number(branch[valueKey]);
+    const secondaryValue = secondaryValueKey ? Number(branch[secondaryValueKey]) : null;
+    const entryKey = `${Number(value).toPrecision(12)}|${secondaryValueKey ? Number(secondaryValue).toPrecision(12) : ''}`;
+    const entry = family.entries.get(entryKey) ?? { value, secondaryValue, probability: 0, oresPerMinute: 0, expectedOutputPerMinute: 0 };
+    const branchOresPerMinute = Number(branch.oresPerMinute ?? 0);
+    const expectedOutputPerMinute = secondaryValueKey && Number.isFinite(secondaryValue)
+      ? secondaryValue * branchOresPerMinute
+      : 0;
+    entry.probability += Number(branch.probability ?? 1);
+    entry.oresPerMinute += branchOresPerMinute;
+    entry.expectedOutputPerMinute += expectedOutputPerMinute;
+    family.entries.set(entryKey, entry);
+    family.probability += Number(branch.probability ?? 1);
+    family.oresPerMinute += branchOresPerMinute;
+    family.expectedOutputPerMinute += expectedOutputPerMinute;
+    families.set(familyKey, family);
+  }
+  return [...families.values()]
+    .map((family) => ({
+      ...family,
+      entries: [...family.entries.values()].sort((left, right) => right.probability - left.probability || right.value - left.value),
+    }))
+    .sort((left, right) => right.probability - left.probability || right.oresPerMinute - left.oresPerMinute || left.label.localeCompare(right.label));
+}
+
+function exactOutcomeFamiliesHtml(families, { furnace = false } = {}) {
+  if (!families.length) return '<p class="live-empty">No exact outcomes were recorded.</p>';
+  return `<div class="exact-outcome-families">${families.map((family, index) => `
+    <details class="exact-outcome-family"${index === 0 ? ' open' : ''}>
+      <summary>
+        <span><strong>#${family.dropperOrder}${family.useNumber == null ? '' : ` · Use ${family.useNumber}`}</strong> ${escapeHtml(family.label)}</span>
+        <span>${(family.probability * 100).toFixed(2)}% · ${truncatedDecimalText(family.oresPerMinute)} ore/min${furnace ? ` · Expected output ${simulationMoney(family.expectedOutputPerMinute)}/min` : ''}</span>
+      </summary>
+      <table class="simulation-hover-table exact-outcome-values">
+        <thead><tr>${furnace ? '<th>Before furnace</th><th>Cash per ore</th>' : '<th>Ore value</th>'}<th>Chance</th><th>Ores/min</th>${furnace ? '<th>Expected output/min</th>' : ''}</tr></thead>
+        <tbody>${family.entries.map((entry) => `<tr>${furnace
+          ? `<td>${simulationMoney(entry.value)}</td><td>${simulationMoney(entry.secondaryValue)}</td>`
+          : `<td>${simulationMoney(entry.value)}</td>`}<td>${(entry.probability * 100).toFixed(4)}%</td><td>${truncatedDecimalText(entry.oresPerMinute)}</td>${furnace ? `<td>${simulationMoney(entry.expectedOutputPerMinute)}/min</td>` : ''}</tr>`).join('')}</tbody>
+      </table>
+    </details>`).join('')}</div>`;
+}
+
+function furnaceOutcomeRows(routes) {
+  return routes.flatMap((route) => {
+    const outcomes = route.furnaceOutcomes?.length ? route.furnaceOutcomes : (route.reachedFurnace ? [{
+      beforeValue: route.valueBeforeFurnace,
+      cashPerOre: route.cashPerOre,
+      probability: 1,
+      outcome: 'Exact route value',
+      history: [],
+      furnaceMultiplier: route.furnaceMultiplier,
+      furnaceCondition: route.furnaceCondition,
+    }] : []);
+    const survivingRate = Number(route.sourceOresPerMinute ?? (route.oresPerSecond ?? 0) * 60)
+      * Number(route.survival ?? 1) * Number(route.replication ?? 1);
+    return outcomes.map((outcome) => ({
+      ...outcome,
+      route,
+      dropperOrder: route.dropperOrder,
+      oresPerMinute: survivingRate * Number(outcome.probability ?? 1),
+    }));
+  }).sort((left, right) => right.probability - left.probability || right.oresPerMinute - left.oresPerMinute);
+}
+
+function mostCommonFurnaceOutcomes(routes) {
+  return routes.map((route) => furnaceOutcomeRows([route]).reduce((best, outcome) => (
+    !best || outcome.probability > best.probability ? outcome : best
+  ), null)).filter(Boolean);
 }
 
 function categorizedManualSimulationHtml(item) {
@@ -681,6 +879,7 @@ function categorizedManualSimulationHtml(item) {
   if (item.type === 'dropper') {
     const route = validation.routes.find((entry) => entry.dropperId === item.id);
     if (!route) return `<section class="item-stat-section timing-tracking simulation-item-tracking"><h3>Route result</h3><p>This dropper was not included in the last simulation.</p></section>${diagnosticsHtml}`;
+    const commonFurnaceOutcome = mostCommonFurnaceOutcomes([route])[0] ?? null;
     const destructionHtml = (route.destroyedOresPerMinute ?? 0) > .000001 ? `
       <section class="item-stat-section destruction-tracking simulation-item-tracking">
         <h3>Ore destruction</h3>
@@ -703,7 +902,7 @@ function categorizedManualSimulationHtml(item) {
         <h3>Ore value</h3>
         <div class="item-stat-grid">${statRowsHtml([
           ['Starting value', route.startingValue == null ? 'N/A' : simulationMoney(route.startingValue)],
-          ['Before furnace', route.valueBeforeFurnace == null ? 'N/A' : simulationMoney(route.valueBeforeFurnace)],
+          ['Most common before furnace', commonFurnaceOutcome == null ? 'N/A' : simulationMoney(commonFurnaceOutcome.beforeValue)],
         ])}</div>
       </section>
       ${destructionHtml}${diagnosticsHtml}`;
@@ -711,11 +910,15 @@ function categorizedManualSimulationHtml(item) {
 
   if (item.type === 'furnace') {
     const successful = validation.routes.filter((route) => route.reachedFurnace);
-    const rows = successful.length ? `<table class="simulation-hover-table">
+    const commonOutcomes = mostCommonFurnaceOutcomes(successful);
+    const rows = commonOutcomes.length ? `<table class="simulation-hover-table">
       <thead><tr><th>Dropper</th><th>Before furnace</th><th>Furnace rate</th><th>Cash per ore</th></tr></thead>
-      <tbody>${successful.map((route) => `<tr><td>#${route.dropperOrder}</td><td>${simulationMoney(route.valueBeforeFurnace)}</td><td>${route.furnaceMultiplier}&times; &middot; ${escapeHtml(route.furnaceCondition)}</td><td>${simulationMoney(route.cashPerOre)}</td></tr>`).join('')}</tbody>
+      <tbody>${commonOutcomes.map((outcome) => `<tr><td>#${outcome.dropperOrder}</td><td>${simulationMoney(outcome.beforeValue)}</td><td>${outcome.furnaceMultiplier}&times; &middot; ${escapeHtml(outcome.furnaceCondition)}</td><td>${simulationMoney(outcome.cashPerOre)}</td></tr>`).join('')}</tbody>
     </table>` : '<p>No simulated ore reaches this furnace.</p>';
-    return `<section class="item-stat-section value-tracking simulation-item-tracking"><h3>Furnace payout</h3>${rows}</section>${diagnosticsHtml}`;
+    const advancedNote = simulationInfoMode === 'advanced' && successful.length
+      ? `<p class="simulation-card-note">All ${furnaceOutcomeRows(successful).length} exact furnace outcomes are sorted in the scrollable Furnace outcomes panel beside the grid.</p>`
+      : '';
+    return `<section class="item-stat-section value-tracking simulation-item-tracking"><h3>Furnace payout · most common outcome</h3>${rows}${advancedNote}</section>${diagnosticsHtml}`;
   }
 
   if (item.teleporterRole) {
@@ -741,6 +944,7 @@ function categorizedManualSimulationHtml(item) {
 
   const hasRng = routeStages.some(({ stage }) => stage.outcomeModel?.outcomes?.length);
   const isIncremental = item.name === 'Incremental Upgrader';
+  const isTiki = item.name === 'Tiki Evaluator';
   const showsRepeatedUses = !isIncremental && routeStages.some(({ stage }) => Number(stage.useNumber ?? 1) > 1);
   const changesValue = routeStages.some(({ stage }) => Math.abs(stage.afterValue - stage.beforeValue) > .000001);
   const changesSize = routeStages.some(({ stage }) => Math.abs(stage.afterOreSize - stage.beforeOreSize) > .000001);
@@ -762,6 +966,28 @@ function categorizedManualSimulationHtml(item) {
       .filter((zone) => zone.sourceItemId === item.id)
       .map((zone) => ({ route, zone }))
   ));
+  const distributionRows = routeStages.flatMap(({ route, stage }) => {
+    const trackedBranches = stage.afterDistribution?.length
+      ? stage.afterDistribution
+      : (stage.outcomeModel?.outcomes ?? []).filter((outcome) => !outcome.destroyed && Number.isFinite(Number(outcome.value)));
+    const survivingRate = Number(route.sourceOresPerMinute ?? (route.oresPerSecond ?? 0) * 60)
+      * Number(stage.survivalAfter ?? 1) * Number(stage.replicationAfter ?? 1);
+    return trackedBranches.map((branch) => ({
+      route,
+      label: [branch.tikiPhase ? `${branch.tikiPhase} cycle` : '', branch.outcome ?? branch.label ?? 'Deterministic path'].filter(Boolean).join(' · '),
+      value: Number(branch.value),
+      probability: Number(branch.probability ?? 1),
+      history: [...(branch.history ?? [])],
+      tikiPhase: branch.tikiPhase ?? null,
+      useNumber: stage.useNumber ?? 1,
+      oresPerMinute: survivingRate * Number(branch.probability ?? 1),
+    }));
+  });
+  const hasTrackedDistribution = distributionRows.length > routeStages.length;
+  const distributionHtml = hasTrackedDistribution ? `
+    <h4>Exact outcome families</h4>
+    <p class="simulation-card-note">Sorted from most common to rarest. Open a family to see every exact ore value in it.</p>
+    ${exactOutcomeFamiliesHtml(exactOutcomeFamilies(distributionRows))}` : '';
 
   const timingHtml = `
     <section class="item-stat-section timing-tracking simulation-item-tracking">
@@ -772,17 +998,42 @@ function categorizedManualSimulationHtml(item) {
       ])}</div>
     </section>`;
 
-  const valueHtml = (changesValue || hasRng) ? `
+  const simpleValueHtml = (changesValue || hasRng || isTiki) ? `
     <section class="item-stat-section value-tracking simulation-item-tracking">
-      <h3>${hasRng ? 'Expected value & RNG' : 'Ore value'}</h3>
+      <h3>Most common ore value</h3>
       <table class="simulation-hover-table">
-        <thead><tr><th>Dropper</th>${isIncremental ? '<th>Use</th><th>Multiplier</th>' : (showsRepeatedUses ? '<th>Use</th>' : '')}<th>Before</th><th>${hasRng ? 'Expected after (survivors)' : 'After'}</th>${hasRng ? '<th>Expected per input</th>' : ''}</tr></thead>
-        <tbody>${routeStages.map(({ route, stage }) => `<tr>
-          <td>#${route.dropperOrder}</td>${isIncremental ? `<td>${stage.useNumber} of ${stage.useLimit}</td><td>${Number(stage.appliedMultiplier ?? 1).toFixed(3).replace(/0+$/, '').replace(/\.$/, '')}&times;</td>` : (showsRepeatedUses ? `<td>${stage.useNumber} of ${stage.useLimit}</td>` : '')}<td>${simulationMoney(stage.beforeValue)}</td><td>${simulationMoney(stage.afterValue)}</td>${hasRng ? `<td>${simulationMoney(stage.outcomeModel?.expectedValuePerInput ?? stage.afterValue)}</td>` : ''}
-        </tr>`).join('')}</tbody>
+        <thead><tr><th>Dropper</th><th>Use</th><th>Before</th><th>After</th></tr></thead>
+        <tbody>${routeStages.map(({ route, stage }) => {
+          const beforeBranch = mostLikelyValueBranch(stage, 'before');
+          const afterBranch = mostLikelyValueBranch(stage, 'after');
+          return `<tr><td>#${route.dropperOrder}</td><td>${stage.useNumber ?? 1}</td><td>${simulationMoney(beforeBranch.value)}</td><td>${simulationMoney(afterBranch.value)}</td></tr>`;
+        }).join('')}</tbody>
       </table>
-      ${survivingOutcomes.length ? `<div class="simulation-outcome-list"><h4>Surviving outcomes</h4>${survivingOutcomes.map((outcome) => `<div><span>${escapeHtml(outcome.label)}</span><strong>${(outcome.probability * 100).toFixed(2)}%</strong></div>`).join('')}</div>` : ''}
     </section>` : '';
+
+  const advancedValueHtml = isTiki ? `
+    <section class="item-stat-section value-tracking simulation-item-tracking">
+      <h3>Cycle ore values</h3>
+      <table class="simulation-hover-table">
+        <thead><tr><th>Dropper</th><th>Use</th><th>Before</th><th>Green value</th><th>Yellow value</th></tr></thead>
+        <tbody>${routeStages.map(({ route, stage }) => {
+          const green = stage.outcomeModel?.outcomes?.find((outcome) => /green phase/i.test(outcome.label));
+          const yellow = stage.outcomeModel?.outcomes?.find((outcome) => /yellow phase/i.test(outcome.label));
+          return `<tr><td>#${route.dropperOrder}</td><td>${stage.useNumber}</td><td>${simulationMoney(stage.beforeValue)}</td><td>${green?.value == null ? 'N/A' : simulationMoney(green.value)}</td><td>${yellow?.value == null ? 'N/A' : simulationMoney(yellow.value)}</td></tr>`;
+        }).join('')}</tbody>
+      </table>
+    </section>` : (changesValue || hasRng) ? `
+    <section class="item-stat-section value-tracking simulation-item-tracking">
+      <h3>${hasTrackedDistribution ? 'Ore value distribution' : 'Ore value'}</h3>
+      ${distributionHtml}
+      ${hasTrackedDistribution ? '' : `<table class="simulation-hover-table">
+        <thead><tr><th>Dropper</th>${isIncremental ? '<th>Use</th><th>Multiplier</th>' : (showsRepeatedUses ? '<th>Use</th>' : '')}<th>Before</th><th>After</th></tr></thead>
+        <tbody>${routeStages.map(({ route, stage }) => `<tr>
+          <td>#${route.dropperOrder}</td>${isIncremental ? `<td>${stage.useNumber} of ${stage.useLimit}</td><td>${truncatedDecimalText(stage.appliedMultiplier ?? 1)}&times;</td>` : (showsRepeatedUses ? `<td>${stage.useNumber} of ${stage.useLimit}</td>` : '')}<td>${simulationMoney(stage.beforeValue)}</td><td>${simulationMoney(stage.afterValue)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`}
+    </section>` : '';
+  const valueHtml = simulationInfoMode === 'advanced' ? advancedValueHtml : simpleValueHtml;
 
   const destructionHtml = destroysOre ? `
     <section class="item-stat-section destruction-tracking simulation-item-tracking">
@@ -790,7 +1041,7 @@ function categorizedManualSimulationHtml(item) {
       ${hasImmediateDestruction ? `<table class="simulation-hover-table">
         <thead><tr><th>Dropper</th>${showsRepeatedUses ? '<th>Use</th>' : ''}<th>Reaches item</th><th>Still alive after</th><th>Chance destroyed</th><th>Destroyed/min</th></tr></thead>
         <tbody>${routeStages.map(({ route, stage }) => `<tr>
-          <td>#${route.dropperOrder}</td>${showsRepeatedUses ? `<td>${stage.useNumber} of ${stage.useLimit}</td>` : ''}<td>${(stage.survivalBefore * 100).toFixed(2)}%</td><td>${(stage.survivalAfter * 100).toFixed(2)}%</td><td>${((stage.destructionChance ?? 0) * 100).toFixed(2)}%</td><td>${(stage.destroyedOresPerMinute ?? 0).toFixed(2)}</td>
+          <td>#${route.dropperOrder}</td>${showsRepeatedUses ? `<td>${stage.useNumber} of ${stage.useLimit}</td>` : ''}<td>${(stage.survivalBefore * 100).toFixed(2)}%</td><td>${((stage.projectedSurvivalAfterMark ?? stage.survivalAfter) * 100).toFixed(2)}%</td><td>${((stage.crimsonDestructionChance ?? stage.destructionChance ?? 0) * 100).toFixed(2)}%</td><td>${(stage.destroyedOresPerMinute ?? 0).toFixed(2)}</td>
         </tr>`).join('')}</tbody>
       </table><p class="simulation-card-note">Reaches item and still alive after are cumulative from the dropper. Chance destroyed applies to this use.</p>` : ''}
       ${unsafeEffectEntries.length ? `<table class="simulation-hover-table effect-destruction-table">
@@ -1107,6 +1358,33 @@ function browserStorage() {
   } catch {
     return null;
   }
+}
+
+function loadSimulationInfoMode() {
+  const storage = browserStorage();
+  if (!storage) return 'simple';
+  try {
+    return storage.getItem(simulationInfoModeStorageKey) === 'advanced' ? 'advanced' : 'simple';
+  } catch {
+    return 'simple';
+  }
+}
+
+function setSimulationInfoMode(mode, { persist = true } = {}) {
+  simulationInfoMode = mode === 'advanced' ? 'advanced' : 'simple';
+  (simulationInfoToggle?.querySelectorAll?.('[data-simulation-info]') ?? []).forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.simulationInfo === simulationInfoMode));
+  });
+  if (persist) {
+    try {
+      browserStorage()?.setItem(simulationInfoModeStorageKey, simulationInfoMode);
+    } catch {
+      // The setting still applies for this page when browser storage is unavailable.
+    }
+  }
+  hideItemTooltip();
+  if (liveOreTracker?.classList) renderLiveOreTracker();
+  return simulationInfoMode;
 }
 
 function cloneLoadoutValue(value) {
@@ -2138,18 +2416,21 @@ function renderWorkflow() {
           <div class="simulation-metric"><span>Space</span><strong>${metrics.reservedTiles} used / ${metrics.remainingTiles} free</strong></div>
         </div>
         ${validation.routes.length ? `<table class="simulation-route-table">
-          <thead><tr><th>Dropper</th><th>Reaches furnace</th><th>Teleporter</th><th>Travel time</th><th>Survival</th><th>Destroyed/min</th><th>Value before furnace</th><th>Furnace rate</th><th>Value after furnace</th></tr></thead>
-          <tbody>${validation.routes.map((route) => `<tr>
-            <td>${escapeHtml(route.dropper)}</td>
-            <td>${route.reachedFurnace ? 'Yes' : 'No'}</td>
-            <td>${(route.teleporterJumps ?? []).length ? escapeHtml(route.teleporterJumps.map((jump) => jump.color).join(', ')) : 'None'}</td>
-            <td>${route.seconds == null ? 'N/A' : `${route.seconds.toFixed(3)}s`}</td>
-            <td>${route.reachedFurnace ? `${((route.survival ?? 0) * 100).toFixed(2)}%` : 'N/A'}</td>
-            <td>${route.reachedFurnace ? (route.destroyedOresPerMinute ?? 0).toFixed(2) : 'N/A'}</td>
-            <td>${route.valueBeforeFurnace == null ? 'N/A' : simulationMoney(route.valueBeforeFurnace)}</td>
-            <td>${route.furnaceMultiplier == null ? 'N/A' : `${route.furnaceMultiplier}&times; &middot; ${escapeHtml(route.furnaceCondition)}`}</td>
-            <td>${route.cashPerOre == null ? 'N/A' : simulationMoney(route.cashPerOre)}</td>
-          </tr>`).join('')}</tbody>
+          <thead><tr><th>Dropper</th><th>Reaches furnace</th><th>Teleporter</th><th>Travel time</th><th>Survival</th><th>Destroyed/min</th><th>Most common before</th><th>Furnace rate</th><th>Most common payout</th></tr></thead>
+          <tbody>${validation.routes.map((route) => {
+            const commonOutcome = mostCommonFurnaceOutcomes([route])[0] ?? null;
+            return `<tr>
+              <td>${escapeHtml(route.dropper)}</td>
+              <td>${route.reachedFurnace ? 'Yes' : 'No'}</td>
+              <td>${(route.teleporterJumps ?? []).length ? escapeHtml(route.teleporterJumps.map((jump) => jump.color).join(', ')) : 'None'}</td>
+              <td>${route.seconds == null ? 'N/A' : `${route.seconds.toFixed(3)}s`}</td>
+              <td>${route.reachedFurnace ? `${((route.survival ?? 0) * 100).toFixed(2)}%` : 'N/A'}</td>
+              <td>${route.reachedFurnace ? (route.destroyedOresPerMinute ?? 0).toFixed(2) : 'N/A'}</td>
+              <td>${commonOutcome == null ? 'N/A' : simulationMoney(commonOutcome.beforeValue)}</td>
+              <td>${commonOutcome == null ? 'N/A' : `${commonOutcome.furnaceMultiplier}&times; &middot; ${escapeHtml(commonOutcome.furnaceCondition)}`}</td>
+              <td>${commonOutcome == null ? 'N/A' : simulationMoney(commonOutcome.cashPerOre)}</td>
+            </tr>`;
+          }).join('')}</tbody>
         </table>` : ''}
         ${validation.diagnostics.length ? `<ul class="simulation-diagnostics">${validation.diagnostics.map((entry) => `<li><strong>${escapeHtml(entry.code)}:</strong> ${escapeHtml(abbreviateDiagnosticMoney(entry.message))}</li>`).join('')}</ul>` : ''}
         <p>This is a simulation of the current layout only; no replacement items or optimization suggestions were generated.</p>`;
@@ -3850,6 +4131,11 @@ plannerModeToggle.addEventListener('click', (event) => {
   if (!button || button.dataset.plannerMode === plannerMode) return;
   setPlannerMode(button.dataset.plannerMode);
 });
+simulationInfoToggle.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-simulation-info]');
+  if (!button || button.dataset.simulationInfo === simulationInfoMode) return;
+  setSimulationInfoMode(button.dataset.simulationInfo);
+});
 simulateBaseButton.addEventListener('click', runManualSimulation);
 saveBaseButton.addEventListener('click', openSaveBaseMenu);
 loadBasesButton.addEventListener('click', openLoadBaseMenu);
@@ -4001,5 +4287,6 @@ if (coordinateMap.length > 0 || routeSegments.length > 0) {
 }
 renderWorkflow();
 renderItemLibrary();
+setSimulationInfoMode(loadSimulationInfoMode(), { persist: false });
 applyGridZoom(zoomSlider.value);
 renderGrid(Number(sizeSlider.value));

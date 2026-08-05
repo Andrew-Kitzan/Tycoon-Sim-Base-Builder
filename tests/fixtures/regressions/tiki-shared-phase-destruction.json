@@ -1,0 +1,26 @@
+{
+  "id": "tiki-shared-phase-destruction",
+  "kind": "correlated-rng-destruction",
+  "observed": "Two chained Tiki Evaluators independently applied 33.33% destruction, reducing survival to 44.44%.",
+  "expected": "Chained Tiki Evaluators share one phase: the first performs the red-phase destruction check and later Tikis do not destroy the surviving ore again.",
+  "input": {
+    "item": "Tiki Evaluator",
+    "variant": "Shiny Mythic",
+    "startingValue": 181570000000
+  },
+  "assert": {
+    "chainSurvival": 0.6666666666666666,
+    "firstDestructionChance": 0.33333333333333337,
+    "secondDestructionChance": 0,
+    "firstModel": "tiki-phase",
+    "secondModel": "tiki-shared-phase",
+    "secondOutcomeCount": 2,
+    "secondDestroyedOutcomes": 0,
+    "firstGreenValue": 817065000000,
+    "firstYellowValue": 181570045000,
+    "firstExpectedSurvivorValue": 499317522500,
+    "secondGreenValue": 3676792500000,
+    "secondYellowValue": 181570090000,
+    "secondExpectedSurvivorValue": 1929181295000
+  }
+}

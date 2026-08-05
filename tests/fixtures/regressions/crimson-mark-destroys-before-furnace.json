@@ -1,0 +1,20 @@
+{
+  "id": "crimson-mark-destroys-before-furnace",
+  "kind": "crimson-mark-survival",
+  "observed": "Intern Dropper ore was reported as reaching the furnace even though every marked ore combusted before the end of the Crimson Pillars window.",
+  "expected": "Crimson Pillars removes the portion of marked ore whose 1–15 second trigger occurs before furnace entry; a route lasting through the full window has zero furnace survival.",
+  "input": {
+    "sourceIndex": 0,
+    "minimumDelaySeconds": 1,
+    "windowSeconds": 15,
+    "components": [
+      { "id": "crimson", "seconds": 0.5, "path": { "x": 1, "y": 1, "width": 2, "height": 2 } },
+      { "id": "route-after-crimson", "seconds": 15, "path": { "x": 3, "y": 1, "width": 15, "height": 2 } }
+    ]
+  },
+  "assert": {
+    "destructionChance": 1,
+    "survival": 0,
+    "expectedOccupancyAfterMarkSeconds": 8
+  }
+}

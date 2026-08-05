@@ -124,12 +124,19 @@
               </div>
             </div>
             <aside id="live-ore-tracker" class="live-ore-tracker" aria-labelledby="live-ore-tracker-title">
+              <div id="simulation-info-toggle" class="simulation-info-toggle" role="group" aria-label="Simulation item information detail">
+                <span>Item info</span>
+                <div class="planner-mode-toggle">
+                  <button type="button" data-simulation-info="simple" aria-pressed="true">Simple</button>
+                  <button type="button" data-simulation-info="advanced" aria-pressed="false">Advanced</button>
+                </div>
+              </div>
               <div class="live-tracker-heading">
                 <div>
-                  <p class="panel-label">Build preview</p>
+                  <p id="live-tracker-label" class="panel-label">Build preview</p>
                   <h2 id="live-ore-tracker-title">Live ore tracker</h2>
                 </div>
-                <span class="live-badge">Live</span>
+                <span id="live-tracker-badge" class="live-badge">Live</span>
               </div>
               <label class="live-dropper-control" for="live-dropper-select">
                 <span>Track one dropper</span>

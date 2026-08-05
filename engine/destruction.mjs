@@ -9,9 +9,14 @@ export function expectedRouteOccupancySeconds({
   routeTimeSeconds,
   stages = [],
   terminalEvents = [],
+  occupancySegments = [],
   finalSurvival = 1,
   finalReplication = 1,
 }) {
+  if (occupancySegments.length) return occupancySegments.reduce((total, segment) => (
+    total + Math.max(0, Number(segment.endTime ?? 0) - Number(segment.startTime ?? 0))
+      * (Number(segment.startMass ?? 0) + Number(segment.endMass ?? 0)) / 2
+  ), 0);
   const events = [
     ...stages.map((stage) => ({
       time: Number(stage.arrivalSeconds ?? stage.timeAfter ?? 0),

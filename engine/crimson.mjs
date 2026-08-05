@@ -87,3 +87,33 @@ export function crimsonPhantomZoneEstimate(components, sourceIndex, options = {}
     })),
   };
 }
+
+export function crimsonMarkDestructionChance(components, sourceIndex, options = {}) {
+  return crimsonPhantomZoneCorridor(
+    components,
+    sourceIndex,
+    Number(options.windowSeconds ?? CRIMSON_PHANTOM_WINDOW_SECONDS),
+    Number(options.minimumDelaySeconds ?? CRIMSON_PHANTOM_MINIMUM_DELAY_SECONDS),
+  ).spawnBeforeFurnaceProbability;
+}
+
+export function crimsonMarkSurvivalAtElapsed(elapsedSeconds, options = {}) {
+  const elapsed = Math.max(0, Number(elapsedSeconds ?? 0));
+  const minimumDelay = Math.max(0, Number(options.minimumDelaySeconds ?? CRIMSON_PHANTOM_MINIMUM_DELAY_SECONDS));
+  const window = Math.max(minimumDelay, Number(options.windowSeconds ?? CRIMSON_PHANTOM_WINDOW_SECONDS));
+  if (elapsed <= minimumDelay) return 1;
+  if (elapsed >= window) return 0;
+  return 1 - (elapsed - minimumDelay) / Math.max(Number.EPSILON, window - minimumDelay);
+}
+
+export function crimsonMarkExpectedOccupancySeconds(elapsedSeconds, options = {}) {
+  const elapsed = Math.max(0, Number(elapsedSeconds ?? 0));
+  const minimumDelay = Math.max(0, Number(options.minimumDelaySeconds ?? CRIMSON_PHANTOM_MINIMUM_DELAY_SECONDS));
+  const window = Math.max(minimumDelay, Number(options.windowSeconds ?? CRIMSON_PHANTOM_WINDOW_SECONDS));
+  const constantDuration = Math.min(elapsed, minimumDelay);
+  if (elapsed <= minimumDelay) return constantDuration;
+  const declineEnd = Math.min(elapsed, window);
+  const declineDuration = Math.max(0, declineEnd - minimumDelay);
+  const endSurvival = crimsonMarkSurvivalAtElapsed(declineEnd, { minimumDelaySeconds: minimumDelay, windowSeconds: window });
+  return constantDuration + declineDuration * (1 + endSurvival) / 2;
+}

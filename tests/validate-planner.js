@@ -30,13 +30,14 @@ assert.match(indexSource, /id="keybind-guide"/);
 assert.match(indexSource, /id="live-ore-tracker"/);
 assert.match(indexSource, /id="live-dropper-select"/);
 assert.match(indexSource, /id="live-ore-content"/);
+assert.match(indexSource, /id="simulation-info-toggle"[\s\S]+data-simulation-info="simple"[\s\S]+data-simulation-info="advanced"/);
 assert.match(stylesSource, /\.board-layout \{[^}]*grid-template-columns: minmax\(0, 1fr\) 330px;/s);
 assert.match(stylesSource, /\.board-layout:has\(\.live-ore-tracker\[hidden\]\) \{[^}]*grid-template-columns: minmax\(0, 1fr\);/s);
 assert.match(stylesSource, /\.live-ore-tracker/);
 assert.match(indexSource, /id="live-ore-tracker"[\s\S]+id="live-ore-content"[\s\S]+id="keybind-guide"[\s\S]+<\/aside>/);
 assert.match(stylesSource, /\.keybind-guide \{[^}]*position: static;[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[^}]*width: auto;/s);
 assert.match(stylesSource, /\.keybind-row \{[^}]*grid-template-columns: 52px minmax\(0, 1fr\);/s);
-assert.match(stylesSource, /\.live-ore-tracker \{[^}]*grid-template-rows: auto auto minmax\(0, 1fr\) auto;[^}]*height: calc\(100vh - 190px\);/s);
+assert.match(stylesSource, /\.live-ore-tracker \{[^}]*grid-template-rows: auto auto auto minmax\(0, 1fr\) auto;[^}]*height: calc\(100vh - 190px\);/s);
 assert.match(stylesSource, /\.live-ore-content \{[^}]*overflow-y: auto;[^}]*scrollbar-gutter: stable;/s);
 assert.match(appSource, /function renderKeybindGuide/);
 assert.match(appSource, /<kbd aria-label="Backspace or Delete">&larr; \/ Del<\/kbd><span>Delete<\/span>/);
@@ -156,17 +157,23 @@ assert.match(appSource, /function resetWorkspaceForMode/);
 assert.match(appSource, /function runManualSimulation/);
 assert.match(appSource, /function renderLiveOreTracker/);
 assert.match(appSource, /liveOreTracker\.hidden = plannerMode !== 'build'/);
-assert.match(appSource, /classList\.toggle\('is-simulation-hidden', simulationResultsActive\)/);
-assert.match(stylesSource, /\.live-ore-tracker\.is-simulation-hidden > :not\(\.keybind-guide\)/);
+assert.match(appSource, /classList\.toggle\('is-simulation-results', simulationResultsActive\)/);
+assert.match(appSource, /function renderSimulationFurnaceOutcomeTracker/);
+assert.match(appSource, /const selectedRoute = successful\.find\([\s\S]+furnaceOutcomeRows\(\[selectedRoute\]\)/);
+assert.match(appSource, /option\.value = route\.dropperId/);
+assert.match(stylesSource, /\.live-ore-tracker\.is-simulation-results/);
 assert.match(appSource, /TycoonPlanner\.traceManualDropper/);
 assert.match(appSource, /liveDropperId: selectedLiveDropperId/);
 assert.match(appSource, /selectedLiveDropperId = saved\.liveDropperId \?\? null/);
 assert.match(appSource, /liveDropperSelect\.addEventListener\('change'/);
 assert.match(appSource, /function manualSimulationItemHtml/);
+assert.match(appSource, /simulationInfoModeStorageKey/);
+assert.match(appSource, /function setSimulationInfoMode/);
+assert.doesNotMatch(appSource, /Expected before|Expected after \(survivors\)|Expected per input/);
 assert.match(appSource, /Last base simulation/);
-assert.match(appSource, /Value after furnace/);
-assert.match(appSource, /simulationMoney\(route\.valueBeforeFurnace\)/);
-assert.match(appSource, /simulationMoney\(route\.cashPerOre\)/);
+assert.match(appSource, /Most common payout/);
+assert.match(appSource, /simulationMoney\(commonOutcome\.beforeValue\)/);
+assert.match(appSource, /simulationMoney\(commonOutcome\.cashPerOre\)/);
 assert.match(stylesSource, /\.simulation-hover-table/);
 assert.match(stylesSource, /overflow-y: auto/);
 assert.match(appSource, /scheduleItemTooltipHide/);
@@ -233,16 +240,35 @@ this.api = { coordinateMap, routeSegments, validation, activePlan, placeItem, co
   selectionRectangle, placementIntersectsRectangle, placementContainsCoordinate, massSelectionBounds,
   automaticBaseMetadata, crateRequirementForPlacement, loadoutFilename, normalizeSavedLoadout, abbreviateDiagnosticMoney,
   recordStats, recordDescription, displayItemDescription, statsSectionsHtml,
-  setValidation: (next) => { validation = next; }, workflowStage, workflowProgress, plannerMode };`, appSandbox);
+  conciseOutcomePath, exactOutcomeFamilies, exactOutcomeFamiliesHtml, furnaceOutcomeRows,
+  setValidation: (next) => { validation = next; }, setSimulationInfoMode,
+  getSimulationInfoMode: () => simulationInfoMode, workflowStage, workflowProgress, plannerMode };`, appSandbox);
 const app = appSandbox.api;
 assert.equal(app.coordinateMap.length, 0);
 assert.equal(app.routeSegments.length, 0);
 assert.equal(app.validation, null);
 assert.equal(app.activePlan.title, 'Manual build workspace');
 assert.equal(app.activePlan.items.length, 0);
+const advancedOutcomeFamilies = app.exactOutcomeFamilies([
+  { dropperOrder: 1, probability: .75, oresPerMinute: 30, beforeValue: 100, cashPerOre: 200, outcome: 'Common outcome' },
+  { dropperOrder: 1, probability: .25, oresPerMinute: 10, beforeValue: 400, cashPerOre: 800, outcome: 'Rare outcome' },
+], { valueKey: 'beforeValue', secondaryValueKey: 'cashPerOre' });
+assert.equal(advancedOutcomeFamilies[0].entries[0].expectedOutputPerMinute, 6000);
+assert.equal(advancedOutcomeFamilies[1].entries[0].expectedOutputPerMinute, 8000);
+const advancedOutcomeFamiliesHtml = app.exactOutcomeFamiliesHtml(advancedOutcomeFamilies, { furnace: true });
+assert.match(advancedOutcomeFamiliesHtml, /Expected output\/min/);
+assert.equal((advancedOutcomeFamiliesHtml.match(/<td>\$[\s\S]*?\/min<\/td>/g) ?? []).length, 2, 'every advanced furnace outcome must show expected output');
 assert.equal(app.activePlan.lanes.length, 0);
 assert.equal(app.workflowStage, 2);
 assert.equal(app.workflowProgress, null);
+assert.equal(app.getSimulationInfoMode(), 'simple');
+assert.equal(app.conciseOutcomePath({ history: ['Green phase: 4.5x', 'Green phase: 4.5x', '2.4200000000000004x', 'Scanner miss'] }), 'Green 4.5× ×2 → Lambda 2.42× → Scanner miss');
+const sortedFamilies = app.exactOutcomeFamilies([
+  { dropperOrder: 1, value: 20, probability: .1, oresPerMinute: 1, history: ['Scanner hit: 3x'] },
+  { dropperOrder: 1, value: 10, probability: .9, oresPerMinute: 9, history: ['Scanner miss'] },
+]);
+assert.equal(sortedFamilies[0].label, 'Scanner miss');
+assert.equal(sortedFamilies[1].label, 'Scanner hit 3×');
 assert.equal(app.plannerMode, 'build');
 assert.equal(app.shouldShowLiveOreTracker('build', null), true);
 assert.equal(app.shouldShowLiveOreTracker('build', { kind: 'manual-simulation' }), false);
@@ -366,6 +392,7 @@ const rareOnly = app.filteredAndSortedLibraryRecords([
   { name: 'Rare Item', type: 'dropper', variant: 'Base', rarity: 'Rare' },
 ], { tier: 'Rare', variant: 'all', sortMode: 'tier-name' });
 assert.deepEqual(JSON.parse(JSON.stringify(rareOnly.map((record) => record.name))), ['Rare Item']);
+app.setSimulationInfoMode('advanced', { persist: false });
 app.setValidation({
   kind: 'manual-simulation',
   diagnostics: [],
@@ -384,7 +411,7 @@ app.setValidation({
 });
 const categorizedLambdaHtml = app.categorizedManualSimulationHtml({ id: 'lambda-ui', type: 'upgrader' });
 assert.match(categorizedLambdaHtml, /Route timing/);
-assert.match(categorizedLambdaHtml, /Expected value & RNG/);
+assert.match(categorizedLambdaHtml, /<h3>Ore value<\/h3>/);
 assert.match(categorizedLambdaHtml, /Ore destruction/);
 assert.match(categorizedLambdaHtml, /Reaches item/);
 assert.match(categorizedLambdaHtml, /Still alive after/);
@@ -394,6 +421,34 @@ assert.match(categorizedLambdaHtml, /Chance destroyed applies to this use/);
 assert.doesNotMatch(categorizedLambdaHtml, /Original entering|Survive this use|Original after|Original lost here/);
 assert.doesNotMatch(categorizedLambdaHtml, /<h3>Ore size<\/h3>/);
 assert.doesNotMatch(categorizedLambdaHtml, /<h3>Ore replication<\/h3>/);
+app.setValidation({
+  kind: 'manual-simulation', diagnostics: [], routes: [{
+    dropperOrder: 1, sourceOresPerMinute: 60, stages: [{
+      itemId: 'distribution-ui', beforeValue: 100, afterValue: 250, beforeOreSize: 1, afterOreSize: 1,
+      survivalBefore: 1, survivalAfter: .7, destructionChance: .3, destroyedOresPerMinute: 18,
+      replicationBefore: 1, replicationAfter: 1, arrivalSeconds: 3, crossingSeconds: .5,
+      afterDistribution: [
+        { value: 100, probability: .5, tikiPhase: 'yellow', outcome: '2.2x' },
+        { value: 400, probability: .5, tikiPhase: 'green', outcome: '2.2x' },
+      ],
+      outcomeModel: { expectedValuePerInput: 175, outcomes: [{ label: 'Survives this item', probability: .7, value: 250 }] },
+    }],
+  }],
+});
+const distributionHtml = app.categorizedManualSimulationHtml({ id: 'distribution-ui', name: 'Minefield Refiner', type: 'upgrader' });
+assert.match(distributionHtml, /Ore value distribution/);
+assert.match(distributionHtml, /Exact outcome families/);
+assert.match(distributionHtml, /most common to rarest/i);
+assert.match(distributionHtml, /green cycle/);
+assert.match(distributionHtml, /yellow cycle/);
+assert.doesNotMatch(distributionHtml, /Expected before|Expected after \(survivors\)|Expected per input/);
+app.setSimulationInfoMode('simple', { persist: false });
+const simpleDistributionHtml = app.categorizedManualSimulationHtml({ id: 'distribution-ui', name: 'Minefield Refiner', type: 'upgrader' });
+assert.match(simpleDistributionHtml, /Most common ore value/);
+assert.match(simpleDistributionHtml, /<th>Dropper<\/th><th>Use<\/th><th>Before<\/th><th>After<\/th>/);
+assert.doesNotMatch(simpleDistributionHtml, /Exact outcome families|Expected before|Expected after/);
+assert.match(simpleDistributionHtml, /\$100\.00[\s\S]+\$100\.00/);
+app.setSimulationInfoMode('advanced', { persist: false });
 app.setValidation({
   kind: 'manual-simulation',
   diagnostics: [],
@@ -411,7 +466,7 @@ app.setValidation({
   }],
 });
 const categorizedScannerHtml = app.categorizedManualSimulationHtml({ id: 'scanner-ui', type: 'upgrader' });
-assert.match(categorizedScannerHtml, /Expected value & RNG/);
+assert.match(categorizedScannerHtml, /Ore value distribution/);
 assert.doesNotMatch(categorizedScannerHtml, /Ore destruction/);
 assert.doesNotMatch(categorizedScannerHtml, /<h3>Ore size<\/h3>/);
 const uiDropper = app.placeItem(1, 'Iron Dropper', 1, 1, 2, 3, 'east', 'dropper');
@@ -707,7 +762,7 @@ assert.match(teleporterTooltipHtml, /red sender.*receiver/i);
 const receiverTooltipHtml = app.categorizedManualSimulationHtml({ id: 'red-receive', type: 'conveyor', teleporterColor: 'red', teleporterRole: 'receiver' });
 assert.match(receiverTooltipHtml, /#1.*furnace/i);
 
-const crimsonSimulation = planner.simulateManualBase({
+const crimsonSimulationInput = {
   plotSize: 14,
   oreCap: 100,
   database: { records: [
@@ -724,9 +779,11 @@ const crimsonSimulation = planner.simulateManualBase({
     { id: 'crimson-c1', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 3, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 },
     { id: 'crimson-c2', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 7, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 3 },
   ],
-});
+};
+const crimsonSimulation = planner.simulateManualBase(crimsonSimulationInput);
 assert.equal(crimsonSimulation.valid, true, JSON.stringify(crimsonSimulation.diagnostics));
 assert.equal(crimsonSimulation.routes[0].valueBeforeFurnace, 10, 'Crimson must not apply its phantom multiplier immediately');
+assert(Math.abs(crimsonSimulation.routes[0].survival - 13 / 14) < 1e-12);
 assert.equal(crimsonSimulation.routes[0].phantomZones.length, 1);
 assert.equal(crimsonSimulation.routes[0].phantomZones[0].windowSeconds, 15);
 assert.equal(crimsonSimulation.routes[0].phantomZones[0].minimumDelaySeconds, 1);
@@ -748,6 +805,31 @@ assert.match(crimsonTooltipHtml, /Phantom-zone estimate/);
 assert.match(crimsonTooltipHtml, /0\.500s/);
 assert.match(crimsonTooltipHtml, /30 seconds/i);
 assert.match(crimsonTooltipHtml, /Active zones/);
+const fatalCrimsonSimulation = planner.simulateManualBase({
+  ...crimsonSimulationInput,
+  database: { records: crimsonSimulationInput.database.records.map((record) => (
+    record.name === 'Test Dropper' ? { ...record, name: 'Intern Dropper', key: 'intern dropper::base' } : record
+  )).concat({ key: 'runic array::base', name: 'Runic Array', variant: 'Base', type: 'upgrader', sheet: 'Upgraders', mainStat: 1.5, mainStatType: 'Multiplicative', conveyorSpeed: 12 }) },
+  items: crimsonSimulationInput.items.map((item) => {
+    if (item.id === 'crimson-d1') return { ...item, name: 'Intern Dropper' };
+    if (item.id === 'crimson-f1') return { ...item, x: 13 };
+    return item;
+  }).concat({ id: 'crimson-u2', order: 4, name: 'Runic Array', variant: 'Base', type: 'upgrader', x: 9, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, conveyorWidth: 2, direction: 'east', stats: { Variant: 'Base' } }),
+  conveyors: crimsonSimulationInput.conveyors.map((conveyor) => (
+    conveyor.id === 'crimson-c2' ? { ...conveyor, speed: .1 } : conveyor
+  )).concat({ id: 'crimson-c3', name: 'Normal Conveyor', conveyor: 'Normal Conveyor', x: 11, y: 1, width: 2, height: 2, itemWidth: 2, itemLength: 2, direction: 'east', speed: 12 }),
+});
+assert.equal(fatalCrimsonSimulation.valid, false);
+assert.equal(fatalCrimsonSimulation.routes[0].physicalRouteToFurnace, true);
+assert.equal(fatalCrimsonSimulation.routes[0].reachedFurnace, false);
+assert.equal(fatalCrimsonSimulation.routes[0].survival, 0);
+assert.equal(fatalCrimsonSimulation.routes[0].stages.some((stage) => stage.item === 'Runic Array'), false, 'ore destroyed before Runic Array must not appear in its results');
+const fatalCrimsonStage = fatalCrimsonSimulation.routes[0].stages.find((stage) => stage.item === 'Crimson Pillars');
+assert(Math.abs(fatalCrimsonSimulation.routes[0].occupancySeconds - (fatalCrimsonStage.arrivalSeconds + 8)) < 1e-9, 'ore-cap occupancy must include the Crimson mark trigger window');
+const fatalCrimsonDiagnostic = fatalCrimsonSimulation.diagnostics.find((entry) => entry.code === 'ORE_DESTROYED');
+assert.ok(fatalCrimsonDiagnostic);
+assert.equal(fatalCrimsonDiagnostic.itemId, 'crimson-u1');
+assert.match(fatalCrimsonDiagnostic.message, /Intern Dropper.*all of its ore is destroyed.*Crimson Pillars/i);
 
 const constraintSimulation = planner.simulateManualBase({
   plotSize: 14,
@@ -800,9 +882,33 @@ const rngSimulation = planner.simulateManualBase({
 assert.equal(rngSimulation.valid, true);
 assert.equal(rngSimulation.routes[0].stages[0].outcomeModel.kind, 'tiki-phase');
 assert.equal(rngSimulation.routes[0].stages[0].afterValue, 15200);
+assert.equal(rngSimulation.routes[0].furnaceOutcomes.length, 2);
+assert.deepEqual(
+  JSON.parse(JSON.stringify(rngSimulation.routes[0].furnaceOutcomes.map((outcome) => outcome.beforeValue))),
+  [300, 30100],
+);
 assert(Math.abs(rngSimulation.routes[0].stages[0].destructionChance - 1 / 3) < 1e-12);
 assert(Math.abs(rngSimulation.metrics.destroyedOresPerMinute - 20) < 1e-12);
 assert.equal(rngSimulation.metrics.survivalToFurnace, 2 / 3);
+app.setValidation({ ...rngSimulation, kind: 'manual-simulation' });
+const tikiCycleHtml = app.categorizedManualSimulationHtml({ id: 'u1', name: 'Tiki Evaluator', type: 'upgrader' });
+assert.match(tikiCycleHtml, /Cycle ore values/);
+assert.match(tikiCycleHtml, /<th>Dropper<\/th><th>Use<\/th><th>Before<\/th><th>Green value<\/th><th>Yellow value<\/th>/);
+assert.match(tikiCycleHtml, /Ore destruction/);
+assert.match(tikiCycleHtml, /Chance destroyed/);
+assert.doesNotMatch(tikiCycleHtml, /Surviving outcomes/);
+app.setSimulationInfoMode('simple', { persist: false });
+const simpleTikiHtml = app.categorizedManualSimulationHtml({ id: 'u1', name: 'Tiki Evaluator', type: 'upgrader' });
+assert.match(simpleTikiHtml, /Most common ore value/);
+assert.match(simpleTikiHtml, /\$100\.00[\s\S]+\$300\.00/, 'a tied Tiki cycle must choose its first surviving branch, green');
+assert.match(simpleTikiHtml, /Ore destruction/, 'simple item info must preserve Tiki destruction details');
+assert.doesNotMatch(simpleTikiHtml, /Cycle ore values/);
+app.setSimulationInfoMode('advanced', { persist: false });
+const advancedFurnaceHtml = app.categorizedManualSimulationHtml({ id: 'f1', name: 'Test Furnace', type: 'furnace' });
+assert.match(advancedFurnaceHtml, /Furnace payout · most common outcome/);
+assert.match(advancedFurnaceHtml, /\$300\.00[\s\S]+\$600\.00/);
+assert.match(advancedFurnaceHtml, /All 2 exact furnace outcomes/);
+assert.doesNotMatch(advancedFurnaceHtml, /\$15\.20K|\$30\.40K/, 'furnace hover must not show the averaged route value');
 
 const minefieldSimulation = planner.simulateManualBase({
   plotSize: 12,

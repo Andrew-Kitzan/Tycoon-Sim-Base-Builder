@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "crateProgression": [
     "Basic", "Advanced", "Factory", "Quarry", "Futuristic", "Toxic",
     "Desert", "Fantasy", "Space", "Candy", "Periastron", "Ancient",
@@ -125,6 +125,7 @@
     "COLLISION": "Two physical footprints overlap.",
     "OUT_OF_BOUNDS": "A footprint extends outside the plot.",
     "FURNACE_MISSED": "The route does not enter the furnace processing zone.",
+    "ORE_DESTROYED": "The route physically reaches the furnace, but no ore survives to enter it.",
     "PORTABLE_UNREACHABLE": "A portable footprint cannot legally reach the ore route.",
     "PORTABLE_BEFORE_CAP": "A portable may not touch ore until all capgraders are complete.",
     "CAP_RANGE": "A capgrader receives ore outside its input range.",

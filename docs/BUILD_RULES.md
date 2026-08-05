@@ -304,6 +304,16 @@ When the expected furnace cash-in value and furnace entry rate are known, report
 - Minefield Refiner destroys 30% of ore that reaches it. Apply that loss at the
   Minefield crossing for ore-cap occupancy, item hover destruction, and the
   route's probability of reaching the furnace.
+- Chained Tiki Evaluators share the same phase for an ore. Apply the 1-in-3 red
+  phase destruction once at the first Tiki; later Tikis in that chain reuse the
+  surviving green or yellow phase and do not roll another destruction chance.
+  Keep the green and yellow ore values as separate branches through the chain:
+  every green Tiki multiplies the green branch, while every yellow Tiki adds its
+  variant's additive amount to the yellow branch.
+- Preserve those value branches through every downstream upgrader. For Lambda,
+  expand each incoming value into its actual surviving outcomes and report the
+  expected ores/min in each outcome group. An expected value may be retained as
+  a benchmark, but must not be presented or reused as though every ore has it.
 - Include probabilistic scanner results, destructive machines, furnace rejection,
   and every other survival risk in the processed-ore rate and expected cash.
 - For a randomized upgrader such as Lambda, calculate the displayed expected ore
@@ -471,6 +481,13 @@ When the expected furnace cash-in value and furnace entry rate are known, report
   destroyed ore leaves a phantom zone at that route position for 30 seconds.
   Base zones multiply later ore by 1.5× and Shiny zones by 1.65×, with at most
   three phantom boosts per ore.
+- Crimson trigger probability also reduces route survival. If the remaining
+  route covers the full 1–15 second trigger window, every marked ore is
+  destroyed and that dropper does not count as reaching the furnace.
+- Keep marked ore in the ore-cap occupancy calculation until its trigger time.
+  For the full uniform 1–15 second window, each marked ore contributes eight
+  expected ore-seconds after leaving Crimson Pillars, even though none survives
+  the complete window.
 - Estimate spawn probability per route section from its share of the 1–15
   second window, expected spawns from the drop rate, and simultaneous zones
   from the 30-second lifetime.

@@ -6,7 +6,7 @@ import { applyDeterministicItem } from '../engine/models.mjs';
 import { evaluateEffectSafety } from '../engine/effects.mjs';
 import { isFastTurnBlocked, routeFailureKind, routeFalloffCells } from '../engine/routing.mjs';
 import { exceedsItemUseLimit, exceedsOreSizeLimit, firstOreSizeViolation, itemUseLimit, maximumAcceptedOreSize } from '../engine/item-constraints.mjs';
-import { crimsonPhantomZoneEstimate, isCrimsonWallLandingCell } from '../engine/crimson.mjs';
+import { crimsonMarkDestructionChance, crimsonMarkExpectedOccupancySeconds, crimsonPhantomZoneEstimate, isCrimsonWallLandingCell } from '../engine/crimson.mjs';
 import { connectTeleporterPairs } from '../engine/teleporters.mjs';
 import { parseWorksheetXml } from '../engine/xlsx-reader.mjs';
 import { internalTransportProfile, internalTransportRect } from '../engine/internal-transport.mjs';
@@ -14,6 +14,7 @@ import { portableUpgradeCells, portableZoneEntryIndices } from '../engine/coordi
 import { validatePlan } from '../engine/validate.mjs';
 import { furnaceMultiplierForOre } from '../engine/furnaces.mjs';
 import { expectedRouteOccupancySeconds, itemDestructionChance } from '../engine/destruction.mjs';
+import { applyItemValueDistribution } from '../engine/value-distribution.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const directory = path.join(root, 'tests', 'fixtures', 'regressions');
@@ -237,6 +238,60 @@ for (const fixture of fixtures) {
       finalSurvival: after.survival,
       finalReplication: after.replication,
     }), fixture.assert.occupancySeconds);
+  } else if (fixture.id === 'tiki-shared-phase-destruction') {
+    const tiki = findItem(database, fixture.input.item, fixture.input.variant);
+    const initial = { value: fixture.input.startingValue, survival: 1, replication: 1, oreSize: 1, effects: [], timeSeconds: 0, area: 0 };
+    const first = applyDeterministicItem(tiki, initial, 1, {}, rules);
+    const second = applyDeterministicItem(tiki, first, 2, {}, rules);
+    assert.equal(first.outcomeModel?.kind, fixture.assert.firstModel);
+    assert.equal(second.outcomeModel?.kind, fixture.assert.secondModel);
+    assert.equal(first.destructionChance, fixture.assert.firstDestructionChance);
+    assert.equal(second.destructionChance, fixture.assert.secondDestructionChance);
+    assert.equal(second.survival, fixture.assert.chainSurvival);
+    assert.equal(second.outcomeModel.outcomes.length, fixture.assert.secondOutcomeCount);
+    assert.equal(second.outcomeModel.outcomes.filter((outcome) => outcome.destroyed).length, fixture.assert.secondDestroyedOutcomes);
+    assert.equal(first.tikiPhaseValues.green, fixture.assert.firstGreenValue);
+    assert.equal(first.tikiPhaseValues.yellow, fixture.assert.firstYellowValue);
+    assert.equal(first.value, fixture.assert.firstExpectedSurvivorValue);
+    assert.equal(second.tikiPhaseValues.green, fixture.assert.secondGreenValue);
+    assert.equal(second.tikiPhaseValues.yellow, fixture.assert.secondYellowValue);
+    assert.equal(second.value, fixture.assert.secondExpectedSurvivorValue);
+  } else if (fixture.id === 'rng-value-distribution-propagation') {
+    const tiki = findItem(database, fixture.input.tiki, fixture.input.tikiVariant);
+    const downstream = findItem(database, fixture.input.downstream, fixture.input.downstreamVariant);
+    const lambda = findItem(database, fixture.input.lambda, fixture.input.lambdaVariant);
+    const initial = { value: fixture.input.startingValue, valueDistribution: [{ value: fixture.input.startingValue, probability: 1 }], oreSize: 1, timeSeconds: 0 };
+    const firstTiki = applyItemValueDistribution(tiki, initial, 1, {}, rules);
+    const secondTiki = applyItemValueDistribution(tiki, { ...initial, valueDistribution: firstTiki }, 2, {}, rules);
+    const downstreamDistribution = applyItemValueDistribution(downstream, { ...initial, valueDistribution: secondTiki }, 1, {}, rules);
+    const lambdaDistribution = applyItemValueDistribution(lambda, { ...initial, valueDistribution: downstreamDistribution }, 1, {}, rules);
+    assert.equal(secondTiki.length, fixture.assert.tikiBranches);
+    assert.equal(downstreamDistribution.length, fixture.assert.downstreamBranches);
+    assert(Math.abs(downstreamDistribution.find((entry) => entry.tikiPhase === 'green').value - fixture.assert.downstreamGreen) < .01);
+    assert(Math.abs(downstreamDistribution.find((entry) => entry.tikiPhase === 'yellow').value - fixture.assert.downstreamYellow) < .01);
+    assert.equal(lambdaDistribution.length, fixture.assert.lambdaBranches);
+    assert.equal(lambdaDistribution.filter((entry) => entry.outcome === 'Set to 1').length, fixture.assert.lambdaSetToOneBranches);
+    assert.deepEqual(
+      [...new Set(lambdaDistribution.map((entry) => entry.outcome))].filter((label) => fixture.assert.lambdaOutcomeLabels.includes(label)).sort(),
+      [...fixture.assert.lambdaOutcomeLabels].sort(),
+    );
+    assert(lambdaDistribution.every((entry) => !/\d+\.\d{5,}/.test(entry.outcome)), 'branch labels must use no more than four decimal places');
+    assert(Math.abs(lambdaDistribution.reduce((sum, entry) => sum + entry.probability, 0) - fixture.assert.probabilityTotal) < 1e-12);
+  } else if (fixture.id === 'exact-furnace-outcomes') {
+    const tiki = { name: 'Tiki Evaluator', variant: 'Base', mainStat: fixture.input.tikiMultiplier, mainStatType: 'Multiplicative' };
+    const branches = applyItemValueDistribution(tiki, {
+      value: fixture.input.startingValue,
+      valueDistribution: [{ value: fixture.input.startingValue, probability: 1 }],
+      oreSize: 1,
+      timeSeconds: 0,
+    }, 1, {}, rules);
+    const payouts = branches.map((branch) => branch.value * fixture.input.furnaceMultiplier);
+    assert.deepEqual(branches.map((branch) => branch.value), fixture.assert.beforeValues);
+    assert.deepEqual(payouts, fixture.assert.cashValues);
+    assert.deepEqual(branches.map((branch) => branch.probability), fixture.assert.probabilities);
+    const mostCommon = branches.reduce((best, branch) => branch.probability > best.probability ? branch : best);
+    assert.equal(mostCommon.value, fixture.assert.mostCommonBefore);
+    assert.equal(branches.some((branch) => branch.value === fixture.assert.averagedBeforeIsNotOutcome), false);
   } else if (fixture.id === 'manual-effect-timer-route') {
     const source = findItem(database, fixture.input.effectSource, 'Base');
     const remover = findItem(database, fixture.input.remover, 'Base');
@@ -323,6 +378,17 @@ for (const fixture of fixtures) {
     assert.equal(corridor.spawnBeforeFurnaceProbability, fixture.assert.spawnBeforeFurnaceProbability);
     assert.equal(corridor.expectedSpawnsPerMinute, fixture.assert.expectedSpawnsPerMinute);
     assert.equal(corridor.expectedActiveZones, fixture.assert.expectedActiveZones);
+  } else if (fixture.id === 'crimson-mark-destroys-before-furnace') {
+    const destructionChance = crimsonMarkDestructionChance(fixture.input.components, fixture.input.sourceIndex, {
+      minimumDelaySeconds: fixture.input.minimumDelaySeconds,
+      windowSeconds: fixture.input.windowSeconds,
+    });
+    assert.equal(destructionChance, fixture.assert.destructionChance);
+    assert.equal(1 - destructionChance, fixture.assert.survival);
+    assert.equal(crimsonMarkExpectedOccupancySeconds(fixture.input.windowSeconds, {
+      minimumDelaySeconds: fixture.input.minimumDelaySeconds,
+      windowSeconds: fixture.input.windowSeconds,
+    }), fixture.assert.expectedOccupancyAfterMarkSeconds);
   } else if (fixture.id === 'teleporter-route-to-furnace') {
     const components = fixture.input.components;
     const byId = new Map(components.map((component) => [component.id, component]));

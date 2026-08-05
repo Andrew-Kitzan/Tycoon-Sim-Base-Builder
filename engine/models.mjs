@@ -1,6 +1,7 @@
 import { integerUseLimit, normalize } from './utils.mjs';
 import { isCrimsonPillars } from './crimson.mjs';
 import { itemDestructionChance } from './destruction.mjs';
+import { applyItemValueDistribution, expectedDistributionValue } from './value-distribution.mjs';
 
 export function crossingSeconds(item) {
   const speed = Number(item.conveyorSpeed);
@@ -69,6 +70,7 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
   let oreSize = state.oreSize ?? 1;
   let outcomeModel = null;
   let appliedMultiplier = null;
+  let tikiPhaseValues = item.name === 'Tiki Evaluator' ? (state.tikiPhaseValues ?? null) : null;
   const model = (profile.complexItemModels ?? {})[item.name];
 
   const activates = canActivateItem(item, state, rules);
@@ -126,18 +128,25 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
     };
   } else if (item.name === 'Tiki Evaluator') {
     const additiveByVariant = { Base: 30000, Shiny: 33000, Mythic: 37500, 'Shiny Mythic': 45000 };
-    const multipliedValue = before * Number(item.mainStat ?? 1);
-    const additiveValue = before + (additiveByVariant[item.variant] ?? 30000);
+    const sharesPriorTikiPhase = useNumber > 1 && tikiPhaseValues != null;
+    const multipliedValue = (sharesPriorTikiPhase ? tikiPhaseValues.green : before) * Number(item.mainStat ?? 1);
+    const additiveValue = (sharesPriorTikiPhase ? tikiPhaseValues.yellow : before) + (additiveByVariant[item.variant] ?? 30000);
+    tikiPhaseValues = { green: multipliedValue, yellow: additiveValue };
     value = (multipliedValue + additiveValue) / 2;
-    survival *= 2 / 3;
+    if (!sharesPriorTikiPhase) survival *= 2 / 3;
     outcomeModel = {
-      kind: 'tiki-phase',
+      kind: sharesPriorTikiPhase ? 'tiki-shared-phase' : 'tiki-phase',
       expectedSurvivorValue: value,
-      outcomes: [
-        { label: 'Red phase: destroyed', probability: 1 / 3, destroyed: true },
-        { label: `Green phase: ${item.mainStat}x`, probability: 1 / 3, value: multipliedValue },
-        { label: `Yellow phase: +${additiveByVariant[item.variant] ?? 30000}`, probability: 1 / 3, value: additiveValue },
-      ],
+      outcomes: sharesPriorTikiPhase
+        ? [
+          { label: `Shared green phase: ${item.mainStat}x`, probability: 1 / 2, value: multipliedValue },
+          { label: `Shared yellow phase: +${additiveByVariant[item.variant] ?? 30000}`, probability: 1 / 2, value: additiveValue },
+        ]
+        : [
+          { label: 'Red phase: destroyed', probability: 1 / 3, destroyed: true },
+          { label: `Green phase: ${item.mainStat}x`, probability: 1 / 3, value: multipliedValue },
+          { label: `Yellow phase: +${additiveByVariant[item.variant] ?? 30000}`, probability: 1 / 3, value: additiveValue },
+        ],
     };
   } else if (item.name === 'Runic Array') {
     const ageMultiplier = Number(item.mainStat ?? 1) * 3 ** ((state.timeSeconds ?? 0) / 120);
@@ -181,6 +190,11 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
   if (item.name === 'Ore Expander') oreSize *= 1.55;
   if (item.name === 'Ore Shrinker') oreSize *= 0.85;
 
+  const valueDistribution = activates
+    ? applyItemValueDistribution(item, state, useNumber, profile, rules)
+    : (state.valueDistribution ?? [{ value: before, probability: 1 }]);
+  if (state.valueDistribution) value = expectedDistributionValue(valueDistribution);
+
   const itemSurvival = state.survival > 0 ? survival / state.survival : 0;
   if (outcomeModel) outcomeModel.expectedValuePerInput = value * itemSurvival;
   return {
@@ -192,6 +206,8 @@ export function applyDeterministicItem(item, state, useNumber = 1, profile = {},
     itemSurvival,
     destructionChance: 1 - itemSurvival,
     outcomeModel,
+    valueDistribution,
+    tikiPhaseValues,
     appliedMultiplier,
     effects: activates ? updateEffects(item, state.effects, rules) : [...(state.effects ?? [])],
     activated: activates,
